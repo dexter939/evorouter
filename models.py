@@ -18,11 +18,23 @@ class NetworkConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     interface_name = db.Column(db.String(32), nullable=False)
     interface_type = db.Column(db.String(16), nullable=False)  # wan, lan, wifi
-    ip_mode = db.Column(db.String(8), default='dhcp')  # dhcp, static
-    ip_address = db.Column(db.String(15))
-    subnet_mask = db.Column(db.String(15))
-    gateway = db.Column(db.String(15))
-    dns_servers = db.Column(db.String(128))
+    
+    # IPv4 settings
+    ipv4_enabled = db.Column(db.Boolean, default=True)
+    ipv4_mode = db.Column(db.String(8), default='dhcp')  # dhcp, static
+    ipv4_address = db.Column(db.String(15))
+    ipv4_subnet_mask = db.Column(db.String(15))
+    ipv4_gateway = db.Column(db.String(15))
+    ipv4_dns_servers = db.Column(db.String(128))
+    
+    # IPv6 settings
+    ipv6_enabled = db.Column(db.Boolean, default=False)
+    ipv6_mode = db.Column(db.String(16), default='auto')  # auto, static, dhcpv6, slaac
+    ipv6_address = db.Column(db.String(45))  # IPv6 addresses can be up to 45 characters
+    ipv6_prefix_length = db.Column(db.Integer, default=64)  # Tipicamente 64 per reti locali
+    ipv6_gateway = db.Column(db.String(45))
+    ipv6_dns_servers = db.Column(db.String(256))  # Più lungo per supportare più server DNS IPv6
+    
     is_active = db.Column(db.Boolean, default=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -290,8 +302,17 @@ class VpnServer(db.Model):
     vpn_type = db.Column(db.String(16), default='openvpn')  # openvpn, wireguard
     protocol = db.Column(db.String(8), default='udp')  # udp, tcp
     port = db.Column(db.Integer, default=1194)
-    subnet = db.Column(db.String(18), default='10.8.0.0/24')
-    dns_servers = db.Column(db.String(128))
+    
+    # IPv4 settings
+    ipv4_enabled = db.Column(db.Boolean, default=True)
+    ipv4_subnet = db.Column(db.String(18), default='10.8.0.0/24')
+    ipv4_dns_servers = db.Column(db.String(128))
+    
+    # IPv6 settings
+    ipv6_enabled = db.Column(db.Boolean, default=False)
+    ipv6_subnet = db.Column(db.String(43), default='fd00::/64')  # IPv6 ULA prefix
+    ipv6_dns_servers = db.Column(db.String(256))
+    
     server_certificates_path = db.Column(db.String(255))
     cipher = db.Column(db.String(32), default='AES-256-GCM')
     auth_method = db.Column(db.String(16), default='certificate')  # certificate, password, both
@@ -313,7 +334,15 @@ class VpnClient(db.Model):
     name = db.Column(db.String(64), nullable=False)
     description = db.Column(db.String(255))
     client_id = db.Column(db.String(64), unique=True)
-    ip_address = db.Column(db.String(15))  # Static IP if assigned
+    
+    # IPv4 settings
+    ipv4_address = db.Column(db.String(15))  # Static IPv4 if assigned
+    
+    # IPv6 settings
+    ipv6_enabled = db.Column(db.Boolean, default=False)
+    ipv6_address = db.Column(db.String(45))  # Static IPv6 if assigned
+    ipv6_prefix_length = db.Column(db.Integer, default=64)
+    
     certificates_path = db.Column(db.String(255))
     config_file_path = db.Column(db.String(255))
     enabled = db.Column(db.Boolean, default=True)

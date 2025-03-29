@@ -4,7 +4,7 @@ import re
 import subprocess
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from config import DEFAULT_LAN_INTERFACE, DEFAULT_WAN_INTERFACE
 
 # Create logger
@@ -43,8 +43,12 @@ def get_connected_devices():
             # Generate MAC address
             mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)]).upper()
             
-            # Generate IP
-            ip = f"192.168.1.{random.randint(2, 250)}"
+            # Generate IPv4
+            ipv4 = f"192.168.1.{random.randint(2, 250)}"
+            
+            # Determine if this device has IPv6
+            has_ipv6 = random.random() > 0.3  # 70% chance of having IPv6
+            ipv6 = f"fd00::{random.randint(100, 999):x}" if has_ipv6 else None
             
             # Random device name
             device_name = device_names[random.randint(0, len(device_names) - 1)]
@@ -70,7 +74,9 @@ def get_connected_devices():
             
             devices.append({
                 "name": device_name,
-                "ip": ip,
+                "ipv4_address": ipv4,
+                "ipv6_address": ipv6,
+                "ipv6_enabled": has_ipv6,
                 "mac": mac,
                 "interface": interface,
                 "connection": connection,
@@ -100,7 +106,14 @@ def get_interfaces_status():
                 "type": "LAN",
                 "state": "UP",
                 "speed": "1 Gbps",
-                "ip": "192.168.1.1",
+                # IPv4 info
+                "ipv4_enabled": True,
+                "ipv4_address": "192.168.1.1",
+                "ipv4_subnet": "255.255.255.0",
+                # IPv6 info
+                "ipv6_enabled": True,
+                "ipv6_address": "fd00::1",
+                "ipv6_prefix": "64",
                 "mac": "AA:BB:CC:11:22:33",
                 "rx_bytes": random.randint(1000000, 100000000),
                 "tx_bytes": random.randint(100000, 10000000)
@@ -110,7 +123,14 @@ def get_interfaces_status():
                 "type": "WAN",
                 "state": "UP",
                 "speed": "1 Gbps",
-                "ip": "203.0.113.10",
+                # IPv4 info
+                "ipv4_enabled": True,
+                "ipv4_address": "203.0.113.10",
+                "ipv4_subnet": "255.255.255.0",
+                # IPv6 info
+                "ipv6_enabled": True,
+                "ipv6_address": f"2001:db8::1:{random.randint(1, 999):x}",
+                "ipv6_prefix": "64",
                 "mac": "AA:BB:CC:11:22:34",
                 "rx_bytes": random.randint(100000000, 1000000000),
                 "tx_bytes": random.randint(10000000, 100000000)
@@ -120,7 +140,14 @@ def get_interfaces_status():
                 "type": "WiFi",
                 "state": "UP",
                 "speed": "300 Mbps",
-                "ip": "192.168.1.1",
+                # IPv4 info
+                "ipv4_enabled": True,
+                "ipv4_address": "192.168.1.1",
+                "ipv4_subnet": "255.255.255.0",
+                # IPv6 info
+                "ipv6_enabled": True,
+                "ipv6_address": "fd00::1",
+                "ipv6_prefix": "64",
                 "mac": "AA:BB:CC:11:22:35",
                 "rx_bytes": random.randint(10000000, 100000000),
                 "tx_bytes": random.randint(1000000, 10000000)
@@ -130,7 +157,14 @@ def get_interfaces_status():
                 "type": "WiFi",
                 "state": "DOWN",
                 "speed": "N/A",
-                "ip": "N/A",
+                # IPv4 info
+                "ipv4_enabled": False,
+                "ipv4_address": "N/A",
+                "ipv4_subnet": "N/A",
+                # IPv6 info
+                "ipv6_enabled": False,
+                "ipv6_address": "N/A",
+                "ipv6_prefix": "N/A",
                 "mac": "AA:BB:CC:11:22:36",
                 "rx_bytes": 0,
                 "tx_bytes": 0
@@ -152,14 +186,24 @@ def get_wan_status():
     try:
         # In Replit environment, we'll create simulated data
         connected = random.random() > 0.1  # 90% chance of being connected
+        ipv6_enabled = random.random() > 0.3  # 70% chance of IPv6 being enabled
         
         status = {
             "connected": connected,
             "interface": DEFAULT_WAN_INTERFACE,
-            "ip": "203.0.113." + str(random.randint(1, 254)) if connected else "N/A",
-            "gateway": "192.168.0.1" if connected else "N/A",
-            "dns": ["8.8.8.8", "8.8.4.4"] if connected else [],
-            "type": "DHCP",
+            # IPv4 info
+            "ipv4_enabled": True,
+            "ipv4_address": "203.0.113." + str(random.randint(1, 254)) if connected else "N/A",
+            "ipv4_gateway": "203.0.113.1" if connected else "N/A",
+            "ipv4_dns": ["8.8.8.8", "8.8.4.4"] if connected else [],
+            "ipv4_type": "DHCP",
+            # IPv6 info
+            "ipv6_enabled": ipv6_enabled and connected,
+            "ipv6_address": f"2001:db8::1:{random.randint(1, 999):x}" if connected and ipv6_enabled else "N/A",
+            "ipv6_gateway": "2001:db8::1" if connected and ipv6_enabled else "N/A",
+            "ipv6_dns": ["2001:4860:4860::8888", "2001:4860:4860::8844"] if connected and ipv6_enabled else [],
+            "ipv6_type": "SLAAC" if ipv6_enabled else "N/A",
+            # Generale
             "uptime": f"{random.randint(1, 48)} ore, {random.randint(0, 59)} minuti" if connected else "N/A"
         }
         
@@ -178,12 +222,20 @@ def get_public_ip_info():
     try:
         # In Replit environment, we'll create simulated data
         ip_types = ["Residenziale", "Business", "Datacenter"]
+        ipv6_enabled = random.random() > 0.3  # 70% chance of IPv6 being available
         
         info = {
-            "ip": "203.0.113." + str(random.randint(1, 254)),
-            "location": "Milano, Italia",
-            "isp": "TIM Telecom Italia",
-            "type": ip_types[random.randint(0, len(ip_types) - 1)]
+            # IPv4 info
+            "ipv4_address": "203.0.113." + str(random.randint(1, 254)),
+            "ipv4_location": "Milano, Italia",
+            "ipv4_isp": "TIM Telecom Italia",
+            "ipv4_type": ip_types[random.randint(0, len(ip_types) - 1)],
+            # IPv6 info
+            "ipv6_enabled": ipv6_enabled,
+            "ipv6_address": f"2001:db8::1:{random.randint(1, 999):x}" if ipv6_enabled else "N/A",
+            "ipv6_location": "Milano, Italia" if ipv6_enabled else "N/A",
+            "ipv6_isp": "TIM Telecom Italia" if ipv6_enabled else "N/A",
+            "ipv6_type": ip_types[random.randint(0, len(ip_types) - 1)] if ipv6_enabled else "N/A"
         }
         
         return info
@@ -200,9 +252,12 @@ def get_firewall_status():
     """
     try:
         # In Replit environment, we'll create simulated data
+        ipv6_enabled = random.random() > 0.3  # 70% chance of IPv6 being enabled
+        
         status = {
             "enabled": True,
-            "rules": [
+            "ipv6_enabled": ipv6_enabled,
+            "ipv4_rules": [
                 {
                     "type": "INPUT",
                     "interface": "eth1",
@@ -246,34 +301,86 @@ def get_firewall_status():
                     "action": "DROP"
                 }
             ],
+            "ipv6_rules": [
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "TCP:22",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "TCP:80,443",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "ICMPv6",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "UDP:1194",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth0",
+                    "protocol": "ALL",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "FORWARD",
+                    "interface": "eth1->eth0",
+                    "protocol": "ALL",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "ALL",
+                    "action": "DROP"
+                }
+            ] if ipv6_enabled else [],
             "port_forwarding": [
                 {
                     "name": "HTTP Server",
                     "external": "80",
-                    "internal_ip": "192.168.1.5",
+                    "internal_ipv4": "192.168.1.5",
+                    "internal_ipv6": "fd00::5" if ipv6_enabled else None,
                     "internal_port": "80",
-                    "protocol": "TCP"
+                    "protocol": "TCP",
+                    "ipv6_enabled": ipv6_enabled
                 },
                 {
                     "name": "HTTPS Server",
                     "external": "443",
-                    "internal_ip": "192.168.1.5",
+                    "internal_ipv4": "192.168.1.5",
+                    "internal_ipv6": "fd00::5" if ipv6_enabled else None,
                     "internal_port": "443",
-                    "protocol": "TCP"
+                    "protocol": "TCP",
+                    "ipv6_enabled": ipv6_enabled
                 },
                 {
                     "name": "SSH Access",
                     "external": "2222",
-                    "internal_ip": "192.168.1.2",
+                    "internal_ipv4": "192.168.1.2",
+                    "internal_ipv6": "fd00::2" if ipv6_enabled else None,
                     "internal_port": "22",
-                    "protocol": "TCP"
+                    "protocol": "TCP",
+                    "ipv6_enabled": ipv6_enabled
                 },
                 {
                     "name": "Game Server",
                     "external": "27015",
-                    "internal_ip": "192.168.1.6",
+                    "internal_ipv4": "192.168.1.6",
+                    "internal_ipv6": "fd00::6" if ipv6_enabled else None,
                     "internal_port": "27015",
-                    "protocol": "UDP"
+                    "protocol": "UDP",
+                    "ipv6_enabled": ipv6_enabled
                 }
             ]
         }
@@ -432,6 +539,7 @@ def get_vpn_status():
     try:
         # In Replit environment, we'll create simulated data
         is_running = random.random() > 0.2  # 80% chance of being active
+        ipv6_enabled = random.random() > 0.4  # 60% chance of IPv6 being enabled
         
         status = {
             "running": is_running,
@@ -439,7 +547,15 @@ def get_vpn_status():
             "protocol": "UDP",
             "port": 1194,
             "clients_connected": random.randint(0, 5) if is_running else 0,
-            "subnet": "10.8.0.0/24",
+            # IPv4 settings
+            "ipv4_enabled": True,
+            "ipv4_subnet": "10.8.0.0/24",
+            "ipv4_dns": ["8.8.8.8", "8.8.4.4"] if is_running else [],
+            # IPv6 settings
+            "ipv6_enabled": ipv6_enabled and is_running,
+            "ipv6_subnet": "fd00::/64" if ipv6_enabled and is_running else "N/A",
+            "ipv6_dns": ["2001:4860:4860::8888", "2001:4860:4860::8844"] if ipv6_enabled and is_running else [],
+            # Common settings
             "bandwidth_down": round(random.uniform(0.5, 2), 1) if is_running else 0,
             "bandwidth_up": round(random.uniform(0.2, 1), 1) if is_running else 0,
             "certificates_valid": True,
@@ -559,7 +675,11 @@ def get_dhcp_leases():
             mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)]).upper()
             
             # Generate IP
-            ip = f"192.168.1.{random.randint(100, 200)}"
+            ipv4 = f"192.168.1.{random.randint(100, 200)}"
+            
+            # Determine if this device has IPv6
+            has_ipv6 = random.random() > 0.3  # 70% chance of having IPv6
+            ipv6 = f"fd00::{random.randint(100, 999):x}" if has_ipv6 else None
             
             # Generate hostname
             hostnames = ["desktop-pc", "laptop-mario", "iphone-lucia", "android-giovanni", 
@@ -574,7 +694,9 @@ def get_dhcp_leases():
             expiry = datetime.now() + timedelta(hours=random.randint(1, 24))
             
             leases.append({
-                "ip": ip,
+                "ipv4_address": ipv4,
+                "ipv6_address": ipv6,
+                "ipv6_enabled": has_ipv6,
                 "mac": mac,
                 "hostname": hostname,
                 "expiry": expiry.strftime("%Y-%m-%d %H:%M:%S"),
@@ -595,17 +717,25 @@ def get_dns_settings():
     """
     try:
         # In Replit environment, we'll create simulated data
+        ipv6_enabled = random.random() > 0.4  # 60% chance of IPv6 being enabled
+        
         settings = {
-            "primary_dns": "8.8.8.8",
-            "secondary_dns": "8.8.4.4",
+            # IPv4 DNS settings
+            "ipv4_primary_dns": "8.8.8.8",
+            "ipv4_secondary_dns": "8.8.4.4",
+            # IPv6 DNS settings
+            "ipv6_enabled": ipv6_enabled,
+            "ipv6_primary_dns": "2001:4860:4860::8888" if ipv6_enabled else "N/A",
+            "ipv6_secondary_dns": "2001:4860:4860::8844" if ipv6_enabled else "N/A",
+            # General settings
             "local_domain": "home.lan",
             "enable_caching": True,
             "forward_queries": True,
             "cache_size": 1000,
             "custom_entries": [
-                {"domain": "router.home.lan", "ip": "192.168.1.1"},
-                {"domain": "printer.home.lan", "ip": "192.168.1.101"},
-                {"domain": "nas.home.lan", "ip": "192.168.1.200"}
+                {"domain": "router.home.lan", "ipv4": "192.168.1.1", "ipv6": "fd00::1"},
+                {"domain": "printer.home.lan", "ipv4": "192.168.1.101", "ipv6": "fd00::101"},
+                {"domain": "nas.home.lan", "ipv4": "192.168.1.200", "ipv6": "fd00::200"}
             ]
         }
         
