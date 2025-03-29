@@ -1,11 +1,11 @@
 #!/bin/bash
-# Script per creare un pacchetto di deployment per BPI-R4 Router OS
+# Script per creare un pacchetto di deployment per EvoRouter R4 OS
 
-echo "Creazione del pacchetto di deployment per BPI-R4 Router OS..."
+echo "Creazione del pacchetto di deployment per EvoRouter R4 OS..."
 
 # Crea directory temporanea
 TEMP_DIR="./deployment_tmp"
-DEPLOY_PKG="bpir4_router_os.zip"
+DEPLOY_PKG="evorouter_os.zip"
 
 mkdir -p $TEMP_DIR
 
@@ -37,9 +37,9 @@ cp INSTALL.md $TEMP_DIR/
 echo "Creando script di installazione..."
 cat > $TEMP_DIR/install.sh << EOL
 #!/bin/bash
-# Script di installazione per BPI-R4 Router OS
+# Script di installazione per EvoRouter R4 OS
 
-echo "Installazione di BPI-R4 Router OS in corso..."
+echo "Installazione di EvoRouter R4 OS in corso..."
 
 # Verifica se l'utente è root
 if [ "\$(id -u)" -ne 0 ]; then
@@ -48,7 +48,7 @@ if [ "\$(id -u)" -ne 0 ]; then
 fi
 
 # Directory di installazione
-INSTALL_DIR="/opt/bpir4-router"
+INSTALL_DIR="/opt/evorouter"
 mkdir -p \$INSTALL_DIR
 
 # Installa dipendenze di sistema
@@ -77,7 +77,7 @@ python create_admin.py
 
 # Configura Nginx
 echo "Configurazione di Nginx..."
-cat > /etc/nginx/sites-available/bpir4-router << EOF
+cat > /etc/nginx/sites-available/evorouter << EOF
 server {
     listen 80;
     server_name _;
@@ -91,20 +91,20 @@ server {
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/bpir4-router /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/evorouter /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
 
 # Configura systemd
 echo "Configurazione del servizio systemd..."
-cat > /etc/systemd/system/bpir4-router.service << EOF
+cat > /etc/systemd/system/evorouter.service << EOF
 [Unit]
-Description=BPI-R4 Router OS
+Description=EvoRouter R4 OS
 After=network.target
 
 [Service]
 User=root
-WorkingDirectory=/opt/bpir4-router
-ExecStart=/opt/bpir4-router/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 2 main:app
+WorkingDirectory=/opt/evorouter
+ExecStart=/opt/evorouter/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 2 main:app
 Restart=always
 
 [Install]
@@ -112,8 +112,8 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable bpir4-router.service
-systemctl start bpir4-router.service
+systemctl enable evorouter.service
+systemctl start evorouter.service
 
 echo "Installazione completata!"
 echo "Puoi accedere all'interfaccia web tramite http://indirizzo-ip-del-dispositivo/"
@@ -137,4 +137,4 @@ echo "Pulizia dei file temporanei..."
 rm -rf $TEMP_DIR
 
 echo "Pacchetto di deployment creato con successo: $DEPLOY_PKG"
-echo "Puoi trasferire questo pacchetto al dispositivo BPI-R4 e seguire le istruzioni in INSTALL.md per l'installazione."
+echo "Puoi trasferire questo pacchetto al dispositivo EvoRouter R4 e seguire le istruzioni in INSTALL.md per l'installazione."

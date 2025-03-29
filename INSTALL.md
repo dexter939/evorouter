@@ -1,9 +1,9 @@
-# Guida all'Installazione del Router OS per BPI-R4
+# Guida all'Installazione del Router OS per EvoRouter R4
 
-Questa guida spiega come installare il Router OS sviluppato per Banana Pi BPI-R4.
+Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4.
 
 ## Prerequisiti
-- Banana Pi BPI-R4
+- EvoRouter R4
 - Scheda microSD (minimo 8GB)
 - Alimentatore compatibile
 - Cavo Ethernet
@@ -11,11 +11,11 @@ Questa guida spiega come installare il Router OS sviluppato per Banana Pi BPI-R4
 
 ## Passi per l'installazione
 
-### 1. Preparazione dell'ambiente sul BPI-R4
+### 1. Preparazione dell'ambiente sul dispositivo
 
 1. Crea una directory sul dispositivo dove verrà installato il software:
    ```
-   mkdir -p /opt/bpir4-router
+   mkdir -p /opt/evorouter
    ```
 
 2. Installa le dipendenze di sistema necessarie:
@@ -29,7 +29,7 @@ Questa guida spiega come installare il Router OS sviluppato per Banana Pi BPI-R4
 
 1. Crea un ambiente virtuale:
    ```
-   cd /opt/bpir4-router
+   cd /opt/evorouter
    python3 -m venv venv
    source venv/bin/activate
    ```
@@ -45,27 +45,27 @@ Esistono due modi per trasferire i file del progetto al dispositivo:
 
 #### Metodo 1: Download diretto dal repository GitHub (se disponibile)
 ```
-cd /opt/bpir4-router
-git clone https://github.com/tuo-username/bpir4-router .
+cd /opt/evorouter
+git clone https://github.com/tuo-username/evorouter .
 ```
 
 #### Metodo 2: Trasferimento manuale
 1. Scarica l'archivio ZIP del progetto da Replit
 2. Trasferisci il file sul dispositivo usando SCP:
    ```
-   scp bpir4-router.zip user@bpir4-device:/tmp/
+   scp evorouter.zip user@evorouter-device:/tmp/
    ```
 3. Sul dispositivo, estrai i file:
    ```
-   cd /opt/bpir4-router
-   unzip /tmp/bpir4-router.zip
+   cd /opt/evorouter
+   unzip /tmp/evorouter.zip
    ```
 
 ### 4. Configurazione del database
 
 1. Inizializza il database:
    ```
-   cd /opt/bpir4-router
+   cd /opt/evorouter
    source venv/bin/activate
    python create_admin.py
    ```
@@ -74,7 +74,7 @@ git clone https://github.com/tuo-username/bpir4-router .
 
 1. Crea un file di configurazione per Nginx:
    ```
-   nano /etc/nginx/sites-available/bpir4-router
+   nano /etc/nginx/sites-available/evorouter
    ```
 
 2. Aggiungi questa configurazione:
@@ -94,7 +94,7 @@ git clone https://github.com/tuo-username/bpir4-router .
 
 3. Abilita il sito:
    ```
-   ln -s /etc/nginx/sites-available/bpir4-router /etc/nginx/sites-enabled/
+   ln -s /etc/nginx/sites-available/evorouter /etc/nginx/sites-enabled/
    nginx -t
    systemctl restart nginx
    ```
@@ -103,19 +103,19 @@ git clone https://github.com/tuo-username/bpir4-router .
 
 1. Crea un file di servizio:
    ```
-   nano /etc/systemd/system/bpir4-router.service
+   nano /etc/systemd/system/evorouter.service
    ```
 
 2. Aggiungi questa configurazione:
    ```
    [Unit]
-   Description=BPI-R4 Router OS
+   Description=EvoRouter R4 OS
    After=network.target
 
    [Service]
    User=root
-   WorkingDirectory=/opt/bpir4-router
-   ExecStart=/opt/bpir4-router/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 main:app
+   WorkingDirectory=/opt/evorouter
+   ExecStart=/opt/evorouter/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 main:app
    Restart=always
 
    [Install]
@@ -124,19 +124,19 @@ git clone https://github.com/tuo-username/bpir4-router .
 
 3. Abilita e avvia il servizio:
    ```
-   systemctl enable bpir4-router.service
-   systemctl start bpir4-router.service
+   systemctl enable evorouter.service
+   systemctl start evorouter.service
    ```
 
 ### 7. Verifica dell'installazione
 
 1. Verifica che il servizio sia in esecuzione:
    ```
-   systemctl status bpir4-router.service
+   systemctl status evorouter.service
    ```
 
 2. Accedi all'interfaccia web:
-   - Apri un browser e visita `http://indirizzo-ip-del-bpir4/`
+   - Apri un browser e visita `http://indirizzo-ip-del-dispositivo/`
    - Accedi con le credenziali predefinite:
      - Username: admin
      - Password: admin123
@@ -145,7 +145,7 @@ git clone https://github.com/tuo-username/bpir4-router .
 
 Se riscontri problemi durante l'installazione, puoi controllare i log:
 ```
-journalctl -u bpir4-router.service -f
+journalctl -u evorouter.service -f
 ```
 
 Per problemi relativi a Nginx:

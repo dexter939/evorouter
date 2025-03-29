@@ -1,8 +1,8 @@
-# Guida all'Hardware Banana Pi BPI-R4
+# Guida all'Hardware EvoRouter R4
 
 ## Specifiche Tecniche
 
-Il Banana Pi BPI-R4 è un router open source con le seguenti caratteristiche:
+L'EvoRouter R4 è un router open source con le seguenti caratteristiche:
 
 - **Processore**: MediaTek MT7988A (Filogic 880) quad-core Arm Cortex-A73 @2.0GHz
 - **RAM**: 4GB DDR4
@@ -25,7 +25,7 @@ Il Banana Pi BPI-R4 è un router open source con le seguenti caratteristiche:
 
 ### Accesso alle Porte GPIO
 
-Il BPI-R4 fornisce un header GPIO da 30 pin che può essere utilizzato per collegare sensori, display, o altri dispositivi esterni. I pin GPIO possono essere controllati attraverso il file system `/sys/class/gpio/` o utilizzando librerie Python come `RPi.GPIO` o `gpiod`.
+L'EvoRouter R4 fornisce un header GPIO da 30 pin che può essere utilizzato per collegare sensori, display, o altri dispositivi esterni. I pin GPIO possono essere controllati attraverso il file system `/sys/class/gpio/` o utilizzando librerie Python come `RPi.GPIO` o `gpiod`.
 
 ```python
 # Esempio di controllo GPIO con gpiod
@@ -47,7 +47,7 @@ line.set_value(0)
 
 ### Configurazione Rete
 
-Il BPI-R4 supporta switch integrato con VLAN hardware. È possibile configurare le porte Ethernet utilizzando `swconfig` o `DSA (Distributed Switch Architecture)`.
+L'EvoRouter R4 supporta switch integrato con VLAN hardware. È possibile configurare le porte Ethernet utilizzando `swconfig` o `DSA (Distributed Switch Architecture)`.
 
 #### Esempio di configurazione VLAN con DSA:
 
@@ -79,7 +79,7 @@ apt install hostapd
 cat > /etc/hostapd/hostapd.conf << EOF
 interface=wlan0
 driver=nl80211
-ssid=BPI-R4-AP
+ssid=EvoRouter-AP
 hw_mode=a
 channel=36
 ieee80211d=1
@@ -112,16 +112,16 @@ ip link set sfp0 up
 ethtool sfp0
 ```
 
-## FreeSWITCH e Supporto VoIP
+## PBX e Supporto VoIP
 
-Il BPI-R4 è potente abbastanza da funzionare come un PBX completo con FreeSWITCH:
+L'EvoRouter R4 è potente abbastanza da funzionare come un centralino telefonico completo:
 
-### Ottimizzazione per FreeSWITCH
+### Ottimizzazione per il Centralino
 
-1. **Priorità dei processi**: È possibile assegnare priorità più alte al processo FreeSWITCH
+1. **Priorità dei processi**: È possibile assegnare priorità più alte al processo del centralino
 
 ```bash
-# Impostare priorità alta per FreeSWITCH
+# Impostare priorità alta per il PBX
 chrt -f -p 80 $(pidof freeswitch)
 ```
 
@@ -135,7 +135,7 @@ sysctl -w net.core.wmem_max=16777216
 
 ## Gestione dell'Alimentazione
 
-Il BPI-R4 consuma circa 5-10W in condizioni normali. È possibile ridurre il consumo disabilitando componenti non utilizzati:
+L'EvoRouter R4 consuma circa 5-10W in condizioni normali. È possibile ridurre il consumo disabilitando componenti non utilizzati:
 
 ```bash
 # Disabilitare WiFi se non utilizzato
@@ -168,7 +168,7 @@ Per problemi con le porte Ethernet:
 
 ### Sovratemperatura
 
-Il BPI-R4 può surriscaldarsi sotto carico intenso. È consigliabile:
+L'EvoRouter R4 può surriscaldarsi sotto carico intenso. È consigliabile:
 1. Installare un dissipatore di calore adeguato
 2. Garantire una buona ventilazione
 3. Monitorare la temperatura: `cat /sys/class/thermal/thermal_zone0/temp`

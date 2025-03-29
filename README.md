@@ -1,11 +1,11 @@
-# BPI-R4 Router OS
+# EvoRouter R4 OS
 
-Sistema operativo personalizzato per router Banana Pi BPI-R4 con interfaccia web avanzata, centralino FreeSWITCH integrato e funzionalità VPN.
+Sistema operativo personalizzato per router EvoRouter R4 con interfaccia web avanzata, centralino integrato e funzionalità VPN.
 
 ## Caratteristiche
 
 - **Interfaccia Web Responsive**: Gestione completa del dispositivo tramite interfaccia web intuitiva
-- **Centralino FreeSWITCH Integrato**: Gestione chiamate, interni, voicemail, IVR e molto altro
+- **Centralino Integrato**: Gestione chiamate, interni, voicemail, IVR e molto altro
 - **Server VPN Integrato**: Supporto per OpenVPN con gestione client
 - **Diagnostica Avanzata**: Strumenti completi per diagnostica di rete e sistema
 - **API RESTful**: Per integrazione con sistemi esterni e automazione
@@ -15,16 +15,16 @@ Sistema operativo personalizzato per router Banana Pi BPI-R4 con interfaccia web
 
 - **Backend**: Flask, SQLAlchemy, PostgreSQL
 - **Frontend**: Bootstrap, JavaScript, Chart.js, Feather Icons
-- **Componenti di Sistema**: FreeSWITCH, OpenVPN, iptables
-- **Hardware**: Banana Pi BPI-R4 (MT7988a)
+- **Componenti di Sistema**: PBX, OpenVPN, iptables
+- **Hardware**: EvoRouter R4 (MT7988a)
 
 ## Installazione
 
 Per istruzioni dettagliate sull'installazione, consulta [INSTALL.md](INSTALL.md).
 
-## Specifiche Hardware BPI-R4
+## Specifiche Hardware
 
-Per dettagli sulle specifiche hardware e le funzionalità del dispositivo BPI-R4, consulta [BPI-R4_HARDWARE.md](BPI-R4_HARDWARE.md).
+Per dettagli sulle specifiche hardware e le funzionalità del dispositivo EvoRouter R4, consulta [HARDWARE.md](HARDWARE.md).
 
 ## Integrazione API
 
