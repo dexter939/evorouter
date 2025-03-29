@@ -48,7 +48,10 @@ def configure_interface_route(interface_name):
                 ip_address=form.ip_address.data if form.ip_mode.data == 'static' else None,
                 subnet_mask=form.subnet_mask.data if form.ip_mode.data == 'static' else None,
                 gateway=form.gateway.data if form.ip_mode.data == 'static' else None,
-                dns_servers=form.dns_servers.data if form.ip_mode.data == 'static' else None
+                dns_servers=form.dns_servers.data,
+                pppoe_username=form.pppoe_username.data if form.ip_mode.data == 'pppoe' else None,
+                pppoe_password=form.pppoe_password.data if form.ip_mode.data == 'pppoe' else None,
+                pppoe_service_name=form.pppoe_service_name.data if form.ip_mode.data == 'pppoe' else None
             )
             
             if result:
@@ -189,7 +192,10 @@ def wizard():
                 ip_address=wizard_data.get('wan_ip') if wizard_data.get('wan_mode') == 'static' else None,
                 subnet_mask=wizard_data.get('wan_subnet') if wizard_data.get('wan_mode') == 'static' else None,
                 gateway=wizard_data.get('wan_gateway') if wizard_data.get('wan_mode') == 'static' else None,
-                dns_servers=wizard_data.get('wan_dns') if wizard_data.get('wan_mode') == 'static' else None
+                dns_servers=wizard_data.get('wan_dns'),
+                pppoe_username=wizard_data.get('wan_pppoe_username') if wizard_data.get('wan_mode') == 'pppoe' else None,
+                pppoe_password=wizard_data.get('wan_pppoe_password') if wizard_data.get('wan_mode') == 'pppoe' else None,
+                pppoe_service_name=wizard_data.get('wan_pppoe_service') if wizard_data.get('wan_mode') == 'pppoe' else None
             )
             
             # Configure LAN interface

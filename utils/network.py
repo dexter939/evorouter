@@ -112,29 +112,37 @@ def get_interfaces_status():
             }
         ]
 
-def configure_interface(interface_name, ip_mode, ip_address=None, subnet_mask=None, gateway=None, dns_servers=None):
+def configure_interface(interface_name, ip_mode, ip_address=None, subnet_mask=None, gateway=None, dns_servers=None, 
+                      pppoe_username=None, pppoe_password=None, pppoe_service_name=None):
     """
     Configure a network interface
     
     Args:
         interface_name: Name of the interface to configure
-        ip_mode: 'dhcp' or 'static'
+        ip_mode: 'dhcp', 'static' or 'pppoe'
         ip_address: Static IP address (required if ip_mode is 'static')
         subnet_mask: Subnet mask (required if ip_mode is 'static')
         gateway: Default gateway (optional for static)
-        dns_servers: DNS servers (optional for static)
+        dns_servers: DNS servers (optional for static and pppoe)
+        pppoe_username: PPPoE username (required if ip_mode is 'pppoe')
+        pppoe_password: PPPoE password (required if ip_mode is 'pppoe')
+        pppoe_service_name: PPPoE service name (optional)
         
     Returns:
         bool: True if successful, False otherwise
     """
     try:
         # Validate input
-        if ip_mode not in ['dhcp', 'static']:
+        if ip_mode not in ['dhcp', 'static', 'pppoe']:
             logger.error(f"Invalid IP mode: {ip_mode}")
             return False
             
         if ip_mode == 'static' and (not ip_address or not subnet_mask):
             logger.error("IP address and subnet mask are required for static configuration")
+            return False
+            
+        if ip_mode == 'pppoe' and (not pppoe_username or not pppoe_password):
+            logger.error("Username and password are required for PPPoE configuration")
             return False
         
         # Create network interface configuration file
@@ -145,7 +153,7 @@ def configure_interface(interface_name, ip_mode, ip_address=None, subnet_mask=No
             config_content = f"""auto {interface_name}
 iface {interface_name} inet dhcp
 """
-        else:  # static
+        elif ip_mode == 'static':
             # Convert subnet mask to CIDR notation
             subnet = ipaddress.IPv4Network(f'0.0.0.0/{subnet_mask}', False)
             cidr = subnet.prefixlen
@@ -156,13 +164,48 @@ iface {interface_name} inet static
 """
             if gateway:
                 config_content += f"    gateway {gateway}\n"
+        else:  # pppoe
+            # For PPPoE, first configure the Ethernet interface
+            config_content = f"""auto {interface_name}
+iface {interface_name} inet manual
+    pre-up ip link set dev {interface_name} up
+    post-down ip link set dev {interface_name} down
+
+# PPPoE connection
+auto ppp0
+iface ppp0 inet ppp
+    provider {interface_name}_provider
+"""
+            
+            # Create provider file for PPPoE
+            provider_file = os.path.join('/etc/ppp/peers', f'{interface_name}_provider')
+            provider_content = f"""# PPPoE provider configuration for {interface_name}
+plugin rp-pppoe.so
+{interface_name}
+user "{pppoe_username}"
+password "{pppoe_password}"
+"""
+            if pppoe_service_name:
+                provider_content += f'servicename "{pppoe_service_name}"\n'
+                
+            provider_content += """noipdefault
+defaultroute
+replacedefaultroute
+hide-password
+noauth
+persist
+maxfail 0
+"""
+            
+            # In Replit environment, just log the provider file that would be created
+            logger.info(f"Would create PPPoE provider file at {provider_file} with configuration:\n{provider_content}")
         
         # Write configuration to file
         with open(config_file, 'w') as f:
             f.write(config_content)
         
         # If DNS servers are provided, update resolv.conf
-        if dns_servers and ip_mode == 'static':
+        if dns_servers:
             set_dns_settings(dns_servers.split(',')[0] if ',' in dns_servers else dns_servers, 
                             dns_servers.split(',')[1] if ',' in dns_servers else None)
         

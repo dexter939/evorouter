@@ -184,6 +184,14 @@
                                         IP Statico (imposta manualmente l'indirizzo IP)
                                     </label>
                                 </div>
+                                {% if interface.type == 'wan' %}
+                                <div class="form-check">
+                                    {{ form.ip_mode(class="form-check-input", id="ipModePppoe", value="pppoe") }}
+                                    <label class="form-check-label" for="ipModePppoe">
+                                        PPPoE (connessione ADSL/Fibra)
+                                    </label>
+                                </div>
+                                {% endif %}
                             </div>
                             
                             <div id="staticIPFields" class="d-none">
@@ -236,6 +244,57 @@
                                 </div>
                                 {% endif %}
                             </div>
+                            
+                            {% if interface.type == 'wan' %}
+                            <div id="pppoeFields" class="d-none">
+                                <div class="mb-3">
+                                    <label for="pppoe_username" class="form-label">Username PPPoE</label>
+                                    {{ form.pppoe_username(class="form-control") }}
+                                    {% if form.pppoe_username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.pppoe_username.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pppoe_password" class="form-label">Password PPPoE</label>
+                                    {{ form.pppoe_password(class="form-control", type="password") }}
+                                    {% if form.pppoe_password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.pppoe_password.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pppoe_service_name" class="form-label">Nome Servizio PPPoE (opzionale)</label>
+                                    {{ form.pppoe_service_name(class="form-control") }}
+                                    {% if form.pppoe_service_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.pppoe_service_name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Lasciare vuoto se non specificato dal provider</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dns_servers" class="form-label">Server DNS (separati da virgola, opzionali)</label>
+                                    {{ form.dns_servers(class="form-control") }}
+                                    {% if form.dns_servers.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.dns_servers.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Esempio: 8.8.8.8, 8.8.4.4</div>
+                                </div>
+                            </div>
+                            {% endif %}
                             
                             <div class="alert alert-info">
                                 <i data-feather="info" class="me-2"></i>

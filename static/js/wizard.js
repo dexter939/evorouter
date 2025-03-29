@@ -173,22 +173,45 @@ function toggleWanFields() {
   if (!selectedMode) return;
   
   const wanStaticFields = document.getElementById('wanStaticFields');
+  const wanPppoeFields = document.getElementById('wanPppoeFields');
+  
+  // Hide all fields first
   if (wanStaticFields) {
-    if (selectedMode.value === 'static') {
-      wanStaticFields.classList.remove('d-none');
-      // Make fields required
-      const inputs = wanStaticFields.querySelectorAll('input');
-      inputs.forEach(input => {
+    wanStaticFields.classList.add('d-none');
+    // Remove required attribute
+    const staticInputs = wanStaticFields.querySelectorAll('input');
+    staticInputs.forEach(input => {
+      input.required = false;
+    });
+  }
+  
+  if (wanPppoeFields) {
+    wanPppoeFields.classList.add('d-none');
+    // Remove required attribute
+    const pppoeInputs = wanPppoeFields.querySelectorAll('input');
+    pppoeInputs.forEach(input => {
+      input.required = false;
+    });
+  }
+  
+  // Show fields based on selected mode
+  if (selectedMode.value === 'static' && wanStaticFields) {
+    wanStaticFields.classList.remove('d-none');
+    // Make fields required
+    const inputs = wanStaticFields.querySelectorAll('input');
+    inputs.forEach(input => {
+      // Don't make DNS servers required
+      if (input.id !== 'wan_dns') {
         input.required = true;
-      });
-    } else {
-      wanStaticFields.classList.add('d-none');
-      // Remove required attribute
-      const inputs = wanStaticFields.querySelectorAll('input');
-      inputs.forEach(input => {
-        input.required = false;
-      });
-    }
+      }
+    });
+  } else if (selectedMode.value === 'pppoe' && wanPppoeFields) {
+    wanPppoeFields.classList.remove('d-none');
+    // Make username and password required, but not service name or DNS
+    const usernameInput = wanPppoeFields.querySelector('#wan_pppoe_username');
+    const passwordInput = wanPppoeFields.querySelector('#wan_pppoe_password');
+    if (usernameInput) usernameInput.required = true;
+    if (passwordInput) passwordInput.required = true;
   }
 }
 

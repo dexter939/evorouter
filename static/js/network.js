@@ -52,29 +52,52 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Toggle static IP configuration fields visibility based on IP mode
+ * Toggle IP configuration fields visibility based on IP mode
  */
 function toggleStaticIPFields() {
   const selectedMode = document.querySelector('input[name="ip_mode"]:checked');
   if (!selectedMode) return;
   
   const staticFields = document.getElementById('staticIPFields');
+  const pppoeFields = document.getElementById('pppoeFields');
+  
+  // Hide all fields first
   if (staticFields) {
-    if (selectedMode.value === 'static') {
-      staticFields.classList.remove('d-none');
-      // Make fields required
-      const inputs = staticFields.querySelectorAll('input');
-      inputs.forEach(input => {
+    staticFields.classList.add('d-none');
+    // Remove required attribute
+    const inputs = staticFields.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.required = false;
+    });
+  }
+  
+  if (pppoeFields) {
+    pppoeFields.classList.add('d-none');
+    // Remove required attribute
+    const inputs = pppoeFields.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.required = false;
+    });
+  }
+  
+  // Show fields based on selected mode
+  if (selectedMode.value === 'static' && staticFields) {
+    staticFields.classList.remove('d-none');
+    // Make fields required
+    const inputs = staticFields.querySelectorAll('input');
+    inputs.forEach(input => {
+      // Don't make DNS servers required
+      if (input.id !== 'dns_servers') {
         input.required = true;
-      });
-    } else {
-      staticFields.classList.add('d-none');
-      // Remove required attribute
-      const inputs = staticFields.querySelectorAll('input');
-      inputs.forEach(input => {
-        input.required = false;
-      });
-    }
+      }
+    });
+  } else if (selectedMode.value === 'pppoe' && pppoeFields) {
+    pppoeFields.classList.remove('d-none');
+    // Make username and password required
+    const usernameInput = pppoeFields.querySelector('#pppoe_username');
+    const passwordInput = pppoeFields.querySelector('#pppoe_password');
+    if (usernameInput) usernameInput.required = true;
+    if (passwordInput) passwordInput.required = true;
   }
 }
 

@@ -110,6 +110,12 @@
                                 IP Statico (imposta manualmente l'indirizzo IP)
                             </label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="wan_mode" id="wanModePppoe" value="pppoe">
+                            <label class="form-check-label" for="wanModePppoe">
+                                PPPoE (connessione ADSL/Fibra)
+                            </label>
+                        </div>
                     </div>
                     
                     <div id="wanStaticFields" class="d-none">
@@ -127,6 +133,26 @@
                         </div>
                         <div class="mb-3">
                             <label for="wan_dns" class="form-label">Server DNS (separati da virgola)</label>
+                            <input type="text" class="form-control" id="wan_dns" name="wan_dns" placeholder="8.8.8.8, 8.8.4.4">
+                        </div>
+                    </div>
+                    
+                    <div id="wanPppoeFields" class="d-none">
+                        <div class="mb-3">
+                            <label for="wan_pppoe_username" class="form-label">Username PPPoE</label>
+                            <input type="text" class="form-control" id="wan_pppoe_username" name="wan_pppoe_username" placeholder="username@provider.it">
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_pppoe_password" class="form-label">Password PPPoE</label>
+                            <input type="password" class="form-control" id="wan_pppoe_password" name="wan_pppoe_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_pppoe_service" class="form-label">Nome Servizio PPPoE (opzionale)</label>
+                            <input type="text" class="form-control" id="wan_pppoe_service" name="wan_pppoe_service">
+                            <div class="form-text">Lasciare vuoto se non specificato dal provider</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_dns" class="form-label">Server DNS (separati da virgola, opzionali)</label>
                             <input type="text" class="form-control" id="wan_dns" name="wan_dns" placeholder="8.8.8.8, 8.8.4.4">
                         </div>
                     </div>
@@ -229,6 +255,11 @@
                                         <p><strong>Gateway:</strong> <span id="summaryWanGateway"></span></p>
                                         <p><strong>DNS:</strong> <span id="summaryWanDns"></span></p>
                                     </div>
+                                    <div id="summaryWanPppoe" class="d-none">
+                                        <p><strong>Username PPPoE:</strong> <span id="summaryWanPppoeUsername"></span></p>
+                                        <p><strong>Password PPPoE:</strong> <span id="summaryWanPppoePassword">********</span></p>
+                                        <p><strong>Servizio PPPoE:</strong> <span id="summaryWanPppoeService"></span></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -291,6 +322,11 @@
         document.getElementById('wan_gateway').addEventListener('input', updateSummary);
         document.getElementById('wan_dns').addEventListener('input', updateSummary);
         
+        // Add PPPoE field listeners
+        document.getElementById('wan_pppoe_username').addEventListener('input', updateSummary);
+        document.getElementById('wan_pppoe_password').addEventListener('input', updateSummary);
+        document.getElementById('wan_pppoe_service').addEventListener('input', updateSummary);
+        
         document.getElementById('lan_ip').addEventListener('input', updateSummary);
         document.getElementById('lan_subnet').addEventListener('input', updateSummary);
         
@@ -306,7 +342,15 @@
     function updateSummary() {
         // Update WAN summary
         const wanMode = document.querySelector('input[name="wan_mode"]:checked').value;
-        document.getElementById('summaryWanMode').textContent = wanMode === 'dhcp' ? 'DHCP (automatico)' : 'IP Statico';
+        
+        // Set the appropriate text based on mode
+        let modeText = 'DHCP (automatico)';
+        if (wanMode === 'static') {
+            modeText = 'IP Statico';
+        } else if (wanMode === 'pppoe') {
+            modeText = 'PPPoE (ADSL/Fibra)';
+        }
+        document.getElementById('summaryWanMode').textContent = modeText;
         
         const summaryWanStatic = document.getElementById('summaryWanStatic');
         if (wanMode === 'static') {
@@ -315,8 +359,25 @@
             document.getElementById('summaryWanSubnet').textContent = document.getElementById('wan_subnet').value || '-';
             document.getElementById('summaryWanGateway').textContent = document.getElementById('wan_gateway').value || '-';
             document.getElementById('summaryWanDns').textContent = document.getElementById('wan_dns').value || '-';
+        } else if (wanMode === 'pppoe') {
+            summaryWanStatic.classList.remove('d-none');
+            document.getElementById('summaryWanIp').textContent = 'Dinamico (PPPoE)';
+            document.getElementById('summaryWanSubnet').textContent = 'Automatico';
+            document.getElementById('summaryWanGateway').textContent = 'Automatico';
+            document.getElementById('summaryWanDns').textContent = document.getElementById('wan_dns').value || 'Automatico';
+            
+            // Show PPPoE details
+            const summaryWanPppoe = document.getElementById('summaryWanPppoe');
+            summaryWanPppoe.classList.remove('d-none');
+            document.getElementById('summaryWanPppoeUsername').textContent = document.getElementById('wan_pppoe_username').value || '-';
+            document.getElementById('summaryWanPppoeService').textContent = document.getElementById('wan_pppoe_service').value || '(nessuno)';
         } else {
             summaryWanStatic.classList.add('d-none');
+            // Hide PPPoE details too
+            const summaryWanPppoe = document.getElementById('summaryWanPppoe');
+            if (summaryWanPppoe) {
+                summaryWanPppoe.classList.add('d-none');
+            }
         }
         
         // Update LAN summary

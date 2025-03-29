@@ -7,7 +7,8 @@ class NetworkInterfaceForm(FlaskForm):
     """Form for configuring network interfaces"""
     ip_mode = SelectField('Modalità IP', choices=[
         ('dhcp', 'DHCP (automatico)'),
-        ('static', 'IP Statico')
+        ('static', 'IP Statico'),
+        ('pppoe', 'PPPoE (ADSL/Fibra)')
     ], validators=[DataRequired()])
     
     ip_address = StringField('Indirizzo IP', validators=[
@@ -24,6 +25,11 @@ class NetworkInterfaceForm(FlaskForm):
     
     dns_servers = StringField('Server DNS', validators=[Optional()])
     
+    # Campi per la configurazione PPPoE
+    pppoe_username = StringField('Username PPPoE', validators=[Optional()])
+    pppoe_password = StringField('Password PPPoE', validators=[Optional()])
+    pppoe_service_name = StringField('Nome Servizio (opzionale)', validators=[Optional()])
+    
     submit = SubmitField('Salva Configurazione')
     
     def validate_subnet_mask(self, field):
@@ -34,6 +40,16 @@ class NetworkInterfaceForm(FlaskForm):
                 ipaddress.IPv4Network(f'0.0.0.0/{field.data}', False)
             except ValueError:
                 raise ValidationError('Subnet mask non valida')
+                
+    def validate_pppoe_username(self, field):
+        """Validate PPPoE username is provided when PPPoE is selected"""
+        if self.ip_mode.data == 'pppoe' and not field.data:
+            raise ValidationError('L\'username è obbligatorio per la connessione PPPoE')
+            
+    def validate_pppoe_password(self, field):
+        """Validate PPPoE password is provided when PPPoE is selected"""
+        if self.ip_mode.data == 'pppoe' and not field.data:
+            raise ValidationError('La password è obbligatoria per la connessione PPPoE')
 
 class DhcpServerForm(FlaskForm):
     """Form for configuring DHCP server"""
