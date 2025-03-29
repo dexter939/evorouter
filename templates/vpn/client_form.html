@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>{% if mode == 'create' %}Nuovo Client VPN{% else %}Modifica Client VPN{% endif %}</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('vpn.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="chevron-left"></i> Torna alla VPN
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% if mode == 'create' %}Crea Nuovo Client VPN{% else %}Modifica Client: {{ client.name }}{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-floating mb-3">
+                            {{ form.name(class="form-control", placeholder="Nome Client") }}
+                            {{ form.name.label }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            {{ form.description(class="form-control", placeholder="Descrizione", style="height: 100px") }}
+                            {{ form.description.label }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            {{ form.ip_address(class="form-control", placeholder="Indirizzo IP") }}
+                            {{ form.ip_address.label }}
+                            <div class="form-text">Se lasciato vuoto, un indirizzo IP verrà assegnato automaticamente.</div>
+                            {% if form.ip_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.ip_address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-check form-switch mb-4">
+                            {{ form.enabled(class="form-check-input") }}
+                            {{ form.enabled.label(class="form-check-label") }}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('vpn.index') }}" class="btn btn-outline-secondary">Annulla</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if mode == 'edit' and client.config_file_path %}
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">File di Configurazione</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Scarica il file di configurazione aggiornato per questo client VPN:</p>
+                        <div class="d-grid">
+                            <a href="{{ url_for('vpn.download_client', client_id=client.id) }}" class="btn btn-success">
+                                <i data-feather="download"></i> Scarica Configurazione
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

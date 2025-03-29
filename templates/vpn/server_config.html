@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Configurazione Server VPN</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('vpn.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="chevron-left"></i> Torna alla VPN
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% if server %}Modifica Server VPN{% else %}Configura Nuovo Server VPN{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="server-config-form">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.enabled(class="form-check-input") }}
+                                {{ form.enabled.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">Impostazioni Base</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.vpn_type(class="form-control") }}
+                                    {{ form.vpn_type.label }}
+                                </div>
+                                <div class="form-text">Il tipo di server VPN da configurare.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.port(class="form-control") }}
+                                    {{ form.port.label }}
+                                </div>
+                                <div class="form-text">La porta su cui il server VPN sarà in ascolto.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.protocol(class="form-control") }}
+                                    {{ form.protocol.label }}
+                                </div>
+                                <div class="form-text">Il protocollo da utilizzare.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.subnet(class="form-control") }}
+                                    {{ form.subnet.label }}
+                                </div>
+                                <div class="form-text">La rete interna VPN (es. 10.8.0.0/24).</div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">Impostazioni Avanzate</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.dns_servers(class="form-control") }}
+                                    {{ form.dns_servers.label }}
+                                </div>
+                                <div class="form-text">Server DNS da fornire ai client (es. 8.8.8.8,8.8.4.4).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.cipher(class="form-control") }}
+                                    {{ form.cipher.label }}
+                                </div>
+                                <div class="form-text">L'algoritmo di cifratura da utilizzare.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.auth_method(class="form-control") }}
+                                    {{ form.auth_method.label }}
+                                </div>
+                                <div class="form-text">Il metodo di autenticazione per i client.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div>
+                                    <i data-feather="info" class="me-2"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0"><strong>Nota:</strong> Per permettere connessioni remote alla VPN, assicurati che:</p>
+                                    <ol class="mb-0">
+                                        <li>La porta selezionata sia aperta nel firewall del router</li>
+                                        <li>La porta sia inoltrata (port forwarding) a questo dispositivo</li>
+                                        <li>Il tuo router abbia un indirizzo IP pubblico o un servizio DDNS configurato</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('vpn.index') }}" class="btn btn-outline-secondary">Annulla</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

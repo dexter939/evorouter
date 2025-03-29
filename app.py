@@ -53,17 +53,19 @@ login_manager.login_message = "Effettua l'accesso per visualizzare questa pagina
 # Import and register blueprints
 from routes.dashboard import dashboard_bp
 from routes.network import network_bp
-from routes.freeswitch import freeswitch_bp
 from routes.system import system_bp
 from routes.auth import auth_bp
 from routes.api import api_bp
+from routes.freeswitch import freeswitch_bp
+from routes.vpn import vpn
 
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(network_bp, url_prefix='/network')
-app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
 app.register_blueprint(system_bp, url_prefix='/system')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
+app.register_blueprint(vpn, url_prefix='/vpn')
 
 # Import user loader
 from models import User

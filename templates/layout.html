@@ -115,9 +115,9 @@
                                             </a>
                                         </div>
                                         <div class="col-4 text-center">
-                                            <a href="{{ url_for('network.wizard') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
-                                                <i data-feather="zap" class="text-primary"></i>
-                                                <small class="d-block mt-1 text-dark">Wizard</small>
+                                            <a href="{{ url_for('vpn.wizard') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="shield" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">VPN</small>
                                             </a>
                                         </div>
                                         <div class="col-4 text-center">
@@ -204,6 +204,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'freeswitch' %}active{% endif %}" href="{{ url_for('freeswitch.index') }}">
                                 <i data-feather="phone"></i> FreeSWITCH
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'vpn' %}active{% endif %}" href="{{ url_for('vpn.index') }}">
+                                <i data-feather="shield"></i> VPN
                             </a>
                         </li>
                         <li class="nav-item">

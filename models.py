@@ -281,3 +281,44 @@ class VoicemailMessage(db.Model):
     
     def __repr__(self):
         return f'<VoicemailMessage {self.id} for {self.extension_id}>'
+
+
+class VpnServer(db.Model):
+    """VPN Server Configuration"""
+    id = db.Column(db.Integer, primary_key=True)
+    enabled = db.Column(db.Boolean, default=False)
+    vpn_type = db.Column(db.String(16), default='openvpn')  # openvpn, wireguard
+    protocol = db.Column(db.String(8), default='udp')  # udp, tcp
+    port = db.Column(db.Integer, default=1194)
+    subnet = db.Column(db.String(18), default='10.8.0.0/24')
+    dns_servers = db.Column(db.String(128))
+    server_certificates_path = db.Column(db.String(255))
+    cipher = db.Column(db.String(32), default='AES-256-GCM')
+    auth_method = db.Column(db.String(16), default='certificate')  # certificate, password, both
+    status = db.Column(db.String(16), default='stopped')  # running, stopped, error
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relazione con i client VPN
+    clients = db.relationship('VpnClient', backref='server', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<VpnServer {self.vpn_type}:{self.port}>'
+
+
+class VpnClient(db.Model):
+    """VPN Client Configuration"""
+    id = db.Column(db.Integer, primary_key=True)
+    server_id = db.Column(db.Integer, db.ForeignKey('vpn_server.id'), nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(255))
+    client_id = db.Column(db.String(64), unique=True)
+    ip_address = db.Column(db.String(15))  # Static IP if assigned
+    certificates_path = db.Column(db.String(255))
+    config_file_path = db.Column(db.String(255))
+    enabled = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_connected = db.Column(db.DateTime)
+    
+    def __repr__(self):
+        return f'<VpnClient {self.name}>'

@@ -1,0 +1,326 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Server VPN</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                {% if not server %}
+                <a href="{{ url_for('vpn.wizard') }}" class="btn btn-primary">
+                    <i data-feather="zap"></i> Wizard
+                </a>
+                <a href="{{ url_for('vpn.server_config') }}" class="btn btn-outline-secondary">
+                    <i data-feather="settings"></i> Configurazione Manuale
+                </a>
+                {% else %}
+                <a href="{{ url_for('vpn.server_config') }}" class="btn btn-outline-secondary">
+                    <i data-feather="edit"></i> Modifica Server
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if not server %}
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <span class="display-6">
+                            <i data-feather="shield-off" style="width: 48px; height: 48px;" class="text-muted"></i>
+                        </span>
+                    </div>
+                    <h4 class="mb-3">Nessun Server VPN Configurato</h4>
+                    <p class="text-muted mb-4">
+                        Non hai ancora configurato un server VPN. Utilizza il wizard per configurare rapidamente un server VPN oppure scegli la configurazione manuale per un maggiore controllo.
+                    </p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('vpn.wizard') }}" class="btn btn-primary">
+                            <i data-feather="zap"></i> Avvia Wizard
+                        </a>
+                        <a href="{{ url_for('vpn.server_config') }}" class="btn btn-outline-secondary">
+                            <i data-feather="settings"></i> Configurazione Manuale
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i data-feather="server" class="me-2"></i>
+                        Stato Server VPN
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h5 class="mb-1">{{ server.vpn_type|upper }}</h5>
+                            <p class="text-muted mb-0">
+                                {{ server.protocol|upper }} | Porta {{ server.port }}
+                            </p>
+                        </div>
+                        <div>
+                            {% if server.status == 'running' %}
+                            <span class="badge bg-success p-2">
+                                <i data-feather="check-circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                                Attivo
+                            </span>
+                            {% elif server.status == 'stopped' %}
+                            <span class="badge bg-secondary p-2">
+                                <i data-feather="circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                                Disattivato
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger p-2">
+                                <i data-feather="alert-circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                                Errore
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Subnet VPN:</label>
+                                <div>{{ server.subnet }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Server DNS:</label>
+                                <div>{{ server.dns_servers or 'Predefiniti' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Cifratura:</label>
+                                <div>{{ server.cipher }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Autenticazione:</label>
+                                <div>{{ server.auth_method }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {% if server.status == 'running' %}
+                        <a href="{{ url_for('vpn.toggle_server', action='stop') }}" class="btn btn-danger">
+                            <i data-feather="stop-circle"></i> Ferma Server
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('vpn.toggle_server', action='start') }}" class="btn btn-success">
+                            <i data-feather="play-circle"></i> Avvia Server
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i data-feather="info" class="me-2"></i>
+                        Informazioni Connessione
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div>
+                                <i data-feather="info" class="me-2"></i>
+                            </div>
+                            <div>
+                                Per permettere connessioni remote alla tua VPN da internet, assicurati di:
+                                <ol class="mb-0 mt-2">
+                                    <li>Avere un indirizzo IP pubblico o un servizio DDNS configurato</li>
+                                    <li>Avere la porta {{ server.port }} aperta nel firewall</li>
+                                    <li>Avere configurato il forwarding della porta {{ server.port }} verso questo dispositivo</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Dettagli Connessione</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Indirizzo Pubblico:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ public_ip or '...' }}" id="public-ip" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" title="Copia" onclick="copyToClipboard('public-ip')">
+                                        <i data-feather="copy" style="width: 16px; height: 16px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Porta:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ server.port }}" id="server-port" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" title="Copia" onclick="copyToClipboard('server-port')">
+                                        <i data-feather="copy" style="width: 16px; height: 16px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <h5 class="mb-0">
+                        <i data-feather="users" class="me-2"></i>
+                        Client VPN
+                    </h5>
+                    <a href="{{ url_for('vpn.add_client') }}" class="btn btn-sm btn-primary">
+                        <i data-feather="plus"></i> Nuovo Client
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if clients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>IP</th>
+                                    <th>Stato</th>
+                                    <th>Ultima Conn.</th>
+                                    <th class="text-end">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients %}
+                                <tr>
+                                    <td>
+                                        <div>{{ client.name }}</div>
+                                        <small class="text-muted">{{ client.description|truncate(30) if client.description else '-' }}</small>
+                                    </td>
+                                    <td>{{ client.ip_address or 'Auto' }}</td>
+                                    <td>
+                                        {% if client.enabled %}
+                                        <span class="badge bg-success">Attivo</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Disabilitato</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if client.last_connected %}
+                                        <small>{{ client.last_connected.strftime('%d/%m/%Y %H:%M') }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Mai</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('vpn.download_client', client_id=client.id) }}" class="btn btn-outline-success" title="Scarica Config">
+                                                <i data-feather="download" style="width: 16px; height: 16px;"></i>
+                                            </a>
+                                            <a href="{{ url_for('vpn.edit_client', client_id=client.id) }}" class="btn btn-outline-primary" title="Modifica">
+                                                <i data-feather="edit" style="width: 16px; height: 16px;"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                title="Elimina" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deleteClientModal"
+                                                data-client-id="{{ client.id }}"
+                                                data-client-name="{{ client.name }}">
+                                                <i data-feather="trash-2" style="width: 16px; height: 16px;"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <div class="mb-3">
+                            <i data-feather="users" style="width: 36px; height: 36px;" class="text-muted"></i>
+                        </div>
+                        <h5>Nessun Client VPN</h5>
+                        <p class="text-muted">Non hai ancora creato alcun client VPN. Clicca sul pulsante "Nuovo Client" per iniziare.</p>
+                        <a href="{{ url_for('vpn.add_client') }}" class="btn btn-primary">
+                            <i data-feather="plus"></i> Crea Primo Client
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminazione Client -->
+    <div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteClientModalLabel">Conferma Eliminazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Sei sicuro di voler eliminare il client VPN <strong id="clientNameToDelete"></strong>?</p>
+                    <p class="text-danger">Questa azione non può essere annullata.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <form id="deleteClientForm" method="post" action="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">Elimina</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup modal per eliminazione client
+        const deleteClientModal = document.getElementById('deleteClientModal');
+        if (deleteClientModal) {
+            deleteClientModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const clientId = button.getAttribute('data-client-id');
+                const clientName = button.getAttribute('data-client-name');
+                
+                document.getElementById('clientNameToDelete').textContent = clientName;
+                document.getElementById('deleteClientForm').action = "{{ url_for('vpn.delete_client', client_id=0) }}".replace('0', clientId);
+            });
+        }
+    });
+    
+    // Funzione per copiare negli appunti
+    function copyToClipboard(elementId) {
+        const copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            // Feedback visivo
+            const button = copyText.nextElementSibling;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i data-feather="check" style="width: 16px; height: 16px;"></i>';
+            feather.replace();
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                feather.replace();
+            }, 1500);
+        });
+    }
+</script>
+{% endblock %}
