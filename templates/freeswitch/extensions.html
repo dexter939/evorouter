@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Estensioni - FreeSWITCH - Banana Pi BPI-R4 Router OS{% endblock %}
+{% block title %}Estensioni - Centralino - Banana Pi BPI-R4 Router OS{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -9,7 +9,7 @@
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i data-feather="arrow-left"></i> Torna a FreeSWITCH
+                    <i data-feather="arrow-left"></i> Torna al Centralino
                 </a>
             </div>
             {% if not form or action != 'add' %}
@@ -248,5 +248,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/freeswitch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pbx.js') }}"></script>
 {% endblock %}

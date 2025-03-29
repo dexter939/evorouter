@@ -41,7 +41,7 @@ class NetworkConfig(db.Model):
     def __repr__(self):
         return f'<NetworkConfig {self.interface_name}>'
 
-class FreeswitchConfig(db.Model):
+class PbxConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     enabled = db.Column(db.Boolean, default=False)
     sip_port = db.Column(db.Integer, default=5060)
@@ -50,7 +50,7 @@ class FreeswitchConfig(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
-        return f'<FreeswitchConfig {self.id}>'
+        return f'<PbxConfig {self.id}>'
 
 class SipExtension(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -103,7 +103,7 @@ class SipTrunk(db.Model):
 
 class SystemLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    log_type = db.Column(db.String(16), nullable=False)  # system, network, freeswitch, security
+    log_type = db.Column(db.String(16), nullable=False)  # system, network, pbx, security
     level = db.Column(db.String(8), nullable=False)  # info, warning, error, debug
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)

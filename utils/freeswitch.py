@@ -11,7 +11,7 @@ from config import (
     FREESWITCH_LOG_PATH, FREESWITCH_DEFAULT_PORT
 )
 from app import db
-from models import FreeswitchConfig, SipExtension, SipTrunk
+from models import PbxConfig, SipExtension, SipTrunk
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -35,15 +35,15 @@ def get_freeswitch_status():
     }
     
     try:
-        # In Replit environment, we check if FreeSWITCH is "enabled" in the database
+        # In Replit environment, we check if the PBX is "enabled" in the database
         # instead of checking if it's running as a process
-        fs_config = FreeswitchConfig.query.first()
+        fs_config = PbxConfig.query.first()
         
         # Check if we have a config and if it's enabled
         if fs_config and fs_config.enabled:
             status['running'] = True
             
-            # Simulate FreeSWITCH ports (SIP and RTP)
+            # Simulate PBX ports (SIP and RTP)
             status['ports'][fs_config.sip_port] = {
                 'ip': '0.0.0.0',
                 'protocol': 'udp'
@@ -67,7 +67,7 @@ def get_freeswitch_status():
             status['active_calls'] = random.randint(0, min(2, extensions_count))
         
         # Get configuration
-        fs_config = FreeswitchConfig.query.first()
+        fs_config = PbxConfig.query.first()
         if fs_config:
             status['config'] = {
                 'enabled': fs_config.enabled,
@@ -77,7 +77,7 @@ def get_freeswitch_status():
             }
         else:
             # Create default config
-            fs_config = FreeswitchConfig(
+            fs_config = PbxConfig(
                 enabled=True,
                 sip_port=FREESWITCH_DEFAULT_PORT,
                 rtp_port_start=16384,
@@ -114,11 +114,11 @@ def restart_freeswitch():
         # instead of using systemctl which is not available
         logger.info("Simulating FreeSWITCH restart in Replit environment")
         
-        # Get FreeSWITCH configuration
-        fs_config = FreeswitchConfig.query.first()
+        # Get PBX configuration
+        fs_config = PbxConfig.query.first()
         if not fs_config:
             # Create default configuration if it doesn't exist
-            fs_config = FreeswitchConfig(
+            fs_config = PbxConfig(
                 enabled=True,
                 sip_port=FREESWITCH_DEFAULT_PORT,
                 rtp_port_start=16384,
@@ -127,7 +127,7 @@ def restart_freeswitch():
             db.session.add(fs_config)
             db.session.commit()
             
-        # Set FreeSWITCH as enabled
+        # Set PBX as enabled
         fs_config.enabled = True
         db.session.commit()
         
@@ -439,16 +439,16 @@ def delete_trunk(trunk_id):
 
 def update_freeswitch_config():
     """
-    Update FreeSWITCH configuration files based on database settings
+    Update PBX configuration files based on database settings
     
     Returns:
         bool: True if successful, False otherwise
     """
     try:
-        # Get FreeSWITCH config
-        fs_config = FreeswitchConfig.query.first()
+        # Get PBX config
+        fs_config = PbxConfig.query.first()
         if not fs_config:
-            logger.error("FreeSWITCH config not found in database")
+            logger.error("PBX config not found in database")
             return False
         
         # Get extensions and trunks
@@ -456,10 +456,10 @@ def update_freeswitch_config():
         trunks = SipTrunk.query.all()
         
         # Update configuration files
-        # In a real implementation, this would modify the actual FreeSWITCH
-        # configuration files. For this example, we'll just log the changes.
+        # In a real implementation, this would modify the actual configuration
+        # files. For this example, we'll just log the changes.
         
-        logger.info("Updating FreeSWITCH configuration:")
+        logger.info("Updating PBX configuration:")
         logger.info(f"SIP port: {fs_config.sip_port}")
         logger.info(f"RTP port range: {fs_config.rtp_port_start}-{fs_config.rtp_port_end}")
         logger.info(f"Extensions: {len(extensions)}")
@@ -472,10 +472,10 @@ def update_freeswitch_config():
         # - dialplan/default.xml (for basic call routing)
         # - dialplan/public.xml (for inbound calls from trunks)
         
-        # Then restart FreeSWITCH to apply changes
+        # Then restart the service to apply changes
         #restart_freeswitch()
         
         return True
     except Exception as e:
-        logger.error(f"Error updating FreeSWITCH configuration: {str(e)}")
+        logger.error(f"Error updating PBX configuration: {str(e)}")
         return False

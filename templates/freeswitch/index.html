@@ -1,18 +1,18 @@
 {% extends "layout.html" %}
 
-{% block title %}FreeSWITCH - Banana Pi BPI-R4 Router OS{% endblock %}
+{% block title %}Centralino Telefonico - Banana Pi BPI-R4 Router OS{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-        <h2>Gestione FreeSWITCH</h2>
+        <h2>Gestione Centralino</h2>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <a href="{{ url_for('freeswitch.wizard') }}" class="btn btn-sm btn-secondary me-2">
                     <i data-feather="settings"></i> Wizard Configurazione
                 </a>
                 <button type="button" id="restartFreeswitch" class="btn btn-sm btn-primary">
-                    <i data-feather="refresh-cw"></i> Avvia/Riavvia FreeSWITCH
+                    <i data-feather="refresh-cw"></i> Avvia/Riavvia Centralino
                 </button>
             </div>
         </div>
@@ -28,12 +28,12 @@
             <div class="col-lg-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5 class="mb-0">Stato FreeSWITCH</h5>
+                        <h5 class="mb-0">Stato Centralino</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <span class="status-indicator {% if fs_status.running %}status-up{% else %}status-down{% endif %} me-2"></span>
-                            <span class="fw-semibold">FreeSWITCH è {% if fs_status.running %}attivo{% else %}disattivo{% endif %}</span>
+                            <span class="fw-semibold">Il centralino è {% if fs_status.running %}attivo{% else %}disattivo{% endif %}</span>
                         </div>
                         
                         {% if fs_status.running %}
@@ -55,11 +55,11 @@
                         {% else %}
                             <div class="alert alert-warning">
                                 <i data-feather="alert-triangle" class="me-2"></i>
-                                FreeSWITCH non è in esecuzione. Clicca sul pulsante <strong>"Avvia/Riavvia FreeSWITCH"</strong> nella parte superiore della pagina per avviare il servizio.
+                                Il centralino non è in esecuzione. Clicca sul pulsante <strong>"Avvia/Riavvia Centralino"</strong> nella parte superiore della pagina per avviare il servizio.
                             </div>
                             <div class="mt-4 text-center">
                                 <button type="button" id="startFreeswitchBtn" class="btn btn-primary btn-lg">
-                                    <i data-feather="play"></i> Avvia FreeSWITCH
+                                    <i data-feather="play"></i> Avvia Centralino
                                 </button>
                             </div>
                         {% endif %}
@@ -193,7 +193,7 @@
                                         {% endif %}
                                     {% else %}
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted">FreeSWITCH non è in esecuzione</td>
+                                            <td colspan="5" class="text-center text-muted">Il centralino non è in esecuzione</td>
                                         </tr>
                                     {% endif %}
                                 </tbody>
@@ -213,11 +213,11 @@
                     </div>
                     <div class="card-body">
                         <h6>Configurazione di Base</h6>
-                        <p>Segui questi passaggi per configurare il tuo centralino FreeSWITCH:</p>
+                        <p>Segui questi passaggi per configurare il tuo centralino telefonico:</p>
                         <ol>
                             <li>Crea estensioni per ogni telefono o utente</li>
                             <li>Configura i trunk SIP per connetterti al tuo provider VoIP</li>
-                            <li>Verifica che il servizio FreeSWITCH sia attivo</li>
+                            <li>Verifica che il servizio di centralino sia attivo</li>
                             <li>Configura i tuoi telefoni VoIP per registrarsi al centralino</li>
                         </ol>
                         
@@ -276,5 +276,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/freeswitch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pbx.js') }}"></script>
 {% endblock %}

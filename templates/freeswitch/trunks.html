@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Trunk SIP - FreeSWITCH - Banana Pi BPI-R4 Router OS{% endblock %}
+{% block title %}Trunk SIP - Centralino - Banana Pi BPI-R4 Router OS{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -9,7 +9,7 @@
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i data-feather="arrow-left"></i> Torna a FreeSWITCH
+                    <i data-feather="arrow-left"></i> Torna al Centralino
                 </a>
             </div>
             {% if not form or action != 'add' %}
@@ -226,7 +226,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>Cosa sono i Trunk SIP?</h6>
-                                <p>I Trunk SIP sono connessioni che permettono al tuo centralino FreeSWITCH di comunicare con la rete telefonica esterna tramite un provider VoIP. Ti consentono di effettuare e ricevere chiamate verso numeri di telefono tradizionali usando la tua connessione internet.</p>
+                                <p>I Trunk SIP sono connessioni che permettono al tuo centralino telefonico di comunicare con la rete telefonica esterna tramite un provider VoIP. Ti consentono di effettuare e ricevere chiamate verso numeri di telefono tradizionali usando la tua connessione internet.</p>
                                 
                                 <h6 class="mt-3">Vantaggi</h6>
                                 <ul>
@@ -262,5 +262,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/freeswitch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pbx.js') }}"></script>
 {% endblock %}

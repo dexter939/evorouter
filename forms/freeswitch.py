@@ -428,9 +428,9 @@ class BlacklistForm(FlaskForm):
     submit = SubmitField('Aggiungi a Blacklist')
 
 class FreeswitchWizardForm(FlaskForm):
-    """Wizard form for FreeSWITCH initial configuration"""
+    """Wizard form for PBX initial configuration"""
     # General settings
-    enabled = BooleanField('Abilita FreeSWITCH', default=True)
+    enabled = BooleanField('Abilita Centralino', default=True)
     sip_port = IntegerField('Porta SIP', validators=[
         NumberRange(min=1024, max=65535, message='La porta deve essere tra 1024 e 65535')
     ], default=5060)

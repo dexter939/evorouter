@@ -39,10 +39,10 @@
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" id="enabled" name="enabled" checked>
-                                        <label class="form-check-label" for="enabled">Abilita FreeSWITCH</label>
+                                        <label class="form-check-label" for="enabled">Abilita Centralino</label>
                                     </div>
                                     <p class="text-muted small">
-                                        L'abilitazione del centralino avvierà automaticamente FreeSWITCH all'avvio del router.
+                                        L'abilitazione del centralino avvierà automaticamente il servizio di telefonia all'avvio del router.
                                     </p>
                                 </div>
                                 <div class="col-md-6">
@@ -186,7 +186,7 @@
 
                             <div class="alert alert-info mt-4">
                                 <i data-feather="info" class="me-2"></i>
-                                Potrai aggiungere o modificare i trunk SIP in qualsiasi momento dalla pagina di gestione FreeSWITCH.
+                                Potrai aggiungere o modificare i trunk SIP in qualsiasi momento dalla pagina di gestione del centralino.
                             </div>
                         </div>
 
@@ -282,7 +282,7 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <strong>Stato FreeSWITCH:</strong>
+                                                <strong>Stato Centralino:</strong>
                                                 <span id="summary-status">Abilitato</span>
                                             </div>
                                         </div>
@@ -388,5 +388,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/freeswitch-wizard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pbx-wizard.js') }}"></script>
 {% endblock %}

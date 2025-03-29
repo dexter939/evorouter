@@ -7,7 +7,7 @@ from utils.freeswitch import (
     get_trunks, add_trunk, update_trunk, delete_trunk
 )
 from forms.freeswitch import ExtensionForm, TrunkForm, FreeswitchWizardForm
-from models import FreeswitchConfig, SipExtension, SipTrunk, db
+from models import PbxConfig, SipExtension, SipTrunk, db
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -290,7 +290,7 @@ def wizard():
     
     # Pre-fill with existing configuration if available
     if not form.is_submitted():
-        fs_config = FreeswitchConfig.query.first()
+        fs_config = PbxConfig.query.first()
         if fs_config:
             form.enabled.data = fs_config.enabled
             form.sip_port.data = fs_config.sip_port
@@ -300,16 +300,16 @@ def wizard():
     if form.validate_on_submit():
         try:
             # Process submitted form
-            # 1. Save FreeswitchConfig
-            freeswitch_config = FreeswitchConfig.query.first()
-            if not freeswitch_config:
-                freeswitch_config = FreeswitchConfig()
-                db.session.add(freeswitch_config)
+            # 1. Save PbxConfig
+            pbx_config = PbxConfig.query.first()
+            if not pbx_config:
+                pbx_config = PbxConfig()
+                db.session.add(pbx_config)
             
-            freeswitch_config.enabled = form.enabled.data
-            freeswitch_config.sip_port = form.sip_port.data
-            freeswitch_config.rtp_port_start = form.rtp_port_start.data
-            freeswitch_config.rtp_port_end = form.rtp_port_end.data
+            pbx_config.enabled = form.enabled.data
+            pbx_config.sip_port = form.sip_port.data
+            pbx_config.rtp_port_start = form.rtp_port_start.data
+            pbx_config.rtp_port_end = form.rtp_port_end.data
             
             # 2. Process extensions
             # Get all extension data from the dynamic form fields
@@ -372,7 +372,7 @@ def wizard():
             # Save all changes
             db.session.commit()
             
-            # Restart FreeSWITCH with new configuration
+            # Restart PBX service with new configuration
             restart_freeswitch()
             
             flash("Configurazione del centralino completata con successo!", "success")
@@ -380,7 +380,7 @@ def wizard():
             
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error saving FreeSWITCH wizard configuration: {str(e)}")
+            logger.error(f"Error saving PBX wizard configuration: {str(e)}")
             flash(f"Errore durante il salvataggio della configurazione: {str(e)}", "danger")
     
     # If GET request or form validation failed, render the wizard template

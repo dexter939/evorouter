@@ -3,20 +3,20 @@
  * Handles PBX configuration, extensions, trunks, and call routing
  */
 
-// Initialize FreeSWITCH page functionality
+// Initialize PBX page functionality
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize Feather icons
   if (typeof feather !== 'undefined') {
     feather.replace();
   }
   
-  // Add listener for restart FreeSWITCH button
+  // Add listener for restart PBX button
   const restartFsBtn = document.getElementById('restartFreeswitch');
   if (restartFsBtn) {
     restartFsBtn.addEventListener('click', confirmRestartFreeswitch);
   }
   
-  // Add listener for the additional start FreeSWITCH button in warning message
+  // Add listener for the additional start PBX button in warning message
   const startFsBtn = document.getElementById('startFreeswitchBtn');
   if (startFsBtn) {
     startFsBtn.addEventListener('click', confirmRestartFreeswitch);
@@ -76,10 +76,10 @@ function confirmRestartFreeswitch(event) {
   const isRunning = statusIndicator && statusIndicator.classList.contains('status-up');
   
   // Change message based on service status
-  let confirmMessage = 'Sei sicuro di voler avviare il servizio FreeSWITCH?';
+  let confirmMessage = 'Sei sicuro di voler avviare il servizio del centralino telefonico?';
   
   if (isRunning) {
-    confirmMessage = 'Sei sicuro di voler riavviare il servizio FreeSWITCH? Tutte le chiamate attive verranno interrotte.';
+    confirmMessage = 'Sei sicuro di voler riavviare il servizio del centralino telefonico? Tutte le chiamate attive verranno interrotte.';
   }
   
   if (confirm(confirmMessage)) {
@@ -122,7 +122,7 @@ function restartFreeswitchService() {
     .then(data => {
       if (data.success) {
         // Show success message
-        showAlert('FreeSWITCH avviato con successo.', 'success');
+        showAlert('Centralino avviato con successo.', 'success');
         
         // After a delay, refresh the page to show updated status
         setTimeout(() => {
@@ -130,7 +130,7 @@ function restartFreeswitchService() {
         }, 3000);
       } else {
         // Show error message
-        showAlert('Errore durante l\'avvio di FreeSWITCH: ' + data.message, 'danger');
+        showAlert('Errore durante l\'avvio del centralino: ' + data.message, 'danger');
         
         // Reset button states
         if (headerBtn) {
@@ -144,8 +144,8 @@ function restartFreeswitchService() {
       }
     })
     .catch(error => {
-      console.error('Error starting FreeSWITCH:', error);
-      showAlert('Errore durante l\'avvio di FreeSWITCH.', 'danger');
+      console.error('Error starting PBX:', error);
+      showAlert('Errore durante l\'avvio del centralino.', 'danger');
       
       // Reset button states
       if (headerBtn) {

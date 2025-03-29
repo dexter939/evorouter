@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from models import User, ApiToken, NetworkConfig, FreeswitchConfig, SipExtension, SipTrunk
+from models import User, ApiToken, NetworkConfig, PbxConfig, SipExtension, SipTrunk
 from utils.network import get_interfaces_status, configure_interface, restart_network
 from utils.system import get_system_stats, reboot_system
 from utils.freeswitch import get_extensions, add_extension, update_extension, delete_extension
