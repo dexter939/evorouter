@@ -1,0 +1,520 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Diagnostics - BPI-R4 Router{% endblock %}
+
+{% block extra_css %}
+<style>
+    .diagnostics-output {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #2d2d2d;
+        color: #f8f8f8;
+        padding: 15px;
+        border-radius: 5px;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-stethoscope me-2"></i>Network Diagnostics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Diagnostic Tools</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-pills flex-column" id="diagnosticTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ping-tab" data-bs-toggle="pill" data-bs-target="#ping" type="button" role="tab" aria-controls="ping" aria-selected="true">
+                            <i class="fas fa-exchange-alt me-2"></i> Ping Test
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="traceroute-tab" data-bs-toggle="pill" data-bs-target="#traceroute" type="button" role="tab" aria-controls="traceroute" aria-selected="false">
+                            <i class="fas fa-map-marked-alt me-2"></i> Traceroute
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="dns-tab" data-bs-toggle="pill" data-bs-target="#dns" type="button" role="tab" aria-controls="dns" aria-selected="false">
+                            <i class="fas fa-server me-2"></i> DNS Lookup
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="logs-tab" data-bs-toggle="pill" data-bs-target="#logs" type="button" role="tab" aria-controls="logs" aria-selected="false">
+                            <i class="fas fa-list-alt me-2"></i> System Logs
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="fslogs-tab" data-bs-toggle="pill" data-bs-target="#fslogs" type="button" role="tab" aria-controls="fslogs" aria-selected="false">
+                            <i class="fas fa-phone me-2"></i> FreeSWITCH Logs
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Diagnostics Help</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Ping:</strong> Test connectivity to a specified host</p>
+                <p><strong>Traceroute:</strong> Show the path packets take to a network host</p>
+                <p><strong>DNS Lookup:</strong> Resolve domain names to IP addresses</p>
+                <p><strong>System Logs:</strong> View system event logs</p>
+                <p><strong>FreeSWITCH Logs:</strong> View FreeSWITCH call and error logs</p>
+                
+                <hr>
+                
+                <div class="d-grid">
+                    <a href="{{ url_for('network.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-network-wired me-1"></i> Network Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-terminal me-2"></i>Diagnostic Results</h5>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="diagnosticTabsContent">
+                    <!-- Ping Tab -->
+                    <div class="tab-pane fade show active" id="ping" role="tabpanel" aria-labelledby="ping-tab">
+                        <form id="ping-form" method="POST" action="{{ url_for('diagnostics.ping') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="input-group mb-3">
+                                {{ form.ping_target(class="form-control", placeholder="Enter host (e.g., google.com or 8.8.8.8)") }}
+                                <button class="btn btn-primary" type="submit" name="{{ form.ping_submit.name }}" value="Ping">
+                                    <i class="fas fa-play me-1"></i> Run Ping Test
+                                </button>
+                            </div>
+                            {% if form.ping_target.errors %}
+                            <div class="text-danger mb-3">
+                                {% for error in form.ping_target.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </form>
+                        
+                        <div id="ping-result" class="mt-3"></div>
+                    </div>
+                    
+                    <!-- Traceroute Tab -->
+                    <div class="tab-pane fade" id="traceroute" role="tabpanel" aria-labelledby="traceroute-tab">
+                        <form id="traceroute-form" method="POST" action="{{ url_for('diagnostics.traceroute') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="input-group mb-3">
+                                {{ form.traceroute_target(class="form-control", placeholder="Enter host (e.g., google.com or 8.8.8.8)") }}
+                                <button class="btn btn-primary" type="submit" name="{{ form.traceroute_submit.name }}" value="Traceroute">
+                                    <i class="fas fa-play me-1"></i> Run Traceroute
+                                </button>
+                            </div>
+                            {% if form.traceroute_target.errors %}
+                            <div class="text-danger mb-3">
+                                {% for error in form.traceroute_target.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </form>
+                        
+                        <div id="traceroute-result" class="mt-3"></div>
+                    </div>
+                    
+                    <!-- DNS Lookup Tab -->
+                    <div class="tab-pane fade" id="dns" role="tabpanel" aria-labelledby="dns-tab">
+                        <form id="dns-form" method="POST" action="{{ url_for('diagnostics.dns_lookup') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="input-group mb-3">
+                                {{ form.dns_target(class="form-control", placeholder="Enter domain name (e.g., google.com)") }}
+                                <button class="btn btn-primary" type="submit" name="{{ form.dns_submit.name }}" value="Lookup">
+                                    <i class="fas fa-play me-1"></i> Run DNS Lookup
+                                </button>
+                            </div>
+                            {% if form.dns_target.errors %}
+                            <div class="text-danger mb-3">
+                                {% for error in form.dns_target.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </form>
+                        
+                        <div id="dns-result" class="mt-3"></div>
+                    </div>
+                    
+                    <!-- System Logs Tab -->
+                    <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>System Logs</h5>
+                                <div>
+                                    <select id="log-level" class="form-select form-select-sm">
+                                        <option value="all">All Levels</option>
+                                        <option value="error">Errors Only</option>
+                                        <option value="warning">Warnings & Errors</option>
+                                        <option value="info">Info & Above</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="system-logs-container">
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button id="load-system-logs" class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh Logs
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- FreeSWITCH Logs Tab -->
+                    <div class="tab-pane fade" id="fslogs" role="tabpanel" aria-labelledby="fslogs-tab">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>FreeSWITCH Logs</h5>
+                                <div>
+                                    <select id="fs-log-level" class="form-select form-select-sm">
+                                        <option value="all">All Levels</option>
+                                        <option value="error">Errors Only</option>
+                                        <option value="warning">Warnings & Errors</option>
+                                        <option value="info">Info & Above</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="freeswitch-logs-container">
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button id="load-freeswitch-logs" class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ping form submission
+        const pingForm = document.getElementById('ping-form');
+        const pingResult = document.getElementById('ping-result');
+        
+        pingForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading
+            pingResult.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Submit form via AJAX
+            const formData = new FormData(pingForm);
+            
+            fetch('/diagnostics/ping', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    pingResult.innerHTML = `<div class="diagnostics-output">${data.result}</div>`;
+                } else {
+                    pingResult.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error || 'An error occurred during the ping test'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error running ping test:', error);
+                pingResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to run ping test. Please try again.
+                    </div>
+                `;
+            });
+        });
+        
+        // Traceroute form submission
+        const tracerouteForm = document.getElementById('traceroute-form');
+        const tracerouteResult = document.getElementById('traceroute-result');
+        
+        tracerouteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading
+            tracerouteResult.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Submit form via AJAX
+            const formData = new FormData(tracerouteForm);
+            
+            fetch('/diagnostics/traceroute', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    tracerouteResult.innerHTML = `<div class="diagnostics-output">${data.result}</div>`;
+                } else {
+                    tracerouteResult.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error || 'An error occurred during the traceroute'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error running traceroute:', error);
+                tracerouteResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to run traceroute. Please try again.
+                    </div>
+                `;
+            });
+        });
+        
+        // DNS lookup form submission
+        const dnsForm = document.getElementById('dns-form');
+        const dnsResult = document.getElementById('dns-result');
+        
+        dnsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading
+            dnsResult.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Submit form via AJAX
+            const formData = new FormData(dnsForm);
+            
+            fetch('/diagnostics/dns', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dnsResult.innerHTML = `<div class="diagnostics-output">${data.result}</div>`;
+                } else {
+                    dnsResult.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error || 'An error occurred during the DNS lookup'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error running DNS lookup:', error);
+                dnsResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to run DNS lookup. Please try again.
+                    </div>
+                `;
+            });
+        });
+        
+        // Load system logs
+        const loadSystemLogsButton = document.getElementById('load-system-logs');
+        const systemLogsContainer = document.getElementById('system-logs-container');
+        const logLevelSelect = document.getElementById('log-level');
+        
+        function loadSystemLogs() {
+            systemLogsContainer.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            fetch('/diagnostics/logs?type=system&lines=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let logs = data.logs;
+                        
+                        // Filter by level if needed
+                        const level = logLevelSelect.value;
+                        if (level !== 'all') {
+                            if (level === 'error') {
+                                logs = logs.filter(line => line.includes('ERROR') || line.includes('CRITICAL'));
+                            } else if (level === 'warning') {
+                                logs = logs.filter(line => 
+                                    line.includes('ERROR') || 
+                                    line.includes('CRITICAL') || 
+                                    line.includes('WARNING')
+                                );
+                            } else if (level === 'info') {
+                                logs = logs.filter(line => 
+                                    !line.includes('DEBUG') || 
+                                    line.includes('INFO') || 
+                                    line.includes('WARNING') || 
+                                    line.includes('ERROR') || 
+                                    line.includes('CRITICAL')
+                                );
+                            }
+                        }
+                        
+                        if (logs.length > 0) {
+                            systemLogsContainer.innerHTML = `<div class="diagnostics-output">${logs.join('\n')}</div>`;
+                        } else {
+                            systemLogsContainer.innerHTML = `
+                                <div class="alert alert-info">
+                                    No log entries found matching the selected filter.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        systemLogsContainer.innerHTML = `
+                            <div class="alert alert-danger">
+                                ${data.error || 'Failed to load system logs'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading system logs:', error);
+                    systemLogsContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load system logs. Please try again.
+                        </div>
+                    `;
+                });
+        }
+        
+        loadSystemLogsButton.addEventListener('click', loadSystemLogs);
+        logLevelSelect.addEventListener('change', loadSystemLogs);
+        
+        // Load FreeSWITCH logs
+        const loadFreeswitchLogsButton = document.getElementById('load-freeswitch-logs');
+        const freeswitchLogsContainer = document.getElementById('freeswitch-logs-container');
+        const fsLogLevelSelect = document.getElementById('fs-log-level');
+        
+        function loadFreeswitchLogs() {
+            freeswitchLogsContainer.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            fetch('/diagnostics/logs?type=freeswitch&lines=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let logs = data.logs;
+                        
+                        // Filter by level if needed
+                        const level = fsLogLevelSelect.value;
+                        if (level !== 'all') {
+                            if (level === 'error') {
+                                logs = logs.filter(line => line.includes('[ERR]') || line.includes('[CRIT]'));
+                            } else if (level === 'warning') {
+                                logs = logs.filter(line => 
+                                    line.includes('[ERR]') || 
+                                    line.includes('[CRIT]') || 
+                                    line.includes('[WARNING]')
+                                );
+                            } else if (level === 'info') {
+                                logs = logs.filter(line => 
+                                    !line.includes('[DEBUG]') || 
+                                    line.includes('[INFO]') || 
+                                    line.includes('[NOTICE]') || 
+                                    line.includes('[WARNING]') || 
+                                    line.includes('[ERR]') || 
+                                    line.includes('[CRIT]')
+                                );
+                            }
+                        }
+                        
+                        if (logs.length > 0) {
+                            freeswitchLogsContainer.innerHTML = `<div class="diagnostics-output">${logs.join('\n')}</div>`;
+                        } else {
+                            freeswitchLogsContainer.innerHTML = `
+                                <div class="alert alert-info">
+                                    No log entries found matching the selected filter.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        freeswitchLogsContainer.innerHTML = `
+                            <div class="alert alert-danger">
+                                ${data.error || 'Failed to load FreeSWITCH logs'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading FreeSWITCH logs:', error);
+                    freeswitchLogsContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load FreeSWITCH logs. Please try again.
+                        </div>
+                    `;
+                });
+        }
+        
+        loadFreeswitchLogsButton.addEventListener('click', loadFreeswitchLogs);
+        fsLogLevelSelect.addEventListener('change', loadFreeswitchLogs);
+        
+        // Load logs when tabs are activated
+        document.getElementById('logs-tab').addEventListener('shown.bs.tab', loadSystemLogs);
+        document.getElementById('fslogs-tab').addEventListener('shown.bs.tab', loadFreeswitchLogs);
+    });
+</script>
+{% endblock %}
