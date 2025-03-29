@@ -11,11 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Add listeners for IP mode selection
-  const ipModeRadios = document.querySelectorAll('input[name="ip_mode"]');
-  if (ipModeRadios.length > 0) {
-    ipModeRadios.forEach(radio => {
-      radio.addEventListener('change', toggleStaticIPFields);
-    });
+  const ipModeSelect = document.getElementById('ip_mode');
+  if (ipModeSelect) {
+    ipModeSelect.addEventListener('change', toggleStaticIPFields);
     // Initial toggle based on selected mode
     toggleStaticIPFields();
   }
@@ -55,8 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
  * Toggle IP configuration fields visibility based on IP mode
  */
 function toggleStaticIPFields() {
-  const selectedMode = document.querySelector('input[name="ip_mode"]:checked');
-  if (!selectedMode) return;
+  const selectElement = document.getElementById('ip_mode');
+  if (!selectElement) return;
+  
+  const selectedMode = selectElement.value;
   
   const staticFields = document.getElementById('staticIPFields');
   const pppoeFields = document.getElementById('pppoeFields');
@@ -81,7 +81,7 @@ function toggleStaticIPFields() {
   }
   
   // Show fields based on selected mode
-  if (selectedMode.value === 'static' && staticFields) {
+  if (selectedMode === 'static' && staticFields) {
     staticFields.classList.remove('d-none');
     // Make fields required
     const inputs = staticFields.querySelectorAll('input');
@@ -91,7 +91,7 @@ function toggleStaticIPFields() {
         input.required = true;
       }
     });
-  } else if (selectedMode.value === 'pppoe' && pppoeFields) {
+  } else if (selectedMode === 'pppoe' && pppoeFields) {
     pppoeFields.classList.remove('d-none');
     // Make username and password required
     const usernameInput = document.getElementById('pppoe_username');

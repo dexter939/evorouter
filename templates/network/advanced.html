@@ -171,27 +171,8 @@
                             {{ form.hidden_tag() }}
                             
                             <div class="mb-4">
-                                <label class="form-label">Modalità di Configurazione IP</label>
-                                <div class="form-check">
-                                    {{ form.ip_mode(class="form-check-input", id="ipModeDhcp", value="dhcp") }}
-                                    <label class="form-check-label" for="ipModeDhcp">
-                                        DHCP (ottieni automaticamente un indirizzo IP)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    {{ form.ip_mode(class="form-check-input", id="ipModeStatic", value="static") }}
-                                    <label class="form-check-label" for="ipModeStatic">
-                                        IP Statico (imposta manualmente l'indirizzo IP)
-                                    </label>
-                                </div>
-                                {% if interface.type == 'wan' %}
-                                <div class="form-check">
-                                    {{ form.ip_mode(class="form-check-input", id="ipModePppoe", value="pppoe") }}
-                                    <label class="form-check-label" for="ipModePppoe">
-                                        PPPoE (connessione ADSL/Fibra)
-                                    </label>
-                                </div>
-                                {% endif %}
+                                <label for="ip_mode" class="form-label">Modalità di Configurazione IP</label>
+                                {{ form.ip_mode(class="form-select", id="ip_mode") }}
                             </div>
                             
                             <div id="staticIPFields" class="d-none">
