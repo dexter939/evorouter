@@ -1,492 +1,645 @@
 import logging
-import subprocess
-import re
 import os
-import ipaddress
-from config import (
-    DEFAULT_LAN_INTERFACE, DEFAULT_WAN_INTERFACE, DEFAULT_WIFI_INTERFACE,
-    DEFAULT_LAN_IP, DEFAULT_LAN_SUBNET,
-    NETWORK_CONFIG_PATH, DHCP_CONFIG_PATH, DNS_CONFIG_PATH
-)
+import re
+import subprocess
+import json
+import random
+from datetime import datetime
+from config import DEFAULT_LAN_INTERFACE, DEFAULT_WAN_INTERFACE
 
 # Create logger
 logger = logging.getLogger(__name__)
 
-def get_interfaces_status():
+def get_connected_devices():
     """
-    Get status of all network interfaces
+    Get list of devices connected to the network
     
     Returns:
-        list: List of dictionaries with interface information
+        list: List of device dictionaries with ip, mac, hostname, etc.
     """
-    interfaces = []
-    
     try:
-        # In Replit environment, we'll simulate the network interfaces
-        # Instead of using 'ip' command which isn't available
+        # In Replit environment, we'll create simulated data
+        devices = []
         
-        # Define default interfaces for simulation
-        simulated_interfaces = [
+        # Simulate 8-12 devices
+        device_count = random.randint(8, 12)
+        
+        # Common device names
+        device_names = [
+            "Router", "Desktop-PC", "Laptop-Admin", "Smartphone-Mario", 
+            "Tablet-Lucia", "Smart-TV-Soggiorno", "Stampante-Ufficio", 
+            "NAS-Storage", "Termostato-Smart", "Alexa-Cucina", 
+            "Raspberry-Pi", "Camera-Ingresso", "Media-Player"
+        ]
+        
+        # Interfaces
+        interfaces = ["LAN", "WiFi", "WiFi", "WiFi", "LAN", "LAN"]
+        
+        # Connection types
+        connection_types = ["Cablata", "Wireless", "Wireless", "Wireless", "Cablata", "Cablata"]
+        
+        # Generate random devices
+        for i in range(device_count):
+            # Generate MAC address
+            mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)]).upper()
+            
+            # Generate IP
+            ip = f"192.168.1.{random.randint(2, 250)}"
+            
+            # Random device name
+            device_name = device_names[random.randint(0, len(device_names) - 1)]
+            if i > 0 and i < len(device_names):
+                device_name = device_names[i]
+            
+            # Interface
+            interface_idx = random.randint(0, len(interfaces) - 1)
+            interface = interfaces[interface_idx]
+            connection = connection_types[interface_idx]
+            
+            # Status (80% online)
+            status = "Online" if random.random() < 0.8 else "Offline"
+            
+            # Last seen
+            last_seen = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if status == "Online" else (
+                datetime.now().strftime("%Y-%m-%d ") + f"{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:{random.randint(0, 59):02d}"
+            )
+            
+            # Traffic
+            download = round(random.uniform(0, 10), 2) if status == "Online" else 0
+            upload = round(random.uniform(0, 2), 2) if status == "Online" else 0
+            
+            devices.append({
+                "name": device_name,
+                "ip": ip,
+                "mac": mac,
+                "interface": interface,
+                "connection": connection,
+                "status": status,
+                "last_seen": last_seen,
+                "download": download,
+                "upload": upload
+            })
+        
+        return devices
+    except Exception as e:
+        logger.error(f"Error getting connected devices: {str(e)}")
+        return []
+
+def get_interfaces_status():
+    """
+    Get network interfaces status
+    
+    Returns:
+        list: List of interface dictionaries with name, state, etc.
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        interfaces = [
             {
-                'name': DEFAULT_LAN_INTERFACE,
-                'status': 'up',
-                'mac_address': '02:42:ac:11:00:02',
-                'ip_address': DEFAULT_LAN_IP,
-                'subnet_mask': DEFAULT_LAN_SUBNET,
-                'gateway': '',
-                'mode': 'static',
-                'type': 'lan'
+                "name": "eth0",
+                "type": "LAN",
+                "state": "UP",
+                "speed": "1 Gbps",
+                "ip": "192.168.1.1",
+                "mac": "AA:BB:CC:11:22:33",
+                "rx_bytes": random.randint(1000000, 100000000),
+                "tx_bytes": random.randint(100000, 10000000)
             },
             {
-                'name': DEFAULT_WAN_INTERFACE,
-                'status': 'up',
-                'mac_address': '02:42:ac:11:00:03',
-                'ip_address': '192.168.0.100',
-                'subnet_mask': '255.255.255.0',
-                'gateway': '192.168.0.1',
-                'mode': 'dhcp',
-                'type': 'wan'
+                "name": "eth1",
+                "type": "WAN",
+                "state": "UP",
+                "speed": "1 Gbps",
+                "ip": "203.0.113.10",
+                "mac": "AA:BB:CC:11:22:34",
+                "rx_bytes": random.randint(100000000, 1000000000),
+                "tx_bytes": random.randint(10000000, 100000000)
+            },
+            {
+                "name": "wlan0",
+                "type": "WiFi",
+                "state": "UP",
+                "speed": "300 Mbps",
+                "ip": "192.168.1.1",
+                "mac": "AA:BB:CC:11:22:35",
+                "rx_bytes": random.randint(10000000, 100000000),
+                "tx_bytes": random.randint(1000000, 10000000)
+            },
+            {
+                "name": "wlan1",
+                "type": "WiFi",
+                "state": "DOWN",
+                "speed": "N/A",
+                "ip": "N/A",
+                "mac": "AA:BB:CC:11:22:36",
+                "rx_bytes": 0,
+                "tx_bytes": 0
             }
         ]
         
-        # In Replit environment we want to use simulated interfaces
-        # with customized data to match our configuration expectations
-        
-        # We'll maintain the simulated interfaces for our router demo
-        # but try to incorporate real MAC addresses from the actual interfaces
-        try:
-            import psutil
-            import socket
-            net_if_addrs = psutil.net_if_addrs()
-            net_if_stats = psutil.net_if_stats()
-            
-            # Get real MAC addresses if possible
-            real_macs = {}
-            for interface_name, addrs in net_if_addrs.items():
-                if interface_name == 'lo':  # Skip loopback
-                    continue
-                
-                for addr in addrs:
-                    if hasattr(addr, 'family') and addr.family == psutil.AF_LINK:
-                        real_macs[interface_name] = addr.address
-            
-            # Update our simulated interfaces with real MAC addresses if available
-            for interface in simulated_interfaces:
-                if interface['name'] in real_macs:
-                    interface['mac_address'] = real_macs[interface['name']]
-                    
-            # Get the most likely real network interface for external access
-            real_interface = None
-            for interface_name, addrs in net_if_addrs.items():
-                if interface_name != 'lo':  # Skip loopback
-                    for addr in addrs:
-                        if addr.family == socket.AF_INET and not addr.address.startswith('127.'):
-                            # Found a likely external interface
-                            if 'wan_interface' not in locals():
-                                # Update the WAN interface with the real IP in our simulated data
-                                for interface in simulated_interfaces:
-                                    if interface['type'] == 'wan':
-                                        interface['ip_address'] = addr.address
-                                        interface['subnet_mask'] = addr.netmask or '255.255.255.0'
-                                        # Add possible gateway
-                                        octets = addr.address.split('.')
-                                        if len(octets) == 4:
-                                            interface['gateway'] = f"{octets[0]}.{octets[1]}.{octets[2]}.1"
-                                        break
-        except Exception as psutil_err:
-            logger.warning(f"Couldn't get network interfaces from psutil: {str(psutil_err)}")
-        
-        return simulated_interfaces
+        return interfaces
     except Exception as e:
         logger.error(f"Error getting interface status: {str(e)}")
-        # Return minimal simulated interfaces on error
-        return [
-            {
-                'name': DEFAULT_LAN_INTERFACE,
-                'status': 'up',
-                'mac_address': '02:42:ac:11:00:02',
-                'ip_address': DEFAULT_LAN_IP,
-                'subnet_mask': DEFAULT_LAN_SUBNET,
-                'gateway': '',
-                'mode': 'static',
-                'type': 'lan'
-            }
-        ]
+        return []
 
-def configure_interface(interface_name, ip_mode, ip_address=None, subnet_mask=None, gateway=None, dns_servers=None, 
-                      pppoe_username=None, pppoe_password=None, pppoe_service_name=None):
+def get_wan_status():
+    """
+    Get WAN connection status
+    
+    Returns:
+        dict: WAN status information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        connected = random.random() > 0.1  # 90% chance of being connected
+        
+        status = {
+            "connected": connected,
+            "interface": DEFAULT_WAN_INTERFACE,
+            "ip": "203.0.113." + str(random.randint(1, 254)) if connected else "N/A",
+            "gateway": "192.168.0.1" if connected else "N/A",
+            "dns": ["8.8.8.8", "8.8.4.4"] if connected else [],
+            "type": "DHCP",
+            "uptime": f"{random.randint(1, 48)} ore, {random.randint(0, 59)} minuti" if connected else "N/A"
+        }
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error getting WAN status: {str(e)}")
+        return {"connected": False, "error": str(e)}
+
+def get_public_ip_info():
+    """
+    Get public IP information
+    
+    Returns:
+        dict: Public IP information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        ip_types = ["Residenziale", "Business", "Datacenter"]
+        
+        info = {
+            "ip": "203.0.113." + str(random.randint(1, 254)),
+            "location": "Milano, Italia",
+            "isp": "TIM Telecom Italia",
+            "type": ip_types[random.randint(0, len(ip_types) - 1)]
+        }
+        
+        return info
+    except Exception as e:
+        logger.error(f"Error getting public IP info: {str(e)}")
+        return {"error": str(e)}
+
+def get_firewall_status():
+    """
+    Get firewall status
+    
+    Returns:
+        dict: Firewall status information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        status = {
+            "enabled": True,
+            "rules": [
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "TCP:22",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "TCP:80,443",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "ICMP",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "UDP:1194",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth0",
+                    "protocol": "ALL",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "FORWARD",
+                    "interface": "eth1->eth0",
+                    "protocol": "ALL",
+                    "action": "ACCEPT"
+                },
+                {
+                    "type": "INPUT",
+                    "interface": "eth1",
+                    "protocol": "ALL",
+                    "action": "DROP"
+                }
+            ],
+            "port_forwarding": [
+                {
+                    "name": "HTTP Server",
+                    "external": "80",
+                    "internal_ip": "192.168.1.5",
+                    "internal_port": "80",
+                    "protocol": "TCP"
+                },
+                {
+                    "name": "HTTPS Server",
+                    "external": "443",
+                    "internal_ip": "192.168.1.5",
+                    "internal_port": "443",
+                    "protocol": "TCP"
+                },
+                {
+                    "name": "SSH Access",
+                    "external": "2222",
+                    "internal_ip": "192.168.1.2",
+                    "internal_port": "22",
+                    "protocol": "TCP"
+                },
+                {
+                    "name": "Game Server",
+                    "external": "27015",
+                    "internal_ip": "192.168.1.6",
+                    "internal_port": "27015",
+                    "protocol": "UDP"
+                }
+            ]
+        }
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error getting firewall status: {str(e)}")
+        return {"error": str(e)}
+
+def check_port(port, protocol="tcp"):
+    """
+    Check if a port is open
+    
+    Args:
+        port: Port number to check
+        protocol: Protocol (tcp or udp)
+        
+    Returns:
+        dict: Port status information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        is_open = random.random() > 0.7  # 30% chance of being open
+        
+        services = {
+            21: "FTP",
+            22: "SSH",
+            23: "Telnet",
+            25: "SMTP",
+            53: "DNS",
+            80: "HTTP",
+            443: "HTTPS",
+            3389: "Remote Desktop",
+            1194: "OpenVPN",
+            5060: "SIP",
+            5061: "SIP/TLS"
+        }
+        
+        status = {
+            "port": port,
+            "protocol": protocol,
+            "is_open": is_open,
+            "service": services.get(int(port), "Sconosciuto") if is_open else None
+        }
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error checking port {port}/{protocol}: {str(e)}")
+        return {"error": str(e)}
+
+def get_bandwidth_usage(interface="all", period="1h"):
+    """
+    Get bandwidth usage data
+    
+    Args:
+        interface: Interface name or 'all' for all interfaces
+        period: Time period (1h, 6h, 24h, 7d)
+        
+    Returns:
+        dict: Bandwidth usage information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        from datetime import datetime, timedelta
+        
+        # Generate 30 points
+        now = datetime.now()
+        timestamps = [(now - timedelta(minutes=i)).strftime('%H:%M:%S') for i in range(30, 0, -1)]
+        
+        # Randomize download/upload data
+        base_download = random.uniform(10, 40)
+        base_upload = random.uniform(2, 10)
+        
+        download = []
+        upload = []
+        
+        for i in range(30):
+            # Add some variation
+            download.append(round(base_download + random.uniform(-5, 10), 1))
+            upload.append(round(base_upload + random.uniform(-2, 5), 1))
+            
+            # Occasionally add a spike
+            if random.random() > 0.9:
+                download[-1] *= 1.5
+                upload[-1] *= 1.2
+        
+        data = {
+            "timestamps": timestamps,
+            "download": download,
+            "upload": upload,
+            "current_download": download[-1],
+            "current_upload": upload[-1],
+            "interface": interface,
+            "period": period
+        }
+        
+        return data
+    except Exception as e:
+        logger.error(f"Error getting bandwidth usage: {str(e)}")
+        return {"error": str(e)}
+
+def test_voip_quality():
+    """
+    Test VoIP quality
+    
+    Returns:
+        dict: VoIP quality test results
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        mos_score = round(random.uniform(3.2, 4.2), 1)
+        latency = round(random.uniform(10, 60), 1)
+        jitter = round(random.uniform(1, 9), 1)
+        packet_loss = round(random.uniform(0, 2), 1)
+        
+        # Determine quality verdict
+        if mos_score >= 4.0 and latency < 30 and jitter < 5 and packet_loss < 0.5:
+            verdict = "Eccellente qualità per chiamate VoIP"
+            quality = "excellent"
+        elif mos_score >= 3.5 and latency < 50 and jitter < 10 and packet_loss < 1:
+            verdict = "Buona qualità per chiamate VoIP"
+            quality = "good"
+        elif mos_score >= 3.0 and latency < 100 and jitter < 15 and packet_loss < 2:
+            verdict = "Qualità accettabile per chiamate VoIP"
+            quality = "fair"
+        else:
+            verdict = "Qualità scadente per chiamate VoIP, possibili problemi"
+            quality = "poor"
+        
+        results = {
+            "mos_score": mos_score,
+            "latency": latency,
+            "jitter": jitter,
+            "packet_loss": packet_loss,
+            "verdict": verdict,
+            "quality": quality,
+            "details": {
+                "codecs_tested": ["G.711", "G.729", "Opus"],
+                "rtp_quality": "Good" if packet_loss < 1 else "Fair",
+                "sip_quality": "Good" if latency < 50 else "Fair"
+            }
+        }
+        
+        return results
+    except Exception as e:
+        logger.error(f"Error testing VoIP quality: {str(e)}")
+        return {"error": str(e)}
+
+def get_vpn_status():
+    """
+    Get VPN status
+    
+    Returns:
+        dict: VPN status information
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        is_running = random.random() > 0.2  # 80% chance of being active
+        
+        status = {
+            "running": is_running,
+            "vpn_type": "OpenVPN",
+            "protocol": "UDP",
+            "port": 1194,
+            "clients_connected": random.randint(0, 5) if is_running else 0,
+            "subnet": "10.8.0.0/24",
+            "bandwidth_down": round(random.uniform(0.5, 2), 1) if is_running else 0,
+            "bandwidth_up": round(random.uniform(0.2, 1), 1) if is_running else 0,
+            "certificates_valid": True,
+            "encryption": "AES-256-GCM"
+        }
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error getting VPN status: {str(e)}")
+        return {"error": str(e)}
+
+def configure_interface(interface_name, config):
     """
     Configure a network interface
     
     Args:
         interface_name: Name of the interface to configure
-        ip_mode: 'dhcp', 'static' or 'pppoe'
-        ip_address: Static IP address (required if ip_mode is 'static')
-        subnet_mask: Subnet mask (required if ip_mode is 'static')
-        gateway: Default gateway (optional for static)
-        dns_servers: DNS servers (optional for static and pppoe)
-        pppoe_username: PPPoE username (required if ip_mode is 'pppoe')
-        pppoe_password: PPPoE password (required if ip_mode is 'pppoe')
-        pppoe_service_name: PPPoE service name (optional)
+        config: Dictionary with interface configuration
         
     Returns:
-        bool: True if successful, False otherwise
+        dict: Result of the configuration
     """
     try:
-        # Validate input
-        if ip_mode not in ['dhcp', 'static', 'pppoe']:
-            logger.error(f"Invalid IP mode: {ip_mode}")
-            return False
-            
-        if ip_mode == 'static' and (not ip_address or not subnet_mask):
-            logger.error("IP address and subnet mask are required for static configuration")
-            return False
-            
-        if ip_mode == 'pppoe' and (not pppoe_username or not pppoe_password):
-            logger.error("Username and password are required for PPPoE configuration")
-            return False
+        # In Replit environment, we'll simulate success
+        logger.info(f"Configuring interface {interface_name} with {config}")
         
-        # Create network interface configuration file
-        config_file = os.path.join(NETWORK_CONFIG_PATH, interface_name)
+        # Simulate a brief delay
+        import time
+        time.sleep(0.5)
         
-        # Generate configuration content
-        if ip_mode == 'dhcp':
-            config_content = f"""auto {interface_name}
-iface {interface_name} inet dhcp
-"""
-        elif ip_mode == 'static':
-            # Convert subnet mask to CIDR notation
-            subnet = ipaddress.IPv4Network(f'0.0.0.0/{subnet_mask}', False)
-            cidr = subnet.prefixlen
-            
-            config_content = f"""auto {interface_name}
-iface {interface_name} inet static
-    address {ip_address}/{cidr}
-"""
-            if gateway:
-                config_content += f"    gateway {gateway}\n"
-        else:  # pppoe
-            # For PPPoE, first configure the Ethernet interface
-            config_content = f"""auto {interface_name}
-iface {interface_name} inet manual
-    pre-up ip link set dev {interface_name} up
-    post-down ip link set dev {interface_name} down
-
-# PPPoE connection
-auto ppp0
-iface ppp0 inet ppp
-    provider {interface_name}_provider
-"""
-            
-            # Create provider file for PPPoE
-            provider_file = os.path.join('/etc/ppp/peers', f'{interface_name}_provider')
-            provider_content = f"""# PPPoE provider configuration for {interface_name}
-plugin rp-pppoe.so
-{interface_name}
-user "{pppoe_username}"
-password "{pppoe_password}"
-"""
-            if pppoe_service_name:
-                provider_content += f'servicename "{pppoe_service_name}"\n'
-                
-            provider_content += """noipdefault
-defaultroute
-replacedefaultroute
-hide-password
-noauth
-persist
-maxfail 0
-"""
-            
-            # In Replit environment, just log the provider file that would be created
-            logger.info(f"Would create PPPoE provider file at {provider_file} with configuration:\n{provider_content}")
-        
-        # Log the configuration that would be written
-        logger.info(f"Would write interface configuration to {config_file}:\n{config_content}")
-        
-        # If DNS servers are provided, simulate updating resolv.conf
-        if dns_servers:
-            logger.info(f"Would update DNS settings: Primary={dns_servers.split(',')[0] if ',' in dns_servers else dns_servers}, Secondary={dns_servers.split(',')[1] if ',' in dns_servers else None}")
-        
-        logger.info(f"Successfully simulated configuration of interface {interface_name} with {ip_mode} mode")
-        return True
+        return {
+            "success": True,
+            "message": f"Interface {interface_name} configured successfully",
+            "interface": interface_name,
+            "config": config
+        }
     except Exception as e:
         logger.error(f"Error configuring interface {interface_name}: {str(e)}")
-        return False
+        return {
+            "success": False,
+            "message": f"Error configuring interface: {str(e)}",
+            "interface": interface_name
+        }
 
-def set_dhcp_config(enabled, start_ip, end_ip, lease_time):
+def set_dhcp_config(config):
     """
     Configure DHCP server
     
     Args:
-        enabled: Whether to enable DHCP server
-        start_ip: Start of DHCP IP range
-        end_ip: End of DHCP IP range
-        lease_time: Lease time in hours
+        config: Dictionary with DHCP configuration
         
     Returns:
-        bool: True if successful, False otherwise
+        dict: Result of the configuration
     """
     try:
-        dhcp_conf_file = os.path.join(DHCP_CONFIG_PATH, 'dhcpd.conf')
+        # In Replit environment, we'll simulate success
+        logger.info(f"Configuring DHCP server with {config}")
         
-        if not enabled:
-            # If disabled, write minimal config
-            config_content = """# DHCP server disabled
-"""
-        else:
-            # For Replit environment, we'll use the configured LAN IP and settings
-            # rather than relying on the actual interface detected
-            
-            # Get the LAN IP and subnet from our default configuration
-            lan_ip = DEFAULT_LAN_IP
-            lan_subnet = DEFAULT_LAN_SUBNET
-            
-            # Calculate network address and broadcast for the default/configured LAN
-            try:
-                # Try to get network details from the local interface configuration if possible
-                interfaces = get_interfaces_status()
-                lan_interface = next((i for i in interfaces if i['type'] == 'lan'), None)
-                
-                if lan_interface and lan_interface['ip_address'] and lan_interface['subnet_mask']:
-                    # Make sure we're using the correct subnet for LAN range
-                    first_three_octets_lan = '.'.join(start_ip.split('.')[:3])
-                    first_three_octets_router = '.'.join(lan_interface['ip_address'].split('.')[:3])
-                    
-                    # If the DHCP range is in a different subnet than the router,
-                    # force the range to be in the router's subnet
-                    if first_three_octets_lan != first_three_octets_router:
-                        logger.warning(f"DHCP range {start_ip}-{end_ip} is not in the same subnet as the router ({lan_interface['ip_address']})")
-                        # Keep the same last octet but change the first three to match the router
-                        start_ip_last = start_ip.split('.')[-1]
-                        end_ip_last = end_ip.split('.')[-1]
-                        start_ip = f"{first_three_octets_router}.{start_ip_last}"
-                        end_ip = f"{first_three_octets_router}.{end_ip_last}"
-                        logger.info(f"Adjusted DHCP range to: {start_ip}-{end_ip}")
-                    
-                    lan_ip = lan_interface['ip_address']
-                    lan_subnet = lan_interface['subnet_mask']
-            except Exception as calc_error:
-                logger.warning(f"Error calculating DHCP range with interface info: {str(calc_error)}")
-                # Fall back to defaults if there's any error
-            
-            try:
-                # Calculate network address and broadcast
-                subnet = ipaddress.IPv4Network(f"{lan_ip}/{lan_subnet}", False)
-                network = subnet.network_address
-                broadcast = subnet.broadcast_address
-                
-                # Write DHCP config
-                config_content = f"""# DHCP Server Configuration
-default-lease-time {int(lease_time) * 3600};
-max-lease-time {int(lease_time) * 3600 * 2};
-
-subnet {network} netmask {lan_subnet} {{
-    range {start_ip} {end_ip};
-    option routers {lan_ip};
-    option broadcast-address {broadcast};
-    option domain-name-servers {lan_ip};
-}}
-"""
-            except Exception as subnet_error:
-                # If there's an error with the IP calculations, create a simpler config
-                logger.error(f"Error calculating subnet information: {str(subnet_error)}")
-                config_content = f"""# DHCP Server Configuration
-default-lease-time {int(lease_time) * 3600};
-max-lease-time {int(lease_time) * 3600 * 2};
-
-subnet 192.168.1.0 netmask 255.255.255.0 {{
-    range {start_ip} {end_ip};
-    option routers {DEFAULT_LAN_IP};
-    option broadcast-address 192.168.1.255;
-    option domain-name-servers {DEFAULT_LAN_IP};
-}}
-"""
+        # Simulate a brief delay
+        import time
+        time.sleep(0.5)
         
-        # Log the DHCP configuration instead of writing to file
-        logger.info(f"Would write DHCP configuration to {dhcp_conf_file}:\n{config_content}")
-        
-        logger.info(f"Successfully simulated DHCP server configuration (enabled: {enabled})")
-        return True
+        return {
+            "success": True,
+            "message": "DHCP server configured successfully",
+            "config": config
+        }
     except Exception as e:
         logger.error(f"Error configuring DHCP server: {str(e)}")
-        return False
+        return {
+            "success": False,
+            "message": f"Error configuring DHCP server: {str(e)}"
+        }
 
 def restart_network():
     """
-    Restart networking services
+    Restart network services
     
     Returns:
-        bool: True if successful, False otherwise
+        dict: Result of the restart
     """
     try:
-        # In Replit environment, just log the restart attempt
-        # since we don't have systemctl commands available
-        logger.info("Network services restart simulated in Replit environment")
+        # In Replit environment, we'll simulate success
+        logger.info("Restarting network services")
         
-        # If we were on a real BPI-R4 system, we would execute:
-        # subprocess.run(['systemctl', 'restart', 'networking'], check=True)
-        # subprocess.run(['systemctl', 'restart', 'isc-dhcp-server'], check=True)
+        # Simulate a brief delay
+        import time
+        time.sleep(1.5)
         
-        return True
+        return {
+            "success": True,
+            "message": "Network services restarted successfully"
+        }
     except Exception as e:
         logger.error(f"Error restarting network services: {str(e)}")
-        return False
+        return {
+            "success": False,
+            "message": f"Error restarting network services: {str(e)}"
+        }
 
 def get_dhcp_leases():
     """
     Get DHCP leases
     
     Returns:
-        list: List of dictionaries with lease information
+        list: List of DHCP leases
     """
-    leases = []
-    
     try:
-        # In Replit environment, return simulated DHCP leases
-        # This is a simulation - in a real router, we'd read from dhcpd.leases
+        # In Replit environment, we'll create simulated data
+        leases = []
         
-        # Generate some realistic looking leases for demo purposes
-        import datetime
+        # Generate 5-10 leases
+        lease_count = random.randint(5, 10)
         
-        simulated_leases = [
-            {
-                'ip_address': '192.168.1.100',
-                'mac_address': '00:1A:2B:3C:4D:5E',
-                'hostname': 'laptop-user1',
-                'start_time': (datetime.datetime.now() - datetime.timedelta(hours=2)).strftime('%Y/%m/%d %H:%M:%S'),
-                'end_time': (datetime.datetime.now() + datetime.timedelta(hours=22)).strftime('%Y/%m/%d %H:%M:%S')
-            },
-            {
-                'ip_address': '192.168.1.101',
-                'mac_address': '00:2C:3D:4E:5F:6A',
-                'hostname': 'smartphone-user2',
-                'start_time': (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime('%Y/%m/%d %H:%M:%S'),
-                'end_time': (datetime.datetime.now() + datetime.timedelta(hours=23)).strftime('%Y/%m/%d %H:%M:%S')
-            },
-            {
-                'ip_address': '192.168.1.102',
-                'mac_address': '00:3E:4F:5A:6B:7C',
-                'hostname': 'smart-tv',
-                'start_time': (datetime.datetime.now() - datetime.timedelta(hours=5)).strftime('%Y/%m/%d %H:%M:%S'),
-                'end_time': (datetime.datetime.now() + datetime.timedelta(hours=19)).strftime('%Y/%m/%d %H:%M:%S')
-            }
-        ]
-        
-        # Try to read real leases file if it exists, but fallback to simulation
-        leases_file = '/var/lib/dhcp/dhcpd.leases'
-        if os.path.exists(leases_file):
-            try:
-                with open(leases_file, 'r') as f:
-                    content = f.read()
+        for i in range(lease_count):
+            # Generate MAC address
+            mac = ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)]).upper()
+            
+            # Generate IP
+            ip = f"192.168.1.{random.randint(100, 200)}"
+            
+            # Generate hostname
+            hostnames = ["desktop-pc", "laptop-mario", "iphone-lucia", "android-giovanni", 
+                         "smart-tv", "printer", "raspberry-pi", "gaming-console", 
+                         "tablet-marco", "media-player", "thermostat", "security-camera"]
+            
+            hostname = hostnames[random.randint(0, len(hostnames) - 1)]
+            if i < len(hostnames):
+                hostname = hostnames[i]
                 
-                # Parse leases file
-                lease_blocks = re.findall(r'lease ([\d.]+) {([^}]+)}', content, re.DOTALL)
-                
-                for ip, details in lease_blocks:
-                    lease_info = {'ip_address': ip}
-                    
-                    # Extract MAC address
-                    mac_match = re.search(r'hardware ethernet ([0-9a-f:]+);', details)
-                    if mac_match:
-                        lease_info['mac_address'] = mac_match.group(1)
-                    
-                    # Extract hostname
-                    hostname_match = re.search(r'client-hostname "([^"]+)";', details)
-                    if hostname_match:
-                        lease_info['hostname'] = hostname_match.group(1)
-                    else:
-                        lease_info['hostname'] = 'unknown'
-                    
-                    # Extract lease start and end times
-                    start_match = re.search(r'starts \d+ ([^;]+);', details)
-                    if start_match:
-                        lease_info['start_time'] = start_match.group(1)
-                    
-                    end_match = re.search(r'ends \d+ ([^;]+);', details)
-                    if end_match:
-                        lease_info['end_time'] = end_match.group(1)
-                    
-                    leases.append(lease_info)
-                
-                if leases:
-                    return leases  # Return real leases if we found any
-            except Exception as inner_e:
-                logger.debug(f"Could not read DHCP leases file, using simulated data: {str(inner_e)}")
+            # Generate lease time information
+            expiry = datetime.now() + timedelta(hours=random.randint(1, 24))
+            
+            leases.append({
+                "ip": ip,
+                "mac": mac,
+                "hostname": hostname,
+                "expiry": expiry.strftime("%Y-%m-%d %H:%M:%S"),
+                "permanent": random.random() > 0.8  # 20% chance of being permanent
+            })
         
-        # Return simulated data
-        return simulated_leases
+        return leases
     except Exception as e:
         logger.error(f"Error getting DHCP leases: {str(e)}")
         return []
 
 def get_dns_settings():
     """
-    Get DNS server settings
+    Get DNS settings
     
     Returns:
-        dict: Dictionary with DNS settings
+        dict: DNS settings
     """
-    dns_settings = {
-        'primary': '',
-        'secondary': ''
-    }
-    
     try:
-        # In Replit environment, return simulated DNS settings
-        dns_settings = {
-            'primary': '8.8.8.8',  # Google DNS as example
-            'secondary': '8.8.4.4'
+        # In Replit environment, we'll create simulated data
+        settings = {
+            "primary_dns": "8.8.8.8",
+            "secondary_dns": "8.8.4.4",
+            "local_domain": "home.lan",
+            "enable_caching": True,
+            "forward_queries": True,
+            "cache_size": 1000,
+            "custom_entries": [
+                {"domain": "router.home.lan", "ip": "192.168.1.1"},
+                {"domain": "printer.home.lan", "ip": "192.168.1.101"},
+                {"domain": "nas.home.lan", "ip": "192.168.1.200"}
+            ]
         }
         
-        # Try to read resolv.conf if it exists, but don't fail if it doesn't
-        try:
-            if os.path.exists(DNS_CONFIG_PATH):
-                with open(DNS_CONFIG_PATH, 'r') as f:
-                    content = f.read()
-                
-                # Extract nameservers
-                nameservers = re.findall(r'nameserver\s+([0-9.]+)', content)
-                
-                if len(nameservers) > 0:
-                    dns_settings['primary'] = nameservers[0]
-                
-                if len(nameservers) > 1:
-                    dns_settings['secondary'] = nameservers[1]
-        except Exception as inner_e:
-            logger.debug(f"Could not read DNS config, using defaults: {str(inner_e)}")
-        
-        return dns_settings
+        return settings
     except Exception as e:
         logger.error(f"Error getting DNS settings: {str(e)}")
-        return dns_settings
+        return {}
 
-def set_dns_settings(primary_dns, secondary_dns=None):
+def set_dns_settings(settings):
     """
-    Set DNS server settings
+    Configure DNS settings
     
     Args:
-        primary_dns: Primary DNS server
-        secondary_dns: Secondary DNS server (optional)
+        settings: Dictionary with DNS settings
         
     Returns:
-        bool: True if successful, False otherwise
+        dict: Result of the configuration
     """
     try:
-        # Generate resolv.conf content
-        content = f"# Generated by BPI-R4 Router OS\n"
+        # In Replit environment, we'll simulate success
+        logger.info(f"Configuring DNS settings with {settings}")
         
-        if primary_dns:
-            content += f"nameserver {primary_dns}\n"
+        # Simulate a brief delay
+        import time
+        time.sleep(0.5)
         
-        if secondary_dns:
-            content += f"nameserver {secondary_dns}\n"
-        
-        # Log the DNS configuration that would be written
-        logger.info(f"Would write DNS configuration to {DNS_CONFIG_PATH}:\n{content}")
-        
-        logger.info("DNS settings simulation completed successfully")
-        return True
+        return {
+            "success": True,
+            "message": "DNS settings configured successfully",
+            "settings": settings
+        }
     except Exception as e:
-        logger.error(f"Error setting DNS settings: {str(e)}")
-        return False
+        logger.error(f"Error configuring DNS settings: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Error configuring DNS settings: {str(e)}"
+        }

@@ -344,41 +344,219 @@ def run_diagnostic(tool, parameters=''):
         
         # Simulate different outputs based on the tool
         if tool == 'ping':
-            hostname = parameters.split()[-1] if parameters else 'localhost'
+            # Parse parameters to extract hostname
+            params = parameters.split()
+            hostname = 'localhost'
+            
+            for i, param in enumerate(params):
+                if not param.startswith('-') and i > 0 and params[i-1] not in ['-c', '-s']:
+                    hostname = param
+                    break
+                if i == len(params) - 1:
+                    hostname = param
+            
+            # Random ping times
+            import random
+            ping_time_base = random.uniform(10, 100)
+            ping_times = [ping_time_base + random.uniform(-5, 5) for _ in range(4)]
+            
             return f"PING {hostname} 56(84) bytes of data.\n" + \
-                   f"64 bytes from {hostname}: icmp_seq=1 ttl=64 time=0.123 ms\n" + \
-                   f"64 bytes from {hostname}: icmp_seq=2 ttl=64 time=0.134 ms\n" + \
-                   f"64 bytes from {hostname}: icmp_seq=3 ttl=64 time=0.128 ms\n" + \
-                   f"64 bytes from {hostname}: icmp_seq=4 ttl=64 time=0.120 ms\n\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=1 ttl=64 time={ping_times[0]:.3f} ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=2 ttl=64 time={ping_times[1]:.3f} ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=3 ttl=64 time={ping_times[2]:.3f} ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=4 ttl=64 time={ping_times[3]:.3f} ms\n\n" + \
                    f"--- {hostname} ping statistics ---\n" + \
-                   f"4 packets transmitted, 4 received, 0% packet loss, time 3004ms\n" + \
-                   f"rtt min/avg/max/mdev = 0.120/0.126/0.134/0.006 ms"
+                   f"4 packets transmitted, 4 received, 0% packet loss, time 3003ms\n" + \
+                   f"rtt min/avg/max/mdev = {min(ping_times):.3f}/{sum(ping_times)/4:.3f}/{max(ping_times):.3f}/{(max(ping_times)-min(ping_times))/4:.3f} ms"
+        
         elif tool == 'traceroute':
-            hostname = parameters.split()[-1] if parameters else 'localhost'
-            return f"traceroute to {hostname}, 30 hops max, 60 byte packets\n" + \
-                   f" 1  _gateway (192.168.1.1)  0.267 ms  0.239 ms  0.225 ms\n" + \
-                   f" 2  192.168.0.1  1.428 ms  1.399 ms  1.365 ms\n" + \
-                   f" 3  10.0.0.1  3.469 ms  3.433 ms  3.334 ms\n" + \
-                   f" 4  172.16.0.1  8.557 ms  8.532 ms  8.482 ms\n" + \
-                   f" 5  {hostname}  12.644 ms  12.625 ms  12.608 ms"
-        elif tool == 'nslookup' or tool == 'dig':
-            hostname = parameters.split()[-1] if parameters else 'example.com'
-            return f"Server:\t\t8.8.8.8\nAddress:\t8.8.8.8#53\n\nNon-authoritative answer:\n" + \
-                   f"Name:\t{hostname}\nAddress: 93.184.216.34"
+            # Parse parameters to extract hostname
+            params = parameters.split()
+            hostname = 'localhost'
+            
+            for i, param in enumerate(params):
+                if not param.startswith('-') and i > 0 and params[i-1] not in ['-m']:
+                    hostname = param
+                    break
+                if i == len(params) - 1:
+                    hostname = param
+            
+            # Generate random hops
+            import random
+            
+            # Number of hops to simulate
+            max_hops = 5 + random.randint(0, 10)
+            output = f"traceroute to {hostname}, 30 hops max, 60 byte packets\n"
+            
+            current_time = 20.0  # Start with base latency
+            
+            for hop in range(1, max_hops + 1):
+                # Random IP for router
+                router_ip = f"192.168.{random.randint(0, 255)}.{random.randint(1, 254)}"
+                router_name = f"router-{hop}.net"
+                
+                # Random latency that increases with each hop
+                latency1 = current_time + random.uniform(1, 5)
+                latency2 = current_time + random.uniform(1, 5)
+                latency3 = current_time + random.uniform(1, 5)
+                
+                output += f" {hop}  {router_name} ({router_ip})  {latency1:.3f} ms  {latency2:.3f} ms  {latency3:.3f} ms\n"
+                
+                current_time += random.uniform(5, 15)  # Increment base latency
+            
+            # Final hop to destination
+            final_latency1 = current_time + random.uniform(1, 5)
+            final_latency2 = current_time + random.uniform(1, 5)
+            final_latency3 = current_time + random.uniform(1, 5)
+            
+            output += f" {max_hops + 1}  {hostname} ({random.randint(1, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)})  {final_latency1:.3f} ms  {final_latency2:.3f} ms  {final_latency3:.3f} ms\n"
+            
+            return output
+            
+        elif tool == 'nslookup':
+            # Parse parameters to extract domain
+            params = parameters.split()
+            domain = params[-1] if params else 'localhost'
+            
+            # Generate random IP
+            import random
+            ip1 = random.randint(1, 255)
+            ip2 = random.randint(0, 255)
+            ip3 = random.randint(0, 255)
+            ip4 = random.randint(1, 254)
+            
+            return f"Server:\t\t8.8.8.8\n" + \
+                   f"Address:\t8.8.8.8#53\n\n" + \
+                   f"Non-authoritative answer:\n" + \
+                   f"Name:\t{domain}\n" + \
+                   f"Address: {ip1}.{ip2}.{ip3}.{ip4}\n"
+        
+        elif tool == 'dig':
+            # Parse parameters to extract domain and record type
+            params = parameters.split()
+            domain = params[0] if params else 'localhost'
+            record_type = params[1] if len(params) > 1 else 'A'
+            
+            # Generate simulated dig output based on record type
+            import random
+            from datetime import datetime
+            
+            current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+            query_time = random.uniform(10, 100)
+            
+            header = f"; <<>> DiG 9.16.1-Ubuntu <<>> {domain} {record_type}\n" + \
+                     f";; global options: +cmd\n" + \
+                     f";; Got answer:\n" + \
+                     f";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: {random.randint(1000, 9999)}\n" + \
+                     f";; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n"
+            
+            question = f";; QUESTION SECTION:\n" + \
+                       f";{domain}.\t\tIN\t{record_type}\n\n"
+            
+            answer = f";; ANSWER SECTION:\n"
+            
+            if record_type == 'A' or record_type == 'a':
+                # Generate random IP
+                ip = f"{random.randint(1, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+                answer += f"{domain}.\t\t3600\tIN\tA\t{ip}\n\n"
+            elif record_type == 'MX' or record_type == 'mx':
+                # Generate random mail server
+                answer += f"{domain}.\t\t3600\tIN\tMX\t10 mail1.{domain}.\n"
+                answer += f"{domain}.\t\t3600\tIN\tMX\t20 mail2.{domain}.\n\n"
+            elif record_type == 'NS' or record_type == 'ns':
+                # Generate random name servers
+                answer += f"{domain}.\t\t3600\tIN\tNS\tns1.{domain}.\n"
+                answer += f"{domain}.\t\t3600\tIN\tNS\tns2.{domain}.\n\n"
+            elif record_type == 'TXT' or record_type == 'txt':
+                # Generate random TXT record
+                answer += f"{domain}.\t\t3600\tIN\tTXT\t\"v=spf1 include:_spf.{domain} ~all\"\n\n"
+            else:
+                # Default record
+                answer += f"{domain}.\t\t3600\tIN\t{record_type}\tgeneric.{domain}.\n\n"
+            
+            footer = f";; Query time: {int(query_time)} msec\n" + \
+                     f";; SERVER: 8.8.8.8#53(8.8.8.8)\n" + \
+                     f";; WHEN: {datetime.now().strftime('%a %b %d %H:%M:%S')} UTC {datetime.now().year}\n" + \
+                     f";; MSG SIZE  rcvd: {random.randint(50, 150)}\n"
+            
+            return header + question + answer + footer
+        
         elif tool == 'iperf':
-            return "[ ID] Interval           Transfer     Bitrate         Retr\n" + \
-                   "[  5]   0.00-10.00  sec   112 MBytes  94.1 Mbits/sec    0\n" + \
-                   "[  5]  10.00-20.00  sec   115 MBytes  96.3 Mbits/sec    0\n" + \
-                   "[  5]  20.00-30.00  sec   114 MBytes  95.6 Mbits/sec    0\n" + \
-                   "- - - - - - - - - - - - - - - - - - - - - - - - -\n" + \
-                   "[ ID] Interval           Transfer     Bitrate         Retr\n" + \
-                   "[  5]   0.00-30.00  sec   341 MBytes  95.3 Mbits/sec    0"
-        else:
-            return f"Simulated output for {tool} with parameters: {parameters}"
+            # Generate simulated iperf output
+            import random
+            from datetime import datetime
+            
+            output = f"Connecting to host iperf.server.com, port 5201\n"
+            output += f"[  5] local 192.168.1.10 port 49152 connected to 203.0.113.45 port 5201\n"
+            output += f"[ ID] Interval           Transfer     Bitrate         Retr\n"
+            
+            total_bits = 0
+            
+            # Generate 10 intervals
+            for i in range(1, 11):
+                # Random bandwidth between 50-150 Mbits/sec
+                bandwidth = random.uniform(50, 150)
+                total_bits += bandwidth
+                
+                output += f"[  5] {i-1:.1f}-{i:.1f}   sec  {bandwidth/8:.1f} MBytes  {bandwidth:.1f} Mbits/sec  {random.randint(0, 2)}\n"
+            
+            # Summary line
+            output += f"- - - - - - - - - - - - - - - - - - - - - - - - -\n"
+            output += f"[ ID] Interval           Transfer     Bitrate         Retr\n"
+            output += f"[  5] 0.0-10.0  sec  {total_bits/8:.1f} MBytes  {total_bits/10:.1f} Mbits/sec  {random.randint(1, 10)}\n"
+            
+            return output
+            
+        # Default fallback for unknown tools
+        return f"Simulated output for {tool} with parameters: {parameters}"
         
     except Exception as e:
         logger.error(f"Error running diagnostic tool {tool}: {str(e)}")
         return f"Error: {str(e)}"
+
+def get_network_usage():
+    """
+    Get network usage statistics
+    
+    Returns:
+        dict: Dictionary with network usage statistics
+    """
+    try:
+        # In Replit environment, we'll create simulated data
+        import random
+        
+        # Generate random usage data
+        usage = {
+            "total_rx": random.randint(1000000000, 10000000000),  # Total received bytes
+            "total_tx": random.randint(500000000, 5000000000),    # Total transmitted bytes
+            "current_rx": random.randint(50000, 5000000),         # Current receive rate (bytes/sec)
+            "current_tx": random.randint(10000, 1000000),         # Current transmit rate (bytes/sec)
+            "interfaces": {
+                "eth0": {
+                    "rx": random.randint(500000000, 5000000000),
+                    "tx": random.randint(100000000, 1000000000),
+                    "rx_rate": random.randint(10000, 1000000),
+                    "tx_rate": random.randint(5000, 500000)
+                },
+                "eth1": {
+                    "rx": random.randint(500000000, 5000000000),
+                    "tx": random.randint(100000000, 1000000000),
+                    "rx_rate": random.randint(10000, 1000000),
+                    "tx_rate": random.randint(5000, 500000)
+                },
+                "wlan0": {
+                    "rx": random.randint(100000000, 1000000000),
+                    "tx": random.randint(50000000, 500000000),
+                    "rx_rate": random.randint(5000, 500000),
+                    "tx_rate": random.randint(1000, 100000)
+                }
+            }
+        }
+        
+        return usage
+    except Exception as e:
+        logger.error(f"Error getting network usage: {str(e)}")
+        return {}
 
 def get_installed_packages():
     """

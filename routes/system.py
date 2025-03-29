@@ -133,6 +133,18 @@ def diagnostics():
         flash("Si è verificato un errore nel caricamento della pagina di diagnostica.", "danger")
         return redirect(url_for('system.index'))
 
+@system_bp.route('/advanced_diagnostics')
+@login_required
+def advanced_diagnostics():
+    """Advanced network diagnostics page"""
+    try:
+        return render_template('system/advanced_diagnostics.html', 
+                              active_page="system")
+    except Exception as e:
+        logger.error(f"Error loading advanced diagnostics page: {str(e)}")
+        flash("Si è verificato un errore nel caricamento della pagina di diagnostica avanzata.", "danger")
+        return redirect(url_for('system.index'))
+
 @system_bp.route('/diagnostics/run', methods=['POST'])
 @login_required
 def run_diagnostic_tool():
@@ -147,6 +159,197 @@ def run_diagnostic_tool():
     except Exception as e:
         logger.error(f"Error running diagnostic tool: {str(e)}")
         return jsonify({'success': False, 'message': f'Errore nell\'esecuzione del test diagnostico: {str(e)}'}), 500
+        
+@system_bp.route('/network/test', methods=['POST'])
+@login_required
+def run_network_test():
+    """Run advanced network test"""
+    try:
+        test_type = request.form.get('test_type')
+        target = request.form.get('target', '')
+        options = request.form.get('options', '{}')
+        
+        if test_type == 'ping':
+            # Test di ping
+            host = target if target else '8.8.8.8'
+            count = request.form.get('count', '5')
+            size = request.form.get('size', '56')
+            
+            result = run_diagnostic('ping', f"-c {count} -s {size} {host}")
+        
+        elif test_type == 'traceroute':
+            # Test di traceroute
+            host = target if target else 'google.com'
+            max_hop = request.form.get('max_hop', '20')
+            
+            result = run_diagnostic('traceroute', f"-m {max_hop} {host}")
+        
+        elif test_type == 'dns':
+            # Test di risoluzione DNS
+            domain = target if target else 'google.com'
+            record_type = request.form.get('record_type', 'A')
+            
+            result = run_diagnostic('dig', f"{domain} {record_type}")
+            
+        elif test_type == 'speed':
+            # Test di velocità
+            server = request.form.get('server', 'auto')
+            duration = request.form.get('duration', '10')
+            
+            # Simula un test di velocità
+            import random
+            import time
+            
+            time.sleep(2)  # Simulazione di test in corso
+            
+            download = random.uniform(30, 100)
+            upload = random.uniform(10, 30)
+            ping = random.uniform(10, 50)
+            
+            result = {
+                'download': round(download, 2),
+                'upload': round(upload, 2),
+                'ping': round(ping, 2),
+                'server': 'Milan, IT (TIM)',
+                'isp': 'Telecom Italia'
+            }
+            
+            return jsonify({'success': True, 'result': result})
+        
+        elif test_type == 'packet_loss':
+            # Test di perdita di pacchetti
+            host = target if target else '8.8.8.8'
+            duration = request.form.get('duration', '30')
+            interval = request.form.get('interval', '500')
+            
+            # Simula un test di perdita di pacchetti
+            import random
+            import time
+            
+            time.sleep(2)  # Simulazione di test in corso
+            
+            latency = random.uniform(15, 50)
+            jitter = random.uniform(1, 8)
+            packet_loss = random.uniform(0, 2)
+            
+            result = {
+                'latency': round(latency, 2),
+                'jitter': round(jitter, 2),
+                'packet_loss': round(packet_loss, 2),
+                'packets_sent': 50,
+                'packets_received': round(50 - (50 * packet_loss / 100))
+            }
+            
+            return jsonify({'success': True, 'result': result})
+            
+        elif test_type == 'port_check':
+            # Verifica porta
+            port = target
+            protocol = request.form.get('protocol', 'tcp')
+            
+            # Simula una verifica porta
+            import random
+            
+            is_open = random.random() > 0.7
+            
+            result = {
+                'port': port,
+                'protocol': protocol,
+                'is_open': is_open,
+                'service': get_service_for_port(port) if is_open else None
+            }
+            
+            return jsonify({'success': True, 'result': result})
+        
+        else:
+            return jsonify({'success': False, 'message': f'Tipo di test non supportato: {test_type}'}), 400
+        
+        return jsonify({'success': True, 'result': result})
+    except Exception as e:
+        logger.error(f"Error running network test: {str(e)}")
+        return jsonify({'success': False, 'message': f'Errore nell\'esecuzione del test di rete: {str(e)}'}), 500
+    
+@system_bp.route('/network/devices', methods=['GET'])
+@login_required
+def get_connected_devices():
+    """Get connected devices on the network"""
+    try:
+        from utils.network import get_connected_devices
+        
+        devices = get_connected_devices()
+        return jsonify({'success': True, 'devices': devices})
+    except Exception as e:
+        logger.error(f"Error getting connected devices: {str(e)}")
+        return jsonify({'success': False, 'message': f'Errore nel recupero dei dispositivi connessi: {str(e)}'}), 500
+
+@system_bp.route('/network/interfaces', methods=['GET'])
+@login_required
+def get_network_interfaces():
+    """Get network interfaces status"""
+    try:
+        from utils.network import get_interfaces_status
+        
+        interfaces = get_interfaces_status()
+        return jsonify({'success': True, 'interfaces': interfaces})
+    except Exception as e:
+        logger.error(f"Error getting interface status: {str(e)}")
+        return jsonify({'success': False, 'message': f'Errore nel recupero dello stato delle interfacce: {str(e)}'}), 500
+
+@system_bp.route('/network/bandwidth', methods=['GET'])
+@login_required
+def get_bandwidth_usage():
+    """Get bandwidth usage data"""
+    try:
+        interface = request.args.get('interface', 'all')
+        period = request.args.get('period', '1h')
+        
+        # Simula dati di utilizzo della larghezza di banda
+        import random
+        import time
+        from datetime import datetime, timedelta
+        
+        # Genera 30 punti dati
+        now = datetime.now()
+        timestamps = [(now - timedelta(minutes=i)).strftime('%H:%M:%S') for i in range(30, 0, -1)]
+        
+        download = [round(random.uniform(5, 50), 1) for _ in range(30)]
+        upload = [round(random.uniform(1, 15), 1) for _ in range(30)]
+        
+        return jsonify({
+            'success': True, 
+            'data': {
+                'timestamps': timestamps,
+                'download': download,
+                'upload': upload,
+                'current_download': download[-1],
+                'current_upload': upload[-1],
+                'interface': interface
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting bandwidth usage: {str(e)}")
+        return jsonify({'success': False, 'message': f'Errore nel recupero dell\'utilizzo della banda: {str(e)}'}), 500
+        
+def get_service_for_port(port):
+    """Get service name for a port number"""
+    port = int(port)
+    
+    # Mapping delle porte comuni
+    services = {
+        21: 'FTP',
+        22: 'SSH',
+        23: 'Telnet',
+        25: 'SMTP',
+        53: 'DNS',
+        80: 'HTTP',
+        443: 'HTTPS',
+        3389: 'Remote Desktop',
+        1194: 'OpenVPN',
+        5060: 'SIP',
+        5061: 'SIP/TLS'
+    }
+    
+    return services.get(port, 'Sconosciuto')
 
 @system_bp.route('/updates')
 @login_required
