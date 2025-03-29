@@ -1,0 +1,72 @@
+# File di ambiente e configurazione
+.env
+.env.local
+*.env.*
+.replit
+
+# File di cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# File di database di sviluppo SQLite
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# File di log
+*.log
+logs/
+
+# File temporanei di sistema
+.DS_Store
+Thumbs.db
+.directory
+*.swp
+*~
+
+# Editor specifici
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# File di ambiente virtuale
+venv/
+ENV/
+
+# File di cache
+.coverage
+htmlcov/
+
+# Nix
+.replit.nix
+
+# Cartella uv
+.uv/
+
+# Lock files
+*.lock
+
+# Replit files
+.replit
+replit.nix
