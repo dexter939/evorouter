@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Aggiungi listener per il pulsante di aggiunta interno
   document.getElementById('add-extension').addEventListener('click', addExtension);
   
+  // Aggiungi listener per i pulsanti di generazione password
+  document.querySelectorAll('.generate-password').forEach(btn => {
+    btn.addEventListener('click', handleGeneratePassword);
+  });
+  
   // Aggiungi listener per il toggle del trunk SIP
   document.getElementById('configure_trunk').addEventListener('change', toggleTrunkConfig);
   
@@ -83,6 +88,20 @@ function updateStepIndicators(currentStep) {
     } else if (i === currentStep) {
       indicator.classList.add('active');
     }
+  }
+}
+
+// Funzione per gestire la generazione delle password
+function handleGeneratePassword() {
+  // Trova l'input password associato al pulsante
+  const passwordInput = this.closest('.input-group').querySelector('input[type="password"]');
+  if (passwordInput) {
+    passwordInput.value = generateSecurePassword();
+    // Mostra temporaneamente la password
+    passwordInput.type = 'text';
+    setTimeout(() => {
+      passwordInput.type = 'password';
+    }, 3000); // Rimettere il tipo password dopo 3 secondi
   }
 }
 
@@ -296,9 +315,12 @@ function addExtension() {
           </div>
         </div>
         <div class="col-md-4">
-          <div class="form-floating">
+          <div class="form-floating input-group">
             <input type="password" class="form-control" name="ext_password_${extensionCount}" value="${generateSecurePassword()}" required>
             <label>Password</label>
+            <button type="button" class="btn btn-secondary generate-password" title="Genera password sicura">
+              <i data-feather="key"></i>
+            </button>
           </div>
         </div>
         <div class="col-md-1 d-flex align-items-center">
@@ -322,6 +344,12 @@ function addExtension() {
   removeBtn.addEventListener('click', function() {
     removeExtension(newExtension);
   });
+  
+  // Aggiungi listener per il pulsante di generazione password
+  const genPasswordBtn = newExtension.querySelector('.generate-password');
+  if (genPasswordBtn) {
+    genPasswordBtn.addEventListener('click', handleGeneratePassword);
+  }
 }
 
 // Rimuove un interno dal modulo
