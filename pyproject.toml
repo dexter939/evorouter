@@ -14,4 +14,5 @@ dependencies = [
     "sqlalchemy>=2.0.40",
     "flask-jwt-extended>=4.7.1",
     "psutil>=7.0.0",
+    "werkzeug>=3.1.3",
 ]
