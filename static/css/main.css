@@ -143,15 +143,15 @@ body {
 }
 
 .status-up {
-  background-color: var(--success-color);
+  background-color: var(--success, #28a745);
 }
 
 .status-down {
-  background-color: var(--danger-color);
+  background-color: var(--danger, #dc3545);
 }
 
 .status-warning {
-  background-color: var(--warning-color);
+  background-color: var(--warning, #ffc107);
 }
 
 /* Form styling */
@@ -272,7 +272,7 @@ body {
 .loader {
   border: 3px solid #f3f3f3;
   border-radius: 50%;
-  border-top: 3px solid var(--primary-color);
+  border-top: 3px solid var(--primary, #009cde);
   width: 20px;
   height: 20px;
   animation: spin 1s linear infinite;

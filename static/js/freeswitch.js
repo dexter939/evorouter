@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
     restartFsBtn.addEventListener('click', confirmRestartFreeswitch);
   }
   
+  // Add listener for the additional start FreeSWITCH button in warning message
+  const startFsBtn = document.getElementById('startFreeswitchBtn');
+  if (startFsBtn) {
+    startFsBtn.addEventListener('click', confirmRestartFreeswitch);
+  }
+  
   // Add listener for delete extension buttons
   const deleteExtensionBtns = document.querySelectorAll('.delete-extension-btn');
   if (deleteExtensionBtns.length > 0) {
@@ -64,8 +70,19 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Show confirmation dialog for FreeSWITCH service restart
  */
-function confirmRestartFreeswitch() {
-  if (confirm('Sei sicuro di voler riavviare il servizio FreeSWITCH? Tutte le chiamate attive verranno interrotte.')) {
+function confirmRestartFreeswitch(event) {
+  // Check if service is already running
+  const statusIndicator = document.querySelector('.status-indicator');
+  const isRunning = statusIndicator && statusIndicator.classList.contains('status-up');
+  
+  // Change message based on service status
+  let confirmMessage = 'Sei sicuro di voler avviare il servizio FreeSWITCH?';
+  
+  if (isRunning) {
+    confirmMessage = 'Sei sicuro di voler riavviare il servizio FreeSWITCH? Tutte le chiamate attive verranno interrotte.';
+  }
+  
+  if (confirm(confirmMessage)) {
     restartFreeswitchService();
   }
 }
@@ -74,12 +91,25 @@ function confirmRestartFreeswitch() {
  * Restart FreeSWITCH service via API
  */
 function restartFreeswitchService() {
-  const btn = document.getElementById('restartFreeswitch');
-  if (btn) {
-    // Disable button and show loading state
-    btn.disabled = true;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="loader"></span> Riavvio in corso...';
+  // Determine which button was clicked (either the header button or the in-page button)
+  const headerBtn = document.getElementById('restartFreeswitch');
+  const inPageBtn = document.getElementById('startFreeswitchBtn');
+  
+  let clickedBtn = headerBtn; // Default to header button
+  
+  // If the in-page button exists and is visible, use it for UI updates
+  if (inPageBtn && inPageBtn.offsetParent !== null) {
+    clickedBtn = inPageBtn;
+  }
+  
+  if (clickedBtn) {
+    // Disable both buttons to prevent multiple clicks
+    if (headerBtn) headerBtn.disabled = true;
+    if (inPageBtn) inPageBtn.disabled = true;
+    
+    // Store original text and show loading state
+    const originalText = clickedBtn.innerHTML;
+    clickedBtn.innerHTML = '<span class="loader"></span> Avvio in corso...';
     
     // Call API to restart FreeSWITCH
     fetch('/freeswitch/restart', {
@@ -92,7 +122,7 @@ function restartFreeswitchService() {
     .then(data => {
       if (data.success) {
         // Show success message
-        showAlert('FreeSWITCH riavviato con successo.', 'success');
+        showAlert('FreeSWITCH avviato con successo.', 'success');
         
         // After a delay, refresh the page to show updated status
         setTimeout(() => {
@@ -100,20 +130,32 @@ function restartFreeswitchService() {
         }, 3000);
       } else {
         // Show error message
-        showAlert('Errore durante il riavvio di FreeSWITCH: ' + data.message, 'danger');
+        showAlert('Errore durante l\'avvio di FreeSWITCH: ' + data.message, 'danger');
         
-        // Reset button state
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        // Reset button states
+        if (headerBtn) {
+          headerBtn.innerHTML = headerBtn === clickedBtn ? originalText : headerBtn.innerHTML;
+          headerBtn.disabled = false;
+        }
+        if (inPageBtn) {
+          inPageBtn.innerHTML = inPageBtn === clickedBtn ? originalText : inPageBtn.innerHTML;
+          inPageBtn.disabled = false;
+        }
       }
     })
     .catch(error => {
-      console.error('Error restarting FreeSWITCH:', error);
-      showAlert('Errore durante il riavvio di FreeSWITCH.', 'danger');
+      console.error('Error starting FreeSWITCH:', error);
+      showAlert('Errore durante l\'avvio di FreeSWITCH.', 'danger');
       
-      // Reset button state
-      btn.innerHTML = originalText;
-      btn.disabled = false;
+      // Reset button states
+      if (headerBtn) {
+        headerBtn.innerHTML = headerBtn === clickedBtn ? originalText : headerBtn.innerHTML;
+        headerBtn.disabled = false;
+      }
+      if (inPageBtn) {
+        inPageBtn.innerHTML = inPageBtn === clickedBtn ? originalText : inPageBtn.innerHTML;
+        inPageBtn.disabled = false;
+      }
     });
   }
 }
