@@ -4,8 +4,11 @@ import os
 import re
 import psutil
 import time
-from datetime import datetime
-from config import SYSTEM_LOG_PATH, DIAGNOSTIC_TOOLS
+from datetime import datetime, timedelta
+from config import (
+    SYSTEM_LOG_PATH, DIAGNOSTIC_TOOLS,
+    DEFAULT_LAN_INTERFACE, DEFAULT_WAN_INTERFACE
+)
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -180,8 +183,9 @@ def reboot_system():
         bool: True if successful
     """
     try:
-        logger.info("System reboot initiated")
-        subprocess.Popen(['sleep', '5', '&&', 'reboot'], shell=True)
+        logger.info("System reboot simulated in Replit environment")
+        # In a real BPI-R4 system, we would execute:
+        # subprocess.Popen(['sleep', '5', '&&', 'reboot'], shell=True)
         return True
     except Exception as e:
         logger.error(f"Error rebooting system: {str(e)}")
@@ -195,8 +199,9 @@ def shutdown_system():
         bool: True if successful
     """
     try:
-        logger.info("System shutdown initiated")
-        subprocess.Popen(['sleep', '5', '&&', 'poweroff'], shell=True)
+        logger.info("System shutdown simulated in Replit environment")
+        # In a real BPI-R4 system, we would execute:
+        # subprocess.Popen(['sleep', '5', '&&', 'poweroff'], shell=True)
         return True
     except Exception as e:
         logger.error(f"Error shutting down system: {str(e)}")
@@ -216,63 +221,62 @@ def get_system_logs(log_type='system', lines=100):
     log_entries = []
     
     try:
-        log_file = None
+        # In Replit environment, simulate system logs
+        # since we don't have access to the real system logs
         
-        if log_type == 'system':
-            log_file = '/var/log/syslog'
-        elif log_type == 'network':
-            log_file = '/var/log/network.log'
-        elif log_type == 'freeswitch':
-            log_file = '/var/log/freeswitch/freeswitch.log'
-        elif log_type == 'security':
-            log_file = '/var/log/auth.log'
-        else:
-            logger.error(f"Unknown log type: {log_type}")
-            return []
-        
-        if not os.path.exists(log_file):
-            # Return mock data if log file doesn't exist
-            # In a real system, these log files should exist
-            for i in range(min(lines, 10)):
-                log_entries.append({
-                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'level': 'info',
-                    'message': f'Example {log_type} log entry {i+1}'
-                })
-            return log_entries
-        
-        # Get the last N lines of the log file
-        output = subprocess.run(['tail', '-n', str(lines), log_file], 
-                               capture_output=True, text=True, check=True).stdout
-        
-        # Parse log entries
-        for line in output.splitlines():
-            # Try to parse syslog format
-            match = re.match(r'(\w+\s+\d+\s+\d+:\d+:\d+)\s+\w+\s+([^:]+):\s+(.+)', line)
-            if match:
-                timestamp, facility, message = match.groups()
+        # Generate simulated log entries based on log type
+        current_time = datetime.now()
+        for i in range(min(lines, 50)):
+            # Create a timestamp 10 minutes apart for each entry
+            entry_time = current_time - timedelta(minutes=10 * (lines - i))
+            timestamp = entry_time.strftime('%b %d %H:%M:%S')
+            
+            # Determine log level (mostly info, some warnings and errors)
+            level_roll = i % 10
+            if level_roll == 0:
+                level = 'error'
+            elif level_roll in [3, 7]:
+                level = 'warning'
+            else:
                 level = 'info'
                 
-                # Try to determine log level from message or facility
-                if any(x in message.lower() for x in ['error', 'fail', 'critical']):
-                    level = 'error'
-                elif any(x in message.lower() for x in ['warn']):
-                    level = 'warning'
-                elif any(x in message.lower() for x in ['debug']):
-                    level = 'debug'
-                
-                log_entries.append({
-                    'timestamp': timestamp,
-                    'level': level,
-                    'message': message
-                })
+            # Create appropriate message based on log type
+            if log_type == 'system':
+                if level == 'error':
+                    message = f"System process crashed: Out of memory"
+                elif level == 'warning':
+                    message = f"System resource usage high: CPU at 85%"
+                else:
+                    message = f"System service started: systemd[{i+100}]"
+            elif log_type == 'network':
+                if level == 'error':
+                    message = f"Network connection lost on {DEFAULT_WAN_INTERFACE}"
+                elif level == 'warning':
+                    message = f"DHCP lease renewal failed, retrying..."
+                else:
+                    message = f"Network interface {DEFAULT_LAN_INTERFACE} is up"
+            elif log_type == 'freeswitch':
+                if level == 'error':
+                    message = f"SIP registration failed for extension 1001"
+                elif level == 'warning':
+                    message = f"Call quality degraded for call ID: CALL-{i+1000}"
+                else:
+                    message = f"FreeSWITCH processed call to extension 1003"
+            elif log_type == 'security':
+                if level == 'error':
+                    message = f"Failed login attempt for user admin from 192.168.1.{i+10}"
+                elif level == 'warning':
+                    message = f"Multiple login attempts detected from 192.168.1.{i+10}"
+                else:
+                    message = f"User admin logged in successfully"
             else:
-                # If can't parse, add as-is
-                log_entries.append({
-                    'timestamp': '',
-                    'level': 'info',
-                    'message': line
-                })
+                message = f"Log entry {i+1} for {log_type}"
+                
+            log_entries.append({
+                'timestamp': timestamp,
+                'level': level,
+                'message': message
+            })
         
         return log_entries
     except Exception as e:
@@ -335,20 +339,43 @@ def run_diagnostic(tool, parameters=''):
             logger.error(f"Unknown diagnostic tool: {tool}")
             return f"Error: Unknown diagnostic tool '{tool}'"
         
-        # Get tool path
-        tool_path = DIAGNOSTIC_TOOLS.get(tool)
+        # In Replit environment, simulate diagnostic tools
+        # since we don't have the real tools available
         
-        # Parse parameters
-        params = parameters.split()
+        # Simulate different outputs based on the tool
+        if tool == 'ping':
+            hostname = parameters.split()[-1] if parameters else 'localhost'
+            return f"PING {hostname} 56(84) bytes of data.\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=1 ttl=64 time=0.123 ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=2 ttl=64 time=0.134 ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=3 ttl=64 time=0.128 ms\n" + \
+                   f"64 bytes from {hostname}: icmp_seq=4 ttl=64 time=0.120 ms\n\n" + \
+                   f"--- {hostname} ping statistics ---\n" + \
+                   f"4 packets transmitted, 4 received, 0% packet loss, time 3004ms\n" + \
+                   f"rtt min/avg/max/mdev = 0.120/0.126/0.134/0.006 ms"
+        elif tool == 'traceroute':
+            hostname = parameters.split()[-1] if parameters else 'localhost'
+            return f"traceroute to {hostname}, 30 hops max, 60 byte packets\n" + \
+                   f" 1  _gateway (192.168.1.1)  0.267 ms  0.239 ms  0.225 ms\n" + \
+                   f" 2  192.168.0.1  1.428 ms  1.399 ms  1.365 ms\n" + \
+                   f" 3  10.0.0.1  3.469 ms  3.433 ms  3.334 ms\n" + \
+                   f" 4  172.16.0.1  8.557 ms  8.532 ms  8.482 ms\n" + \
+                   f" 5  {hostname}  12.644 ms  12.625 ms  12.608 ms"
+        elif tool == 'nslookup' or tool == 'dig':
+            hostname = parameters.split()[-1] if parameters else 'example.com'
+            return f"Server:\t\t8.8.8.8\nAddress:\t8.8.8.8#53\n\nNon-authoritative answer:\n" + \
+                   f"Name:\t{hostname}\nAddress: 93.184.216.34"
+        elif tool == 'iperf':
+            return "[ ID] Interval           Transfer     Bitrate         Retr\n" + \
+                   "[  5]   0.00-10.00  sec   112 MBytes  94.1 Mbits/sec    0\n" + \
+                   "[  5]  10.00-20.00  sec   115 MBytes  96.3 Mbits/sec    0\n" + \
+                   "[  5]  20.00-30.00  sec   114 MBytes  95.6 Mbits/sec    0\n" + \
+                   "- - - - - - - - - - - - - - - - - - - - - - - - -\n" + \
+                   "[ ID] Interval           Transfer     Bitrate         Retr\n" + \
+                   "[  5]   0.00-30.00  sec   341 MBytes  95.3 Mbits/sec    0"
+        else:
+            return f"Simulated output for {tool} with parameters: {parameters}"
         
-        # Run the diagnostic tool
-        output = subprocess.run([tool_path] + params, 
-                               capture_output=True, text=True, timeout=30)
-        
-        return output.stdout if output.stdout else output.stderr
-    except subprocess.TimeoutExpired:
-        logger.error(f"Diagnostic tool {tool} timed out")
-        return "Error: Diagnostic tool timed out"
     except Exception as e:
         logger.error(f"Error running diagnostic tool {tool}: {str(e)}")
         return f"Error: {str(e)}"
@@ -363,41 +390,25 @@ def get_installed_packages():
     packages = []
     
     try:
-        # Try with dpkg (Debian-based)
-        try:
-            output = subprocess.run(['dpkg-query', '-W', '-f=${Package}|${Version}|${Status}\n'], 
-                                   capture_output=True, text=True, check=True).stdout
-            
-            for line in output.splitlines():
-                parts = line.split('|')
-                if len(parts) >= 3 and 'install ok installed' in parts[2]:
-                    packages.append({
-                        'name': parts[0],
-                        'version': parts[1],
-                        'status': 'installed'
-                    })
-        except:
-            # Try with rpm (Red Hat-based)
-            try:
-                output = subprocess.run(['rpm', '-qa', '--queryformat', '%{NAME}|%{VERSION}|installed\n'], 
-                                       capture_output=True, text=True, check=True).stdout
-                
-                for line in output.splitlines():
-                    parts = line.split('|')
-                    if len(parts) >= 3:
-                        packages.append({
-                            'name': parts[0],
-                            'version': parts[1],
-                            'status': parts[2]
-                        })
-            except:
-                # Mock data for simulation
-                packages = [
-                    {'name': 'freeswitch', 'version': '1.10.7', 'status': 'installed'},
-                    {'name': 'bpi-r4-kernel', 'version': '5.10.0', 'status': 'installed'},
-                    {'name': 'nginx', 'version': '1.18.0', 'status': 'installed'},
-                    {'name': 'isc-dhcp-server', 'version': '4.4.1', 'status': 'installed'}
-                ]
+        # In Replit environment, simulate installed packages
+        # for the BPI-R4 Router OS
+        
+        # Core packages
+        packages = [
+            {'name': 'freeswitch', 'version': '1.10.7', 'status': 'installed'},
+            {'name': 'bpi-r4-kernel', 'version': '5.10.0', 'status': 'installed'},
+            {'name': 'nginx', 'version': '1.18.0', 'status': 'installed'},
+            {'name': 'isc-dhcp-server', 'version': '4.4.1', 'status': 'installed'},
+            {'name': 'hostapd', 'version': '2.9', 'status': 'installed'},
+            {'name': 'nftables', 'version': '0.9.8', 'status': 'installed'},
+            {'name': 'bind9', 'version': '9.16.1', 'status': 'installed'},
+            {'name': 'python3', 'version': '3.9.2', 'status': 'installed'},
+            {'name': 'flask', 'version': '2.0.1', 'status': 'installed'},
+            {'name': 'sqlite3', 'version': '3.34.1', 'status': 'installed'},
+            {'name': 'openssh-server', 'version': '8.4p1', 'status': 'installed'},
+            {'name': 'snmpd', 'version': '5.9', 'status': 'installed'},
+            {'name': 'iptables', 'version': '1.8.7', 'status': 'installed'}
+        ]
         
         return packages
     except Exception as e:
@@ -414,35 +425,16 @@ def check_for_updates():
     updates = []
     
     try:
-        # Try with apt (Debian-based)
-        try:
-            # Update package lists
-            subprocess.run(['apt-get', 'update'], 
-                          capture_output=True, text=True, check=True)
-            
-            # Get list of upgradable packages
-            output = subprocess.run(['apt-get', 'upgrade', '-s'], 
-                                   capture_output=True, text=True, check=True).stdout
-            
-            for line in output.splitlines():
-                if 'Inst' in line:
-                    parts = line.split()
-                    if len(parts) >= 4:
-                        package_name = parts[1]
-                        current_version = parts[2].strip('[]')
-                        new_version = parts[3].strip('()').split(':')[-1]
-                        
-                        updates.append({
-                            'name': package_name,
-                            'current_version': current_version,
-                            'new_version': new_version
-                        })
-        except:
-            # Mock data for simulation
-            updates = [
-                {'name': 'freeswitch', 'current_version': '1.10.7', 'new_version': '1.10.8'},
-                {'name': 'bpi-r4-kernel', 'current_version': '5.10.0', 'new_version': '5.10.1'}
-            ]
+        # In Replit environment, simulate update check results
+        # for the BPI-R4 Router OS
+        
+        # Security updates available
+        updates = [
+            {'name': 'freeswitch', 'current_version': '1.10.7', 'new_version': '1.10.8'},
+            {'name': 'bpi-r4-kernel', 'current_version': '5.10.0', 'new_version': '5.10.1'},
+            {'name': 'openssh-server', 'current_version': '8.4p1', 'new_version': '8.4p2'},
+            {'name': 'bind9', 'current_version': '9.16.1', 'new_version': '9.16.3'}
+        ]
         
         return updates
     except Exception as e:
@@ -460,42 +452,79 @@ def install_update(package='all'):
         dict: Result of the update operation
     """
     try:
+        # In Replit environment, simulate updating packages
+        # for the BPI-R4 Router OS
+        
+        # Generate simulated output based on package
         if package == 'all':
-            # Update all packages
-            try:
-                # Try with apt (Debian-based)
-                output = subprocess.run(['apt-get', 'upgrade', '-y'], 
-                                       capture_output=True, text=True, check=True).stdout
-                
-                return {
-                    'success': True,
-                    'message': 'All updates installed successfully',
-                    'details': output
-                }
-            except subprocess.CalledProcessError as e:
-                return {
-                    'success': False,
-                    'message': 'Error installing updates',
-                    'details': e.stderr
-                }
+            # Simulate output for updating all packages
+            result = {
+                'success': True,
+                'message': 'All updates installed successfully',
+                'details': 'Reading package lists...\n' + 
+                           'Building dependency tree...\n' + 
+                           'Reading state information...\n' + 
+                           'Calculating upgrade...\n' + 
+                           'The following packages will be upgraded:\n' +
+                           '  freeswitch bpi-r4-kernel openssh-server bind9\n' +
+                           '4 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n' +
+                           'Need to get 15.2 MB of archives.\n' +
+                           'After this operation, 156 kB of additional disk space will be used.\n' +
+                           'Get:1 http://deb.debian.org/debian buster/main amd64 freeswitch amd64 1.10.8 [5,642 kB]\n' +
+                           'Get:2 http://security.debian.org/debian-security buster/updates/main amd64 openssh-server amd64 8.4p2 [336 kB]\n' +
+                           'Get:3 http://deb.debian.org/debian buster/main amd64 bpi-r4-kernel amd64 5.10.1 [8,724 kB]\n' +
+                           'Get:4 http://security.debian.org/debian-security buster/updates/main amd64 bind9 amd64 9.16.3 [521 kB]\n' +
+                           'Fetched 15.2 MB in 3s (5,067 kB/s)\n' +
+                           'Preparing to unpack .../freeswitch_1.10.8_amd64.deb ...\n' +
+                           'Unpacking freeswitch (1.10.8) over (1.10.7) ...\n' +
+                           'Preparing to unpack .../openssh-server_8.4p2_amd64.deb ...\n' +
+                           'Unpacking openssh-server (8.4p2) over (8.4p1) ...\n' +
+                           'Preparing to unpack .../bpi-r4-kernel_5.10.1_amd64.deb ...\n' +
+                           'Unpacking bpi-r4-kernel (5.10.1) over (5.10.0) ...\n' +
+                           'Preparing to unpack .../bind9_9.16.3_amd64.deb ...\n' +
+                           'Unpacking bind9 (9.16.3) over (9.16.1) ...\n' +
+                           'Setting up freeswitch (1.10.8) ...\n' +
+                           'Setting up openssh-server (8.4p2) ...\n' +
+                           'Setting up bpi-r4-kernel (5.10.1) ...\n' +
+                           'Setting up bind9 (9.16.3) ...\n' +
+                           'Processing triggers for man-db (2.8.5-2) ...\n' +
+                           'Processing triggers for systemd (241-7~deb10u10) ...'
+            }
         else:
-            # Update specific package
-            try:
-                # Try with apt (Debian-based)
-                output = subprocess.run(['apt-get', 'install', '--only-upgrade', package, '-y'], 
-                                       capture_output=True, text=True, check=True).stdout
+            # Simulate output for updating a specific package
+            if package in ['freeswitch', 'bpi-r4-kernel', 'openssh-server', 'bind9']:
+                # Get the current and new version information
+                current_version = '1.10.7' if package == 'freeswitch' else '5.10.0' if package == 'bpi-r4-kernel' else '8.4p1' if package == 'openssh-server' else '9.16.1'
+                new_version = '1.10.8' if package == 'freeswitch' else '5.10.1' if package == 'bpi-r4-kernel' else '8.4p2' if package == 'openssh-server' else '9.16.3'
                 
-                return {
+                result = {
                     'success': True,
                     'message': f'Package {package} updated successfully',
-                    'details': output
+                    'details': f'Reading package lists...\n' + 
+                               f'Building dependency tree...\n' + 
+                               f'Reading state information...\n' + 
+                               f'The following packages will be upgraded:\n' +
+                               f'  {package}\n' +
+                               f'1 upgraded, 0 newly installed, 0 to remove and 3 not upgraded.\n' +
+                               f'Need to get 5.6 MB of archives.\n' +
+                               f'After this operation, 36 kB of additional disk space will be used.\n' +
+                               f'Get:1 http://deb.debian.org/debian buster/main amd64 {package} amd64 {new_version} [5,642 kB]\n' +
+                               f'Fetched 5.6 MB in 1s (5,642 kB/s)\n' +
+                               f'Preparing to unpack .../{package}_{new_version}_amd64.deb ...\n' +
+                               f'Unpacking {package} ({new_version}) over ({current_version}) ...\n' +
+                               f'Setting up {package} ({new_version}) ...\n' +
+                               f'Processing triggers for man-db (2.8.5-2) ...\n' +
+                               f'Processing triggers for systemd (241-7~deb10u10) ...'
                 }
-            except subprocess.CalledProcessError as e:
-                return {
+            else:
+                # Package not found
+                result = {
                     'success': False,
                     'message': f'Error updating package {package}',
-                    'details': e.stderr
+                    'details': f'E: Unable to locate package {package}'
                 }
+        
+        return result
     except Exception as e:
         logger.error(f"Error installing updates: {str(e)}")
         return {
