@@ -1,0 +1,331 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Dashboard</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboardData()">
+                    <i data-feather="refresh-cw"></i> Aggiorna
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        <!-- System Status Overview -->
+        <div class="row mb-4">
+            <div class="col-md-6 col-xl-3 mb-4 mb-xl-0">
+                <div class="card dashboard-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">CPU</h6>
+                        <div class="text-muted small">{{ system_stats.cpu.count }} Core</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <h2 class="mb-0 me-2" id="cpuUsageValue">{{ system_stats.cpu.usage }}%</h2>
+                            <span class="text-muted small">Utilizzo</span>
+                            <span id="cpuUsage" data-value="{{ system_stats.cpu.usage }}" class="d-none"></span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="cpuChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3 mb-4 mb-xl-0">
+                <div class="card dashboard-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Memoria</h6>
+                        <div class="text-muted small">RAM</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <h2 class="mb-0 me-2" id="memoryUsageValue">{{ system_stats.memory.percent }}%</h2>
+                            <span class="text-muted small" id="memoryDetails">
+                                {{ (system_stats.memory.used / (1024*1024))|round|int }} MB / 
+                                {{ (system_stats.memory.total / (1024*1024))|round|int }} MB
+                            </span>
+                            <span id="memoryUsage" data-value="{{ system_stats.memory.percent }}" class="d-none"></span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="memoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3 mb-4 mb-xl-0">
+                <div class="card dashboard-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Archiviazione</h6>
+                        <div class="text-muted small">Spazio Disco</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <h2 class="mb-0 me-2">{{ system_stats.disk.percent }}%</h2>
+                            <span class="text-muted small">
+                                {{ (system_stats.disk.used / (1024*1024*1024))|round(1) }} GB / 
+                                {{ (system_stats.disk.total / (1024*1024*1024))|round(1) }} GB
+                            </span>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar {% if system_stats.disk.percent > 90 %}bg-danger{% elif system_stats.disk.percent > 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                role="progressbar" style="width: {{ system_stats.disk.percent }}%" 
+                                aria-valuenow="{{ system_stats.disk.percent }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ system_stats.disk.percent }}%
+                            </div>
+                        </div>
+                        <div class="text-muted small mt-3">
+                            <div><strong>Sistema:</strong> {{ (system_stats.disk.used / (1024*1024*1024) * 0.4)|round(1) }} GB</div>
+                            <div><strong>Dati:</strong> {{ (system_stats.disk.used / (1024*1024*1024) * 0.6)|round(1) }} GB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3">
+                <div class="card dashboard-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Uptime</h6>
+                        <div class="text-muted small">Sistema</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center mb-3">
+                                <h3 class="mb-0">
+                                    {{ system_stats.uptime.days }}d {{ system_stats.uptime.hours }}h {{ system_stats.uptime.minutes }}m
+                                </h3>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-muted mb-1">Informazioni di Sistema:</p>
+                                <div class="mb-1"><strong>OS:</strong> {{ system_stats.system.os_name }}</div>
+                                <div class="mb-1"><strong>Kernel:</strong> {{ system_stats.system.kernel }}</div>
+                                <div class="mb-1"><strong>Hostname:</strong> {{ system_stats.system.hostname }}</div>
+                                <div><strong>Carico:</strong> {{ system_stats.load_avg[0] }}, {{ system_stats.load_avg[1] }}, {{ system_stats.load_avg[2] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Network Status -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="m-0">Utilizzo della Rete</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="networkChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="m-0">Interfacce di Rete</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Interfaccia</th>
+                                    <th>Stato</th>
+                                    <th>Download</th>
+                                    <th>Upload</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for interface in network_stats %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if interface.type == 'wan' %}
+                                                <i data-feather="globe" class="me-2 text-primary"></i>
+                                            {% elif interface.type == 'lan' %}
+                                                <i data-feather="server" class="me-2 text-success"></i>
+                                            {% elif interface.type == 'wifi' %}
+                                                <i data-feather="wifi" class="me-2 text-info"></i>
+                                            {% else %}
+                                                <i data-feather="box" class="me-2 text-secondary"></i>
+                                            {% endif %}
+                                            <span>{{ interface.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-indicator {% if interface.status == 'up' %}status-up{% else %}status-down{% endif %}"></span>
+                                        {{ 'Attivo' if interface.status == 'up' else 'Disattivo' }}
+                                    </td>
+                                    <td id="{{ interface.name }}Download">0 Mbps</td>
+                                    <td id="{{ interface.name }}Upload">0 Mbps</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Services -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0">Servizi di Sistema</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Servizio</th>
+                                    <th>Stato</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>DHCP Server</td>
+                                    <td>
+                                        <span class="status-indicator status-up"></span>
+                                        Attivo
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('network.dhcp_config') }}" class="btn btn-sm btn-outline-secondary">
+                                            <i data-feather="settings" class="feather-small"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>FreeSWITCH</td>
+                                    <td>
+                                        <span class="status-indicator status-up"></span>
+                                        Attivo
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
+                                            <i data-feather="settings" class="feather-small"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Firewall</td>
+                                    <td>
+                                        <span class="status-indicator status-up"></span>
+                                        Attivo
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                                            <i data-feather="settings" class="feather-small"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>DNS</td>
+                                    <td>
+                                        <span class="status-indicator status-up"></span>
+                                        Attivo
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('network.dns_config') }}" class="btn btn-sm btn-outline-secondary">
+                                            <i data-feather="settings" class="feather-small"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0">Stato Centralino FreeSWITCH</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="small text-muted">Estensioni</div>
+                                                <div class="h5 mb-0">{{ network_stats|length }}</div>
+                                            </div>
+                                            <i data-feather="user" class="text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="small text-muted">Chiamate Attive</div>
+                                                <div class="h5 mb-0">0</div>
+                                            </div>
+                                            <i data-feather="phone-call" class="text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="small text-muted">Trunk SIP</div>
+                                                <div class="h5 mb-0">1</div>
+                                            </div>
+                                            <i data-feather="server" class="text-info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="small text-muted">Registrazioni</div>
+                                                <div class="h5 mb-0">2</div>
+                                            </div>
+                                            <i data-feather="check-circle" class="text-warning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('freeswitch.index') }}" class="btn btn-outline-primary btn-sm">
+                                <i data-feather="settings" class="feather-small"></i> Gestisci FreeSWITCH
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

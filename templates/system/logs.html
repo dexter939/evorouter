@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block title %}Log di Sistema - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Log di Sistema</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('system.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> Torna alla Gestione Sistema
+                </a>
+            </div>
+            <form action="{{ url_for('system.download_logs') }}" method="GET" class="me-2">
+                <input type="hidden" name="type" value="{{ current_log_type }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i data-feather="download"></i> Scarica Log
+                </button>
+            </form>
+            <form action="{{ url_for('system.clear_system_logs') }}" method="POST" onsubmit="return confirm('Sei sicuro di voler cancellare tutti i log? Questa azione non può essere annullata.');">
+                <input type="hidden" name="type" value="{{ current_log_type }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i data-feather="trash-2"></i> Cancella Log
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Filtro e Ricerca</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('system.logs') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="type" class="form-label">Tipo di Log</label>
+                            <select class="form-select" id="type" name="type" onchange="this.form.submit()">
+                                <option value="system" {% if current_log_type == 'system' %}selected{% endif %}>Sistema</option>
+                                <option value="network" {% if current_log_type == 'network' %}selected{% endif %}>Rete</option>
+                                <option value="freeswitch" {% if current_log_type == 'freeswitch' %}selected{% endif %}>FreeSWITCH</option>
+                                <option value="security" {% if current_log_type == 'security' %}selected{% endif %}>Sicurezza</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="lines" class="form-label">Numero di righe</label>
+                            <select class="form-select" id="lines" name="lines" onchange="this.form.submit()">
+                                <option value="50" {% if request.args.get('lines') == '50' %}selected{% endif %}>50</option>
+                                <option value="100" {% if not request.args.get('lines') or request.args.get('lines') == '100' %}selected{% endif %}>100</option>
+                                <option value="200" {% if request.args.get('lines') == '200' %}selected{% endif %}>200</option>
+                                <option value="500" {% if request.args.get('lines') == '500' %}selected{% endif %}>500</option>
+                                <option value="1000" {% if request.args.get('lines') == '1000' %}selected{% endif %}>1000</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="searchTerm" class="form-label">Ricerca</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchTerm" placeholder="Filtra log..." aria-label="Filtra log">
+                                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                    <i data-feather="search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if current_log_type == 'system' %}
+                            Log di Sistema
+                        {% elif current_log_type == 'network' %}
+                            Log di Rete
+                        {% elif current_log_type == 'freeswitch' %}
+                            Log FreeSWITCH
+                        {% elif current_log_type == 'security' %}
+                            Log di Sicurezza
+                        {% else %}
+                            Log di Sistema
+                        {% endif %}
+                    </h5>
+                    <div class="text-muted small">Visualizzando {{ logs|length }} righe</div>
+                </div>
+                <div class="card-body p-0">
+                    {% if error %}
+                        <div class="alert alert-danger m-3">
+                            {{ error }}
+                        </div>
+                    {% elif not logs or logs|length == 0 %}
+                        <div class="text-center py-5">
+                            <i data-feather="file-text" style="width: 48px; height: 48px; color: #ccc;"></i>
+                            <p class="mt-3 text-muted">Nessun log disponibile.</p>
+                        </div>
+                    {% else %}
+                        <div id="logContainer" class="log-container" style="max-height: 600px; overflow-y: auto;">
+                            {% for log in logs %}
+                            <div class="log-entry log-row" data-log-text="{{ log.message }}">
+                                <div class="row g-0">
+                                    <div class="col-md-2 log-time">{{ log.timestamp }}</div>
+                                    <div class="col-md-1">
+                                        <span class="badge {% if log.level == 'error' %}bg-danger{% elif log.level == 'warning' %}bg-warning{% elif log.level == 'info' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            {{ log.level|upper }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-9 log-message">{{ log.message }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Log search functionality
+        const searchButton = document.getElementById('searchButton');
+        const searchTerm = document.getElementById('searchTerm');
+        const logRows = document.querySelectorAll('.log-row');
+        
+        if (searchButton && searchTerm) {
+            // Search when button is clicked
+            searchButton.addEventListener('click', performSearch);
+            
+            // Search when Enter key is pressed
+            searchTerm.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    performSearch();
+                }
+            });
+            
+            // Clear search when search field is cleared
+            searchTerm.addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    logRows.forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+            });
+        }
+        
+        function performSearch() {
+            const term = searchTerm.value.trim().toLowerCase();
+            
+            if (term === '') {
+                // Show all rows if search term is empty
+                logRows.forEach(row => {
+                    row.style.display = '';
+                });
+                return;
+            }
+            
+            // Hide/show rows based on search term
+            logRows.forEach(row => {
+                const logText = row.getAttribute('data-log-text').toLowerCase();
+                if (logText.includes(term)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // Scroll to bottom of log container on load (most recent logs)
+        const logContainer = document.getElementById('logContainer');
+        if (logContainer) {
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    });
+</script>
+{% endblock %}

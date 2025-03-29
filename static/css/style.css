@@ -1,0 +1,195 @@
+/* 
+ * Custom style overrides for Banana Pi BPI-R4 Router OS 
+ * Contains additional styles beyond main.css
+ */
+
+/* Login page specific styles */
+.login-page {
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+}
+
+.login-logo h1 {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.login-container {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 15px;
+}
+
+/* Dashboard card animation */
+.dashboard-card {
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.dashboard-card .card-header {
+  border-radius: 15px 15px 0 0;
+  background: linear-gradient(to right, #3498db, #4ca5db);
+  color: white;
+  font-weight: 500;
+}
+
+/* System status indicators */
+.system-status {
+  padding: 8px 15px;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.status-operational {
+  background-color: rgba(46, 204, 113, 0.2);
+  color: #27ae60;
+}
+
+.status-warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #f39c12;
+}
+
+.status-error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+/* Wizard specific styles */
+.wizard-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.wizard-step-number {
+  box-shadow: 0 0 0 5px rgba(52, 152, 219, 0.1);
+}
+
+.wizard-progress {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  margin-bottom: 30px;
+}
+
+.wizard-progress .progress-bar {
+  background-color: #3498db;
+  transition: width 0.5s ease;
+}
+
+/* Network visualization */
+.network-visualization {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.network-device {
+  display: inline-block;
+  text-align: center;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  min-width: 120px;
+}
+
+.network-device-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #3498db;
+}
+
+.network-connection {
+  display: inline-block;
+  width: 50px;
+  height: 2px;
+  background-color: #3498db;
+  margin: 0 -5px;
+  vertical-align: middle;
+}
+
+/* FreeSWITCH extensions table */
+.extension-table th {
+  background-color: #f8f9fa;
+}
+
+.extension-table tr:hover {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Diagnostic tools */
+.diagnostic-output {
+  font-family: 'Courier New', monospace;
+  background-color: #2c3e50;
+  color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.diagnostic-input {
+  display: flex;
+}
+
+.diagnostic-input input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.diagnostic-input button {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* System logs */
+.log-entry {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.log-entry:hover {
+  background-color: #f9f9f9;
+}
+
+.log-time {
+  font-family: 'Courier New', monospace;
+  color: #7f8c8d;
+}
+
+.log-level-info {
+  color: #3498db;
+}
+
+.log-level-warning {
+  color: #f39c12;
+}
+
+.log-level-error {
+  color: #e74c3c;
+}
+
+.log-level-debug {
+  color: #7f8c8d;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .card-stats {
+    margin-bottom: 20px;
+  }
+  
+  .network-visualization {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

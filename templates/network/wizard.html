@@ -1,0 +1,342 @@
+{% extends "layout.html" %}
+
+{% block title %}Wizard di Configurazione Rete - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block head %}
+<style>
+    .wizard-step {
+        margin-bottom: 1.5rem;
+    }
+    .wizard-step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #495057;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    .wizard-step.active .wizard-step-number {
+        background-color: #3498db;
+        color: white;
+    }
+    .wizard-step.completed .wizard-step-number {
+        background-color: #2ecc71;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Wizard di Configurazione Rete</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('network.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="arrow-left"></i> Torna alla Gestione Rete
+            </a>
+        </div>
+    </div>
+
+    <div class="wizard-container">
+        <!-- Wizard Steps Indicator -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3 mb-md-0">
+                                <div class="wizard-step active" id="stepIndicator1">
+                                    <div class="wizard-step-number mx-auto mb-2">1</div>
+                                    <div class="wizard-step-label">Connessione Internet</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3 mb-md-0">
+                                <div class="wizard-step" id="stepIndicator2">
+                                    <div class="wizard-step-number mx-auto mb-2">2</div>
+                                    <div class="wizard-step-label">Rete Locale</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3 mb-md-0">
+                                <div class="wizard-step" id="stepIndicator3">
+                                    <div class="wizard-step-number mx-auto mb-2">3</div>
+                                    <div class="wizard-step-label">Server DHCP</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="wizard-step" id="stepIndicator4">
+                                    <div class="wizard-step-number mx-auto mb-2">4</div>
+                                    <div class="wizard-step-label">Riepilogo</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="progress wizard-progress mt-4">
+                            <div class="progress-bar" role="progressbar" id="wizardProgress" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alert container for validation messages -->
+        <div id="wizardAlerts"></div>
+        
+        <!-- Wizard Form -->
+        <form id="wizardForm" method="POST" action="{{ url_for('network.wizard') }}">
+            <!-- Step 1: Internet Connection (WAN) -->
+            <div class="card mb-4 wizard-step-content" id="wizardStep1">
+                <div class="card-header">
+                    <h5 class="mb-0">Passo 1: Configurazione Connessione Internet</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Configura la connessione a Internet tramite l'interfaccia WAN (eth1).</p>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Modalità di Configurazione IP</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="wan_mode" id="wanModeDhcp" value="dhcp" checked>
+                            <label class="form-check-label" for="wanModeDhcp">
+                                DHCP (ottieni automaticamente un indirizzo IP)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="wan_mode" id="wanModeStatic" value="static">
+                            <label class="form-check-label" for="wanModeStatic">
+                                IP Statico (imposta manualmente l'indirizzo IP)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="wanStaticFields" class="d-none">
+                        <div class="mb-3">
+                            <label for="wan_ip" class="form-label">Indirizzo IP</label>
+                            <input type="text" class="form-control" id="wan_ip" name="wan_ip" data-validate="ip" placeholder="192.168.0.2">
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_subnet" class="form-label">Subnet Mask</label>
+                            <input type="text" class="form-control" id="wan_subnet" name="wan_subnet" data-validate="ip" placeholder="255.255.255.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_gateway" class="form-label">Gateway</label>
+                            <input type="text" class="form-control" id="wan_gateway" name="wan_gateway" data-validate="ip" placeholder="192.168.0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="wan_dns" class="form-label">Server DNS (separati da virgola)</label>
+                            <input type="text" class="form-control" id="wan_dns" name="wan_dns" placeholder="8.8.8.8, 8.8.4.4">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" disabled>
+                        <i data-feather="arrow-left"></i> Indietro
+                    </button>
+                    <button type="button" class="btn btn-primary wizard-next-btn">
+                        Avanti <i data-feather="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: LAN Configuration -->
+            <div class="card mb-4 wizard-step-content" id="wizardStep2" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">Passo 2: Configurazione Rete Locale</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Configura la tua rete locale (LAN) per i dispositivi interni. Questa sarà l'interfaccia eth0.</p>
+                    
+                    <div class="mb-3">
+                        <label for="lan_ip" class="form-label">Indirizzo IP del Router (LAN)</label>
+                        <input type="text" class="form-control" id="lan_ip" name="lan_ip" data-validate="ip" value="192.168.1.1" required>
+                        <div class="form-text">Questo sarà l'indirizzo del router nella rete locale.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lan_subnet" class="form-label">Subnet Mask</label>
+                        <input type="text" class="form-control" id="lan_subnet" name="lan_subnet" data-validate="ip" value="255.255.255.0" required>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary wizard-prev-btn">
+                        <i data-feather="arrow-left"></i> Indietro
+                    </button>
+                    <button type="button" class="btn btn-primary wizard-next-btn">
+                        Avanti <i data-feather="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: DHCP Server -->
+            <div class="card mb-4 wizard-step-content" id="wizardStep3" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">Passo 3: Configurazione Server DHCP</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Configura il server DHCP per assegnare automaticamente indirizzi IP ai dispositivi nella tua rete locale.</p>
+                    
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="dhcp_enabled" name="dhcp_enabled" checked>
+                        <label class="form-check-label" for="dhcp_enabled">Abilita server DHCP</label>
+                    </div>
+                    
+                    <div id="dhcpFields">
+                        <div class="mb-3">
+                            <label for="dhcp_start" class="form-label">Inizio Range DHCP</label>
+                            <input type="text" class="form-control" id="dhcp_start" name="dhcp_start" data-validate="ip" value="192.168.1.100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dhcp_end" class="form-label">Fine Range DHCP</label>
+                            <input type="text" class="form-control" id="dhcp_end" name="dhcp_end" data-validate="ip" value="192.168.1.200" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dhcp_lease" class="form-label">Tempo di Lease (ore)</label>
+                            <input type="number" class="form-control" id="dhcp_lease" name="dhcp_lease" min="1" max="168" value="24" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary wizard-prev-btn">
+                        <i data-feather="arrow-left"></i> Indietro
+                    </button>
+                    <button type="button" class="btn btn-primary wizard-next-btn">
+                        Avanti <i data-feather="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Summary -->
+            <div class="card mb-4 wizard-step-content" id="wizardStep4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">Passo 4: Riepilogo Configurazione</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Rivedi la configurazione di rete prima di applicare le modifiche.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Configurazione WAN (Internet)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Modalità:</strong> <span id="summaryWanMode">DHCP</span></p>
+                                    <div id="summaryWanStatic" class="d-none">
+                                        <p><strong>Indirizzo IP:</strong> <span id="summaryWanIp"></span></p>
+                                        <p><strong>Subnet Mask:</strong> <span id="summaryWanSubnet"></span></p>
+                                        <p><strong>Gateway:</strong> <span id="summaryWanGateway"></span></p>
+                                        <p><strong>DNS:</strong> <span id="summaryWanDns"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Configurazione LAN</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Indirizzo IP Router:</strong> <span id="summaryLanIp">192.168.1.1</span></p>
+                                    <p><strong>Subnet Mask:</strong> <span id="summaryLanSubnet">255.255.255.0</span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Server DHCP</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Stato:</strong> <span id="summaryDhcpStatus">Abilitato</span></p>
+                                    <div id="summaryDhcpDetails">
+                                        <p><strong>Range:</strong> <span id="summaryDhcpRange">192.168.1.100 - 192.168.1.200</span></p>
+                                        <p><strong>Tempo di Lease:</strong> <span id="summaryDhcpLease">24 ore</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i data-feather="info" class="me-2"></i>
+                        Facendo clic su "Applica Configurazione" verranno applicate le modifiche alla rete. Il router potrebbe richiedere alcuni secondi per riconfigurare le interfacce di rete.
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary wizard-prev-btn">
+                        <i data-feather="arrow-left"></i> Indietro
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i data-feather="check"></i> Applica Configurazione
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add listeners to update summary in real-time
+        document.querySelectorAll('input[name="wan_mode"]').forEach(input => {
+            input.addEventListener('change', updateSummary);
+        });
+        
+        document.getElementById('wan_ip').addEventListener('input', updateSummary);
+        document.getElementById('wan_subnet').addEventListener('input', updateSummary);
+        document.getElementById('wan_gateway').addEventListener('input', updateSummary);
+        document.getElementById('wan_dns').addEventListener('input', updateSummary);
+        
+        document.getElementById('lan_ip').addEventListener('input', updateSummary);
+        document.getElementById('lan_subnet').addEventListener('input', updateSummary);
+        
+        document.getElementById('dhcp_enabled').addEventListener('change', updateSummary);
+        document.getElementById('dhcp_start').addEventListener('input', updateSummary);
+        document.getElementById('dhcp_end').addEventListener('input', updateSummary);
+        document.getElementById('dhcp_lease').addEventListener('input', updateSummary);
+        
+        // Initial summary update
+        updateSummary();
+    });
+    
+    function updateSummary() {
+        // Update WAN summary
+        const wanMode = document.querySelector('input[name="wan_mode"]:checked').value;
+        document.getElementById('summaryWanMode').textContent = wanMode === 'dhcp' ? 'DHCP (automatico)' : 'IP Statico';
+        
+        const summaryWanStatic = document.getElementById('summaryWanStatic');
+        if (wanMode === 'static') {
+            summaryWanStatic.classList.remove('d-none');
+            document.getElementById('summaryWanIp').textContent = document.getElementById('wan_ip').value || '-';
+            document.getElementById('summaryWanSubnet').textContent = document.getElementById('wan_subnet').value || '-';
+            document.getElementById('summaryWanGateway').textContent = document.getElementById('wan_gateway').value || '-';
+            document.getElementById('summaryWanDns').textContent = document.getElementById('wan_dns').value || '-';
+        } else {
+            summaryWanStatic.classList.add('d-none');
+        }
+        
+        // Update LAN summary
+        document.getElementById('summaryLanIp').textContent = document.getElementById('lan_ip').value || '192.168.1.1';
+        document.getElementById('summaryLanSubnet').textContent = document.getElementById('lan_subnet').value || '255.255.255.0';
+        
+        // Update DHCP summary
+        const dhcpEnabled = document.getElementById('dhcp_enabled').checked;
+        document.getElementById('summaryDhcpStatus').textContent = dhcpEnabled ? 'Abilitato' : 'Disabilitato';
+        
+        const summaryDhcpDetails = document.getElementById('summaryDhcpDetails');
+        if (dhcpEnabled) {
+            summaryDhcpDetails.classList.remove('d-none');
+            const dhcpStart = document.getElementById('dhcp_start').value || '192.168.1.100';
+            const dhcpEnd = document.getElementById('dhcp_end').value || '192.168.1.200';
+            document.getElementById('summaryDhcpRange').textContent = `${dhcpStart} - ${dhcpEnd}`;
+            document.getElementById('summaryDhcpLease').textContent = `${document.getElementById('dhcp_lease').value || '24'} ore`;
+        } else {
+            summaryDhcpDetails.classList.add('d-none');
+        }
+    }
+</script>
+{% endblock %}

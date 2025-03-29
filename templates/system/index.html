@@ -1,0 +1,453 @@
+{% extends "layout.html" %}
+
+{% block title %}Sistema - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>
+            {% if section == "updates" %}
+                Aggiornamenti Sistema
+            {% else %}
+                Gestione Sistema
+            {% endif %}
+        </h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('system.logs') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="file-text"></i> Log di Sistema
+                </a>
+                <a href="{{ url_for('system.diagnostics') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="activity"></i> Strumenti Diagnostici
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% elif section == "updates" %}
+        <!-- System Updates -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Aggiornamenti Disponibili</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                            <i data-feather="refresh-cw"></i> Controlla Aggiornamenti
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if updates_available and updates_available|length > 0 %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pacchetto</th>
+                                            <th>Versione Attuale</th>
+                                            <th>Nuova Versione</th>
+                                            <th>Azione</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for update in updates_available %}
+                                        <tr>
+                                            <td>{{ update.name }}</td>
+                                            <td>{{ update.current_version }}</td>
+                                            <td>{{ update.new_version }}</td>
+                                            <td>
+                                                <form action="{{ url_for('system.install_system_update') }}" method="POST" class="d-inline">
+                                                    <input type="hidden" name="package" value="{{ update.name }}">
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i data-feather="download" class="feather-small"></i> Aggiorna
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <form action="{{ url_for('system.install_system_update') }}" method="POST">
+                                    <input type="hidden" name="package" value="all">
+                                    <button type="submit" class="btn btn-success">
+                                        <i data-feather="download"></i> Aggiorna Tutto
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i data-feather="check-circle" style="width: 48px; height: 48px; color: #2ecc71;"></i>
+                                <p class="mt-3">Il sistema è aggiornato. Non ci sono aggiornamenti disponibili.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Pacchetti Installati</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Pacchetto</th>
+                                        <th>Versione</th>
+                                        <th>Stato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for package in installed_packages %}
+                                    <tr>
+                                        <td>{{ package.name }}</td>
+                                        <td>{{ package.version }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ package.status }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni di Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Modello:</strong> {{ system_stats.system.hostname }}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Sistema Operativo:</strong> {{ system_stats.system.os_name }}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Kernel:</strong> {{ system_stats.system.kernel }}
+                        </div>
+                        <div>
+                            <strong>Uptime:</strong> {{ system_stats.uptime.days }}d {{ system_stats.uptime.hours }}h {{ system_stats.uptime.minutes }}m
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Note di Aggiornamento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i data-feather="info" class="me-2"></i>
+                            Gli aggiornamenti di sistema possono temporaneamente interrompere i servizi durante l'installazione.
+                        </div>
+                        <ul>
+                            <li>Backup dei dati di configurazione prima dell'aggiornamento</li>
+                            <li>Gli aggiornamenti critici di sicurezza sono prioritari</li>
+                            <li>Il sistema potrebbe riavviarsi automaticamente dopo alcuni aggiornamenti</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- System Information and Controls -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni di Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Nome Host</th>
+                                            <td>{{ system_stats.system.hostname }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Sistema Operativo</th>
+                                            <td>{{ system_stats.system.os_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Kernel</th>
+                                            <td>{{ system_stats.system.kernel }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Uptime</th>
+                                            <td>{{ system_stats.uptime.days }}d {{ system_stats.uptime.hours }}h {{ system_stats.uptime.minutes }}m</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Processore</th>
+                                            <td>{{ system_stats.cpu.count }} core @ {{ system_stats.cpu.frequency }} MHz</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Memoria Totale</th>
+                                            <td>{{ (system_stats.memory.total / (1024*1024))|round|int }} MB</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Memoria Utilizzata</th>
+                                            <td>{{ (system_stats.memory.used / (1024*1024))|round|int }} MB ({{ system_stats.memory.percent }}%)</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Spazio Disco Totale</th>
+                                            <td>{{ (system_stats.disk.total / (1024*1024*1024))|round(1) }} GB</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Spazio Disco Utilizzato</th>
+                                            <td>{{ (system_stats.disk.used / (1024*1024*1024))|round(1) }} GB ({{ system_stats.disk.percent }}%)</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Carico Sistema</th>
+                                            <td>{{ system_stats.load_avg[0] }}, {{ system_stats.load_avg[1] }}, {{ system_stats.load_avg[2] }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Azioni di Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">Esegui azioni di gestione del sistema. Usa queste opzioni con cautela.</p>
+                        
+                        <div class="d-grid gap-3">
+                            <a href="{{ url_for('system.updates') }}" class="btn btn-primary">
+                                <i data-feather="download"></i> Verifica Aggiornamenti
+                            </a>
+                            
+                            <a href="{{ url_for('system.logs') }}" class="btn btn-outline-secondary">
+                                <i data-feather="file-text"></i> Visualizza Log di Sistema
+                            </a>
+                            
+                            <a href="{{ url_for('system.diagnostics') }}" class="btn btn-outline-secondary">
+                                <i data-feather="activity"></i> Strumenti Diagnostici
+                            </a>
+                            
+                            <hr>
+                            
+                            <button type="button" class="btn btn-warning" 
+                                    onclick="confirmAction('reboot', 'Sei sicuro di voler riavviare il sistema?')">
+                                <i data-feather="refresh-cw"></i> Riavvia Sistema
+                            </button>
+                            
+                            <button type="button" class="btn btn-danger" 
+                                    onclick="confirmAction('shutdown', 'Sei sicuro di voler spegnere il sistema?')">
+                                <i data-feather="power"></i> Spegni Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Temperature & Resources -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Temperatura Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if system_stats.temperature and system_stats.temperature.cpu %}
+                            <div class="text-center">
+                                <div class="display-4 mb-3">
+                                    {{ system_stats.temperature.cpu|round(1) }}°C
+                                </div>
+                                
+                                <div class="progress" style="height: 20px;">
+                                    {% set temp_percent = (system_stats.temperature.cpu / 85) * 100 %}
+                                    {% set temp_class = 'bg-success' %}
+                                    {% if system_stats.temperature.cpu > 70 %}
+                                        {% set temp_class = 'bg-danger' %}
+                                    {% elif system_stats.temperature.cpu > 60 %}
+                                        {% set temp_class = 'bg-warning' %}
+                                    {% endif %}
+                                    <div class="progress-bar {{ temp_class }}" 
+                                         role="progressbar" 
+                                         style="width: {{ temp_percent }}%" 
+                                         aria-valuenow="{{ temp_percent }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ system_stats.temperature.cpu|round(1) }}°C
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 text-muted">
+                                    <i data-feather="alert-circle" class="me-1"></i>
+                                    Temperatura ottimale: &lt; 60°C
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i data-feather="thermometer" style="width: 48px; height: 48px; color: #ccc;"></i>
+                                <p class="mt-3 text-muted">Informazioni sulla temperatura non disponibili.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Utilizzo Risorse</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>CPU: {{ system_stats.cpu.usage }}%</span>
+                                <span class="text-muted small">{{ system_stats.cpu.count }} Core</span>
+                            </label>
+                            <div class="progress" style="height: 20px;">
+                                {% set cpu_class = 'bg-success' %}
+                                {% if system_stats.cpu.usage > 90 %}
+                                    {% set cpu_class = 'bg-danger' %}
+                                {% elif system_stats.cpu.usage > 70 %}
+                                    {% set cpu_class = 'bg-warning' %}
+                                {% endif %}
+                                <div class="progress-bar {{ cpu_class }}" 
+                                     role="progressbar" 
+                                     style="width: {{ system_stats.cpu.usage }}%" 
+                                     aria-valuenow="{{ system_stats.cpu.usage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ system_stats.cpu.usage }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>Memoria: {{ system_stats.memory.percent }}%</span>
+                                <span class="text-muted small">
+                                    {{ (system_stats.memory.used / (1024*1024))|round|int }} MB / 
+                                    {{ (system_stats.memory.total / (1024*1024))|round|int }} MB
+                                </span>
+                            </label>
+                            <div class="progress" style="height: 20px;">
+                                {% set mem_class = 'bg-success' %}
+                                {% if system_stats.memory.percent > 90 %}
+                                    {% set mem_class = 'bg-danger' %}
+                                {% elif system_stats.memory.percent > 70 %}
+                                    {% set mem_class = 'bg-warning' %}
+                                {% endif %}
+                                <div class="progress-bar {{ mem_class }}" 
+                                     role="progressbar" 
+                                     style="width: {{ system_stats.memory.percent }}%" 
+                                     aria-valuenow="{{ system_stats.memory.percent }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ system_stats.memory.percent }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>Spazio Disco: {{ system_stats.disk.percent }}%</span>
+                                <span class="text-muted small">
+                                    {{ (system_stats.disk.used / (1024*1024*1024))|round(1) }} GB / 
+                                    {{ (system_stats.disk.total / (1024*1024*1024))|round(1) }} GB
+                                </span>
+                            </label>
+                            <div class="progress" style="height: 20px;">
+                                {% set disk_class = 'bg-success' %}
+                                {% if system_stats.disk.percent > 90 %}
+                                    {% set disk_class = 'bg-danger' %}
+                                {% elif system_stats.disk.percent > 70 %}
+                                    {% set disk_class = 'bg-warning' %}
+                                {% endif %}
+                                <div class="progress-bar {{ disk_class }}" 
+                                     role="progressbar" 
+                                     style="width: {{ system_stats.disk.percent }}%" 
+                                     aria-valuenow="{{ system_stats.disk.percent }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ system_stats.disk.percent }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent System Logs -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Log di Sistema Recenti</h5>
+                        <a href="{{ url_for('system.logs') }}" class="btn btn-sm btn-outline-secondary">
+                            Visualizza Tutti i Log
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Ora</th>
+                                        <th>Livello</th>
+                                        <th>Messaggio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set logs = get_system_logs('system', 5) %}
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td class="log-time">{{ log.timestamp }}</td>
+                                        <td>
+                                            <span class="badge {% if log.level == 'error' %}bg-danger{% elif log.level == 'warning' %}bg-warning{% elif log.level == 'info' %}bg-info{% else %}bg-secondary{% endif %}">
+                                                {{ log.level|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ log.message }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Hidden forms for system actions -->
+<form id="rebootForm" action="{{ url_for('system.reboot') }}" method="POST" style="display: none;"></form>
+<form id="shutdownForm" action="{{ url_for('system.shutdown') }}" method="POST" style="display: none;"></form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmAction(action, message) {
+        if (confirm(message)) {
+            document.getElementById(action + 'Form').submit();
+        }
+    }
+</script>
+{% endblock %}

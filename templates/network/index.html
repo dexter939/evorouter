@@ -1,0 +1,267 @@
+{% extends "layout.html" %}
+
+{% block title %}Rete - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Configurazione di Rete</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" id="restartNetwork" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="refresh-cw"></i> Riavvia Rete
+                </button>
+            </div>
+            <a href="{{ url_for('network.wizard') }}" class="btn btn-sm btn-primary">
+                <i data-feather="play"></i> Wizard di Configurazione
+            </a>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        <!-- Network Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Panoramica di Rete</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="network-visualization text-center">
+                            <div class="network-device">
+                                <div class="network-device-icon">
+                                    <i data-feather="globe"></i>
+                                </div>
+                                <div>Internet</div>
+                            </div>
+                            
+                            <div class="network-connection"></div>
+                            
+                            <div class="network-device">
+                                <div class="network-device-icon">
+                                    <i data-feather="wifi"></i>
+                                </div>
+                                <div>WAN</div>
+                                {% for interface in interfaces %}
+                                    {% if interface.type == 'wan' %}
+                                        <div class="small text-muted">{{ interface.ip_address }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="network-connection"></div>
+                            
+                            <div class="network-device">
+                                <div class="network-device-icon">
+                                    <i data-feather="cpu"></i>
+                                </div>
+                                <div>Router</div>
+                                <div class="small text-muted">BPI-R4</div>
+                            </div>
+                            
+                            <div class="network-connection"></div>
+                            
+                            <div class="network-device">
+                                <div class="network-device-icon">
+                                    <i data-feather="server"></i>
+                                </div>
+                                <div>LAN</div>
+                                {% for interface in interfaces %}
+                                    {% if interface.type == 'lan' %}
+                                        <div class="small text-muted">{{ interface.ip_address }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="network-connection"></div>
+                            
+                            <div class="network-device">
+                                <div class="network-device-icon">
+                                    <i data-feather="monitor"></i>
+                                </div>
+                                <div>Dispositivi</div>
+                                <div class="small text-muted">{{ dhcp_leases|length }} connessi</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Network Interfaces -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Interfacce di Rete</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Interfaccia</th>
+                                        <th>Tipo</th>
+                                        <th>Stato</th>
+                                        <th>Indirizzo IP</th>
+                                        <th>Modalità</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for interface in interfaces %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if interface.type == 'wan' %}
+                                                    <i data-feather="globe" class="me-2 text-primary"></i>
+                                                {% elif interface.type == 'lan' %}
+                                                    <i data-feather="server" class="me-2 text-success"></i>
+                                                {% elif interface.type == 'wifi' %}
+                                                    <i data-feather="wifi" class="me-2 text-info"></i>
+                                                {% else %}
+                                                    <i data-feather="box" class="me-2 text-secondary"></i>
+                                                {% endif %}
+                                                {{ interface.name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if interface.type == 'wan' %}
+                                                WAN
+                                            {% elif interface.type == 'lan' %}
+                                                LAN
+                                            {% elif interface.type == 'wifi' %}
+                                                WiFi
+                                            {% else %}
+                                                Altro
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="status-indicator {% if interface.status == 'up' %}status-up{% else %}status-down{% endif %}" 
+                                                  data-interface-indicator="{{ interface.name }}"></span>
+                                            {{ 'Attivo' if interface.status == 'up' else 'Disattivo' }}
+                                        </td>
+                                        <td>{{ interface.ip_address }}</td>
+                                        <td>{{ interface.mode|upper }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('network.configure_interface_route', interface_name=interface.name) }}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i data-feather="settings" class="feather-small"></i>
+                                                </a>
+                                                <button class="btn btn-{% if interface.status == 'up' %}danger{% else %}success{% endif %} interface-status-btn"
+                                                        data-interface="{{ interface.name }}"
+                                                        data-status="{{ interface.status }}">
+                                                    {{ 'Disattiva' if interface.status == 'up' else 'Attiva' }}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">DHCP</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="status-indicator status-up me-2"></span>
+                            <span>Server DHCP attivo</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Intervallo:</strong> 192.168.1.100 - 192.168.1.200
+                        </div>
+                        <div class="mb-3">
+                            <strong>Tempo di lease:</strong> 24 ore
+                        </div>
+                        <div>
+                            <a href="{{ url_for('network.dhcp_config') }}" class="btn btn-outline-primary btn-sm">
+                                <i data-feather="settings" class="feather-small"></i> Configura DHCP
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">DNS</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>DNS Primario:</strong> 8.8.8.8
+                        </div>
+                        <div class="mb-3">
+                            <strong>DNS Secondario:</strong> 8.8.4.4
+                        </div>
+                        <div>
+                            <a href="{{ url_for('network.dns_config') }}" class="btn btn-outline-primary btn-sm">
+                                <i data-feather="settings" class="feather-small"></i> Configura DNS
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DHCP Leases -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Lease DHCP</h5>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i data-feather="refresh-cw"></i> Aggiorna
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if dhcp_leases|length > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Indirizzo IP</th>
+                                            <th>Indirizzo MAC</th>
+                                            <th>Hostname</th>
+                                            <th>Lease fino a</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lease in dhcp_leases %}
+                                        <tr>
+                                            <td>{{ lease.ip_address }}</td>
+                                            <td>{{ lease.mac_address }}</td>
+                                            <td>{{ lease.hostname }}</td>
+                                            <td>{{ lease.end_time }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i data-feather="info" style="width: 48px; height: 48px; color: #ccc;"></i>
+                                <p class="mt-3 text-muted">Nessun lease DHCP attivo al momento.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/network.js') }}"></script>
+{% endblock %}

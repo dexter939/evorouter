@@ -1,0 +1,252 @@
+{% extends "layout.html" %}
+
+{% block title %}Estensioni - FreeSWITCH - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Gestione Estensioni</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> Torna a FreeSWITCH
+                </a>
+            </div>
+            {% if not form or action != 'add' %}
+            <a href="{{ url_for('freeswitch.add_extension_route') }}" class="btn btn-sm btn-primary">
+                <i data-feather="plus"></i> Aggiungi Estensione
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if form %}
+        <!-- Add/Edit Extension Form -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            {% if action == 'add' %}
+                                Aggiungi Nuova Estensione
+                            {% else %}
+                                Modifica Estensione {{ extension.extension_number }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" 
+                              action="{% if action == 'add' %}{{ url_for('freeswitch.add_extension_route') }}{% else %}{{ url_for('freeswitch.edit_extension_route', extension_id=extension.id) }}{% endif %}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="extension_number" class="form-label">Numero Estensione</label>
+                                    {{ form.extension_number(class="form-control", placeholder="Es: 101") }}
+                                    {% if form.extension_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.extension_number.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Numero a 3-6 cifre per l'estensione</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Nome</label>
+                                    {{ form.name(class="form-control", placeholder="Es: Ufficio Vendite") }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    {{ form.password(class="form-control", placeholder="Password per l'autenticazione SIP", type="password", id="password") }}
+                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
+                                        <i data-feather="eye"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if action == 'add' %}
+                                <div class="mt-2">
+                                    <div class="progress">
+                                        <div class="progress-bar" id="passwordStrength" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if action == 'edit' %}
+                                <div class="form-text">Lascia vuoto per mantenere la password esistente</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    {{ form.voicemail_enabled(class="form-check-input") }}
+                                    <label class="form-check-label" for="voicemail_enabled">Abilita casella vocale</label>
+                                </div>
+                            </div>
+                            
+                            <div id="voicemailFields" class="d-none">
+                                <div class="mb-3">
+                                    <label for="voicemail_pin" class="form-label">PIN Casella Vocale</label>
+                                    {{ form.voicemail_pin(class="form-control", placeholder="PIN numerico per accedere alla casella vocale") }}
+                                    {% if form.voicemail_pin.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.voicemail_pin.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">PIN numerico per accedere alla casella vocale (4-10 cifre)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('freeswitch.list_extensions') }}" class="btn btn-outline-secondary me-md-2">Annulla</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i> 
+                                    {% if action == 'add' %}
+                                        Crea Estensione
+                                    {% else %}
+                                        Salva Modifiche
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Extensions List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Estensioni Configurate</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error }}
+                            </div>
+                        {% elif extensions and extensions|length > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover extension-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Estensione</th>
+                                            <th>Nome</th>
+                                            <th>Casella Vocale</th>
+                                            <th>Stato</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for extension in extensions %}
+                                        <tr>
+                                            <td><strong>{{ extension.extension_number }}</strong></td>
+                                            <td>{{ extension.name }}</td>
+                                            <td>
+                                                {% if extension.voicemail_enabled %}
+                                                    <span class="badge bg-success">Abilitata</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Disabilitata</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="status-indicator status-warning me-1"></span> Non Registrata
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('freeswitch.edit_extension_route', extension_id=extension.id) }}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i data-feather="edit" class="feather-small"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger delete-extension-btn"
+                                                            data-id="{{ extension.id }}"
+                                                            data-number="{{ extension.extension_number }}">
+                                                        <i data-feather="trash-2" class="feather-small"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Hidden form for delete action -->
+                                                <form id="deleteExtensionForm{{ extension.id }}" 
+                                                      action="{{ url_for('freeswitch.delete_extension_route', extension_id=extension.id) }}" 
+                                                      method="POST" style="display: none;">
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i data-feather="users" style="width: 48px; height: 48px; color: #ccc;"></i>
+                                <p class="mt-3 text-muted">Nessuna estensione configurata.</p>
+                                <a href="{{ url_for('freeswitch.add_extension_route') }}" class="btn btn-primary mt-2">
+                                    <i data-feather="plus"></i> Aggiungi la prima estensione
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Best Practices -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Suggerimenti per le Estensioni</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Buone Pratiche</h6>
+                                <ul>
+                                    <li>Usa numeri di estensione di facile memorizzazione (3-4 cifre)</li>
+                                    <li>Assegna range dedicati per tipologia (es: 100-199 per uffici, 200-299 per magazzino)</li>
+                                    <li>Usa password complesse e uniche per ogni estensione</li>
+                                    <li>Abilita la casella vocale per garantire che nessuna chiamata vada persa</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Configurazione Telefoni SIP</h6>
+                                <ul>
+                                    <li><strong>Server SIP:</strong> Indirizzo IP LAN del router</li>
+                                    <li><strong>Nome Utente:</strong> Numero dell'estensione</li>
+                                    <li><strong>Password:</strong> Password configurata per l'estensione</li>
+                                    <li><strong>Nome Visualizzato:</strong> Nome configurato per l'estensione</li>
+                                    <li><strong>Codecs consigliati:</strong> G.711, G.722, G.729</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/freeswitch.js') }}"></script>
+{% endblock %}

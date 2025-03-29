@@ -1,0 +1,294 @@
+{% extends "layout.html" %}
+
+{% block title %}Strumenti Diagnostici - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Strumenti Diagnostici</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('system.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="arrow-left"></i> Torna alla Gestione Sistema
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Strumenti Disponibili</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center tool-item active" data-tool="ping">
+                            <div>
+                                <i data-feather="send" class="me-2"></i>
+                                Ping
+                            </div>
+                            <span class="badge bg-primary rounded-pill">ICMP</span>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center tool-item" data-tool="traceroute">
+                            <div>
+                                <i data-feather="map" class="me-2"></i>
+                                Traceroute
+                            </div>
+                            <span class="badge bg-primary rounded-pill">Rete</span>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center tool-item" data-tool="nslookup">
+                            <div>
+                                <i data-feather="search" class="me-2"></i>
+                                Nslookup
+                            </div>
+                            <span class="badge bg-primary rounded-pill">DNS</span>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center tool-item" data-tool="dig">
+                            <div>
+                                <i data-feather="search" class="me-2"></i>
+                                Dig
+                            </div>
+                            <span class="badge bg-primary rounded-pill">DNS</span>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center tool-item" data-tool="iperf">
+                            <div>
+                                <i data-feather="activity" class="me-2"></i>
+                                Iperf
+                            </div>
+                            <span class="badge bg-primary rounded-pill">Banda</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" id="toolTitle">Ping</h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="clearOutput">
+                        <i data-feather="trash-2"></i> Pulisci Output
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="tool-description mb-3" id="pingDescription">
+                        <p>Il comando ping verifica la raggiungibilità di un host sulla rete. Utile per testare la connettività di base e misurare la latenza.</p>
+                        <p><strong>Esempio:</strong> <code>www.google.com</code> o <code>8.8.8.8</code></p>
+                    </div>
+                    
+                    <div class="tool-description mb-3 d-none" id="tracerouteDescription">
+                        <p>Traceroute mostra il percorso che i pacchetti seguono per raggiungere un host di destinazione, rivelando tutti i router intermedi.</p>
+                        <p><strong>Esempio:</strong> <code>www.google.com</code> o <code>8.8.8.8</code></p>
+                    </div>
+                    
+                    <div class="tool-description mb-3 d-none" id="nslookupDescription">
+                        <p>Nslookup esegue query DNS per ottenere informazioni sui record di dominio, utile per diagnosticare problemi DNS.</p>
+                        <p><strong>Esempio:</strong> <code>www.google.com</code> o <code>-type=MX gmail.com</code></p>
+                    </div>
+                    
+                    <div class="tool-description mb-3 d-none" id="digDescription">
+                        <p>Dig (Domain Information Groper) è uno strumento avanzato per interrogare i server DNS e ottenere informazioni dettagliate sui record DNS.</p>
+                        <p><strong>Esempio:</strong> <code>www.google.com</code> o <code>gmail.com MX</code></p>
+                    </div>
+                    
+                    <div class="tool-description mb-3 d-none" id="iperfDescription">
+                        <p>Iperf misura la larghezza di banda della rete. Utile per testare la velocità di connessione tra dispositivi.</p>
+                        <p><strong>Esempio:</strong> <code>-c iperf.server.com -p 5201</code> (client) o <code>-s -p 5201</code> (server)</p>
+                    </div>
+                    
+                    <div class="diagnostic-input mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="toolParameters" placeholder="Inserisci hostname o parametri...">
+                            <button class="btn btn-primary" type="button" id="runTool">
+                                <i data-feather="play"></i> Esegui
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="diagnostic-output" id="toolOutput">
+                        <div class="text-muted p-3">
+                            Seleziona uno strumento e inserisci i parametri per visualizzare i risultati...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Guida alla Diagnostica di Rete</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Risoluzione dei Problemi di Rete</h6>
+                            <ol>
+                                <li><strong>Verifica la connettività di base</strong> con ping verso un server noto come 8.8.8.8</li>
+                                <li><strong>Controlla la risoluzione DNS</strong> usando nslookup o dig per un dominio come google.com</li>
+                                <li><strong>Analizza il percorso di rete</strong> con traceroute per identificare colli di bottiglia</li>
+                                <li><strong>Misura la larghezza di banda</strong> con iperf per verificare le prestazioni della connessione</li>
+                            </ol>
+                            
+                            <h6 class="mt-3">Problemi Comuni</h6>
+                            <ul>
+                                <li><strong>Perdita di pacchetti</strong>: Se ping mostra pacchetti persi, potrebbero esserci problemi di connettività</li>
+                                <li><strong>Latenza elevata</strong>: Tempi di risposta ping superiori a 100ms possono indicare problemi di rete</li>
+                                <li><strong>Errori DNS</strong>: Se nslookup fallisce ma ping agli IP funziona, il problema è la risoluzione DNS</li>
+                                <li><strong>Hop eccessivi</strong>: Traceroute con molti hop può indicare un routing inefficiente</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Parametri Utili</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Strumento</th>
+                                        <th>Parametri</th>
+                                        <th>Descrizione</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ping</td>
+                                        <td><code>-c 4 8.8.8.8</code></td>
+                                        <td>Invia 4 pacchetti a Google DNS</td>
+                                    </tr>
+                                    <tr>
+                                        <td>traceroute</td>
+                                        <td><code>-m 20 google.com</code></td>
+                                        <td>Limita a 20 hop massimi</td>
+                                    </tr>
+                                    <tr>
+                                        <td>nslookup</td>
+                                        <td><code>-type=MX gmail.com</code></td>
+                                        <td>Cerca record MX per Gmail</td>
+                                    </tr>
+                                    <tr>
+                                        <td>dig</td>
+                                        <td><code>+short google.com</code></td>
+                                        <td>Output conciso dei record A</td>
+                                    </tr>
+                                    <tr>
+                                        <td>iperf</td>
+                                        <td><code>-c server -t 10</code></td>
+                                        <td>Test client per 10 secondi</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i data-feather="info" class="me-2"></i>
+                                Per problemi di rete più complessi, consulta i log di sistema nella sezione <a href="{{ url_for('system.logs', type='network') }}">Log di Rete</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let currentTool = 'ping';
+        
+        // Tool selection
+        const toolItems = document.querySelectorAll('.tool-item');
+        toolItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Update active state
+                toolItems.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update current tool
+                currentTool = this.getAttribute('data-tool');
+                
+                // Update tool title
+                document.getElementById('toolTitle').textContent = currentTool.charAt(0).toUpperCase() + currentTool.slice(1);
+                
+                // Update tool description
+                document.querySelectorAll('.tool-description').forEach(desc => {
+                    desc.classList.add('d-none');
+                });
+                document.getElementById(currentTool + 'Description').classList.remove('d-none');
+                
+                // Clear output
+                document.getElementById('toolOutput').innerHTML = '<div class="text-muted p-3">Seleziona uno strumento e inserisci i parametri per visualizzare i risultati...</div>';
+                
+                // Update placeholder based on tool
+                const toolParameters = document.getElementById('toolParameters');
+                switch(currentTool) {
+                    case 'ping':
+                        toolParameters.placeholder = 'Inserisci hostname o IP (es: google.com)';
+                        break;
+                    case 'traceroute':
+                        toolParameters.placeholder = 'Inserisci hostname o IP (es: google.com)';
+                        break;
+                    case 'nslookup':
+                        toolParameters.placeholder = 'Inserisci dominio o parametri (es: google.com)';
+                        break;
+                    case 'dig':
+                        toolParameters.placeholder = 'Inserisci dominio e tipo di record (es: google.com A)';
+                        break;
+                    case 'iperf':
+                        toolParameters.placeholder = 'Inserisci parametri (es: -c iperf.server.com -p 5201)';
+                        break;
+                }
+            });
+        });
+        
+        // Run diagnostic tool
+        document.getElementById('runTool').addEventListener('click', function() {
+            const parameters = document.getElementById('toolParameters').value.trim();
+            const outputElement = document.getElementById('toolOutput');
+            
+            // Basic validation
+            if (!parameters) {
+                outputElement.innerHTML = '<div class="text-danger p-3">Errore: Inserisci un valore valido.</div>';
+                return;
+            }
+            
+            // Show loading state
+            outputElement.innerHTML = '<div class="p-3"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Esecuzione in corso...</div>';
+            
+            // Call the diagnostic API
+            fetch('/system/diagnostics/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `tool=${encodeURIComponent(currentTool)}&parameters=${encodeURIComponent(parameters)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    outputElement.textContent = data.result || 'Nessun risultato.';
+                } else {
+                    outputElement.innerHTML = `<div class="text-danger p-3">Errore: ${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error running diagnostic tool:', error);
+                outputElement.innerHTML = '<div class="text-danger p-3">Errore di comunicazione con il server.</div>';
+            });
+        });
+        
+        // Clear output
+        document.getElementById('clearOutput').addEventListener('click', function() {
+            document.getElementById('toolOutput').innerHTML = '<div class="text-muted p-3">Output cancellato. Esegui un nuovo test...</div>';
+        });
+        
+        // Allow running tool with Enter key
+        document.getElementById('toolParameters').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('runTool').click();
+            }
+        });
+    });
+</script>
+{% endblock %}

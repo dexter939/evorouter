@@ -1,0 +1,266 @@
+{% extends "layout.html" %}
+
+{% block title %}Trunk SIP - FreeSWITCH - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Gestione Trunk SIP</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> Torna a FreeSWITCH
+                </a>
+            </div>
+            {% if not form or action != 'add' %}
+            <a href="{{ url_for('freeswitch.add_trunk_route') }}" class="btn btn-sm btn-primary">
+                <i data-feather="plus"></i> Aggiungi Trunk SIP
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if form %}
+        <!-- Add/Edit Trunk Form -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            {% if action == 'add' %}
+                                Aggiungi Nuovo Trunk SIP
+                            {% else %}
+                                Modifica Trunk SIP {{ trunk.name }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" 
+                              action="{% if action == 'add' %}{{ url_for('freeswitch.add_trunk_route') }}{% else %}{{ url_for('freeswitch.edit_trunk_route', trunk_id=trunk.id) }}{% endif %}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nome Trunk</label>
+                                {{ form.name(class="form-control", placeholder="Es: Provider VoIP") }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Nome descrittivo per identificare il trunk</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label for="host" class="form-label">Host/IP del Provider</label>
+                                    {{ form.host(class="form-control", placeholder="Es: sip.provider.com") }}
+                                    {% if form.host.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.host.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="port" class="form-label">Porta</label>
+                                    {{ form.port(class="form-control", placeholder="5060") }}
+                                    {% if form.port.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.port.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nome Utente</label>
+                                {{ form.username(class="form-control", placeholder="Nome utente del provider SIP") }}
+                                {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Lascia vuoto se non richiesto dal provider</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    {{ form.password(class="form-control", placeholder="Password del provider SIP", type="password", id="trunkPassword") }}
+                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="trunkPassword">
+                                        <i data-feather="eye"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if action == 'edit' %}
+                                <div class="form-text">Lascia vuoto per mantenere la password esistente</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    {{ form.enabled(class="form-check-input") }}
+                                    <label class="form-check-label" for="enabled">Trunk attivo</label>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i data-feather="info" class="me-2"></i>
+                                Configura i parametri forniti dal tuo provider VoIP. Questi dati sono essenziali per collegare il tuo centralino alla rete telefonica pubblica.
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('freeswitch.list_trunks') }}" class="btn btn-outline-secondary me-md-2">Annulla</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i> 
+                                    {% if action == 'add' %}
+                                        Crea Trunk
+                                    {% else %}
+                                        Salva Modifiche
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Trunks List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Trunk SIP Configurati</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error }}
+                            </div>
+                        {% elif trunks and trunks|length > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Host</th>
+                                            <th>Nome Utente</th>
+                                            <th>Stato</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for trunk in trunks %}
+                                        <tr>
+                                            <td><strong>{{ trunk.name }}</strong></td>
+                                            <td>{{ trunk.host }}:{{ trunk.port }}</td>
+                                            <td>{{ trunk.username or '-' }}</td>
+                                            <td>
+                                                {% if trunk.enabled %}
+                                                    <span class="badge bg-success">Attivo</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Disattivo</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('freeswitch.edit_trunk_route', trunk_id=trunk.id) }}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i data-feather="edit" class="feather-small"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger delete-trunk-btn"
+                                                            data-id="{{ trunk.id }}"
+                                                            data-name="{{ trunk.name }}">
+                                                        <i data-feather="trash-2" class="feather-small"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Hidden form for delete action -->
+                                                <form id="deleteTrunkForm{{ trunk.id }}" 
+                                                      action="{{ url_for('freeswitch.delete_trunk_route', trunk_id=trunk.id) }}" 
+                                                      method="POST" style="display: none;">
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i data-feather="server" style="width: 48px; height: 48px; color: #ccc;"></i>
+                                <p class="mt-3 text-muted">Nessun trunk SIP configurato.</p>
+                                <a href="{{ url_for('freeswitch.add_trunk_route') }}" class="btn btn-primary mt-2">
+                                    <i data-feather="plus"></i> Aggiungi il primo trunk SIP
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trunk Information -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni sui Trunk SIP</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Cosa sono i Trunk SIP?</h6>
+                                <p>I Trunk SIP sono connessioni che permettono al tuo centralino FreeSWITCH di comunicare con la rete telefonica esterna tramite un provider VoIP. Ti consentono di effettuare e ricevere chiamate verso numeri di telefono tradizionali usando la tua connessione internet.</p>
+                                
+                                <h6 class="mt-3">Vantaggi</h6>
+                                <ul>
+                                    <li>Costi inferiori rispetto alle linee telefoniche tradizionali</li>
+                                    <li>Scalabilità facile senza necessità di hardware aggiuntivo</li>
+                                    <li>Funzionalità avanzate come inoltro di chiamata e IVR</li>
+                                    <li>Numeri telefonici virtuali da diverse aree geografiche</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Configurazione</h6>
+                                <p>Per configurare un trunk SIP, avrai bisogno delle seguenti informazioni dal tuo provider VoIP:</p>
+                                <ul>
+                                    <li><strong>Host/IP del server:</strong> L'indirizzo del server SIP del provider</li>
+                                    <li><strong>Porta:</strong> Solitamente 5060 per connessioni non crittografate</li>
+                                    <li><strong>Nome utente:</strong> Il tuo account presso il provider</li>
+                                    <li><strong>Password:</strong> La password di autenticazione</li>
+                                    <li><strong>Formato di chiamata in uscita:</strong> Come formattare i numeri per le chiamate in uscita</li>
+                                </ul>
+                                
+                                <div class="alert alert-warning mt-3">
+                                    <i data-feather="alert-triangle" class="me-2"></i>
+                                    Assicurati che la porta SIP (5060) sia aperta sul tuo router per ricevere chiamate in entrata.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/freeswitch.js') }}"></script>
+{% endblock %}

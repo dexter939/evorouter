@@ -1,0 +1,261 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurazione Avanzata - Banana Pi BPI-R4 Router OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>
+            {% if section == "dhcp" %}
+                Configurazione DHCP
+            {% elif section == "dns" %}
+                Configurazione DNS
+            {% else %}
+                Configurazione Interfaccia {{ interface.name }}
+            {% endif %}
+        </h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('network.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="arrow-left"></i> Torna alla Gestione Rete
+            </a>
+        </div>
+    </div>
+
+    {% if section == "dhcp" %}
+        <!-- DHCP Server Configuration -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configurazione Server DHCP</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('network.dhcp_config') }}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="form-check form-switch mb-4">
+                                {{ form.enabled(class="form-check-input") }}
+                                <label class="form-check-label" for="enabled">Abilita server DHCP</label>
+                            </div>
+                            
+                            <div id="dhcpFields">
+                                <div class="mb-3">
+                                    <label for="start_ip" class="form-label">Inizio Range DHCP</label>
+                                    {{ form.start_ip(class="form-control", data_validate="ip") }}
+                                    {% if form.start_ip.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.start_ip.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="end_ip" class="form-label">Fine Range DHCP</label>
+                                    {{ form.end_ip(class="form-control", data_validate="ip") }}
+                                    {% if form.end_ip.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.end_ip.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="lease_time" class="form-label">Tempo di Lease (ore)</label>
+                                    {{ form.lease_time(class="form-control") }}
+                                    {% if form.lease_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.lease_time.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i data-feather="info" class="me-2"></i>
+                                Il server DHCP assegnerà automaticamente indirizzi IP, subnet mask, gateway e DNS ai dispositivi nella tua rete.
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i> Salva Configurazione
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif section == "dns" %}
+        <!-- DNS Configuration -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configurazione DNS</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('network.dns_config') }}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-3">
+                                <label for="primary_dns" class="form-label">DNS Primario</label>
+                                {{ form.primary_dns(class="form-control", data_validate="ip") }}
+                                {% if form.primary_dns.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.primary_dns.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Esempio: 8.8.8.8 (Google DNS)</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="secondary_dns" class="form-label">DNS Secondario</label>
+                                {{ form.secondary_dns(class="form-control", data_validate="ip") }}
+                                {% if form.secondary_dns.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.secondary_dns.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Esempio: 8.8.4.4 (Google DNS alternativo)</div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i data-feather="info" class="me-2"></i>
+                                I server DNS traducono i nomi di dominio in indirizzi IP. Imposta server DNS affidabili per una navigazione web veloce e sicura.
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i> Salva Configurazione
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Interface Configuration -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            {% if interface.type == 'wan' %}
+                                Configurazione Interfaccia WAN
+                            {% elif interface.type == 'lan' %}
+                                Configurazione Interfaccia LAN
+                            {% elif interface.type == 'wifi' %}
+                                Configurazione Interfaccia WiFi
+                            {% else %}
+                                Configurazione Interfaccia {{ interface.name }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4 d-flex align-items-center">
+                            <span class="status-indicator {% if interface.status == 'up' %}status-up{% else %}status-down{% endif %} me-2"></span>
+                            <strong>Stato:</strong> {{ 'Attivo' if interface.status == 'up' else 'Disattivo' }}
+                            <span class="ms-3 me-2">|</span>
+                            <strong>MAC:</strong> {{ interface.mac_address }}
+                        </div>
+                        
+                        <form method="POST" action="{{ url_for('network.configure_interface_route', interface_name=interface.name) }}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Modalità di Configurazione IP</label>
+                                <div class="form-check">
+                                    {{ form.ip_mode(class="form-check-input", id="ipModeDhcp", value="dhcp") }}
+                                    <label class="form-check-label" for="ipModeDhcp">
+                                        DHCP (ottieni automaticamente un indirizzo IP)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.ip_mode(class="form-check-input", id="ipModeStatic", value="static") }}
+                                    <label class="form-check-label" for="ipModeStatic">
+                                        IP Statico (imposta manualmente l'indirizzo IP)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="staticIPFields" class="d-none">
+                                <div class="mb-3">
+                                    <label for="ip_address" class="form-label">Indirizzo IP</label>
+                                    {{ form.ip_address(class="form-control", data_validate="ip") }}
+                                    {% if form.ip_address.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.ip_address.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subnet_mask" class="form-label">Subnet Mask</label>
+                                    {{ form.subnet_mask(class="form-control", data_validate="ip") }}
+                                    {% if form.subnet_mask.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.subnet_mask.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if interface.type == 'wan' %}
+                                <div class="mb-3">
+                                    <label for="gateway" class="form-label">Gateway</label>
+                                    {{ form.gateway(class="form-control", data_validate="ip") }}
+                                    {% if form.gateway.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.gateway.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dns_servers" class="form-label">Server DNS (separati da virgola)</label>
+                                    {{ form.dns_servers(class="form-control") }}
+                                    {% if form.dns_servers.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.dns_servers.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Esempio: 8.8.8.8, 8.8.4.4</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i data-feather="info" class="me-2"></i>
+                                Le modifiche alla configurazione di rete potrebbero causare la perdita temporanea della connessione. Il sistema si riconnetterà automaticamente con le nuove impostazioni.
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i> Salva Configurazione
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/network.js') }}"></script>
+{% endblock %}

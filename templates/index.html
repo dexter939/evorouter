@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2>Benvenuto a BPI-R4 Router OS</h2>
+    <p class="lead">Questa è la pagina principale del sistema operativo del router Banana Pi BPI-R4.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i data-feather="home" width="48" height="48"></i>
+                    </div>
+                    <h5 class="card-title">Dashboard</h5>
+                    <p class="card-text">Visualizza lo stato generale del sistema</p>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Vai alla Dashboard</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i data-feather="wifi" width="48" height="48"></i>
+                    </div>
+                    <h5 class="card-title">Configurazione Rete</h5>
+                    <p class="card-text">Configura le interfacce di rete e il DHCP</p>
+                    <a href="{{ url_for('network.index') }}" class="btn btn-primary">Gestisci Rete</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i data-feather="phone" width="48" height="48"></i>
+                    </div>
+                    <h5 class="card-title">FreeSWITCH</h5>
+                    <p class="card-text">Gestisci il centralino telefonico VoIP</p>
+                    <a href="{{ url_for('freeswitch.index') }}" class="btn btn-primary">Gestisci FreeSWITCH</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i data-feather="settings" width="48" height="48"></i>
+                    </div>
+                    <h5 class="card-title">Sistema</h5>
+                    <p class="card-text">Gestisci le impostazioni di sistema</p>
+                    <a href="{{ url_for('system.index') }}" class="btn btn-primary">Gestisci Sistema</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-2">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Guida Rapida</h5>
+                </div>
+                <div class="card-body">
+                    <p>Benvenuto nel sistema operativo personalizzato per il tuo router Banana Pi BPI-R4. Ecco alcuni suggerimenti per iniziare:</p>
+                    <ul>
+                        <li>Configura la tua connessione internet utilizzando la <a href="{{ url_for('network.wizard') }}">Configurazione guidata</a></li>
+                        <li>Imposta il centralino VoIP FreeSWITCH per gestire chiamate telefoniche</li>
+                        <li>Controlla lo stato del sistema nella Dashboard</li>
+                        <li>Consulta i log di sistema per risolvere eventuali problemi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informazioni sul Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Modello Router</th>
+                                <td>Banana Pi BPI-R4</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Processore</th>
+                                <td>RK3566 Quad-core ARM Cortex-A55</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Memoria RAM</th>
+                                <td>4GB LPDDR4</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Porte Ethernet</th>
+                                <td>5 Porte (4 LAN, 1 WAN)</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Versione SO</th>
+                                <td>1.0.0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
