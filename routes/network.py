@@ -22,10 +22,15 @@ def index():
     try:
         interfaces = get_interfaces_status()
         dhcp_leases = get_dhcp_leases()
+        
+        # Aggiungi link alla pagina UPnP
+        upnp_enabled = True  # Questo valore dovrebbe provenire dalla configurazione reale
+        
         return render_template('network/index.html', 
                                active_page="network",
                                interfaces=interfaces,
-                               dhcp_leases=dhcp_leases)
+                               dhcp_leases=dhcp_leases,
+                               upnp_enabled=upnp_enabled)
     except Exception as e:
         logger.error(f"Error loading network dashboard: {str(e)}")
         flash("Si è verificato un errore nel caricamento delle informazioni di rete.", "danger")

@@ -41,6 +41,49 @@ class NetworkConfig(db.Model):
     def __repr__(self):
         return f'<NetworkConfig {self.interface_name}>'
 
+class UPnPConfig(db.Model):
+    """UPnP Configuration"""
+    __tablename__ = 'upnp_config'
+    id = db.Column(db.Integer, primary_key=True)
+    enabled = db.Column(db.Boolean, default=False)
+    internal_port_range_start = db.Column(db.Integer, default=1024)
+    internal_port_range_end = db.Column(db.Integer, default=65535)
+    external_port_range_start = db.Column(db.Integer, default=1024)
+    external_port_range_end = db.Column(db.Integer, default=65535)
+    max_lease_duration = db.Column(db.Integer, default=86400)  # In seconds (24 hours)
+    allow_remote_host = db.Column(db.Boolean, default=False)
+    secure_mode = db.Column(db.Boolean, default=True)
+    notify_interval = db.Column(db.Integer, default=1800)  # In seconds (30 minutes)
+    allow_loopback = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relazione con i port mapping UPnP
+    port_mappings = db.relationship('UPnPPortMapping', backref='config', lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<UPnPConfig {"enabled" if self.enabled else "disabled"}>'
+
+class UPnPPortMapping(db.Model):
+    """UPnP Port Mapping"""
+    __tablename__ = 'upnp_port_mapping'
+    id = db.Column(db.Integer, primary_key=True)
+    config_id = db.Column(db.Integer, db.ForeignKey('upnp_config.id'), nullable=False)
+    description = db.Column(db.String(128))
+    external_port = db.Column(db.Integer, nullable=False)
+    internal_client = db.Column(db.String(64), nullable=False)  # IP address of internal client
+    internal_port = db.Column(db.Integer, nullable=False)
+    protocol = db.Column(db.String(8), nullable=False)  # TCP, UDP
+    enabled = db.Column(db.Boolean, default=True)
+    lease_duration = db.Column(db.Integer, default=86400)  # In seconds (24 hours)
+    remote_host = db.Column(db.String(64))  # Remote address restriction (optional)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<UPnPPortMapping {self.external_port}->{self.internal_client}:{self.internal_port} ({self.protocol})>'
+
 class PbxConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     enabled = db.Column(db.Boolean, default=False)

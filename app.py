@@ -25,7 +25,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key_for_development")
 
 # Configure database URI
-database_url = os.environ.get("DATABASE_URL", "sqlite:///bpir4_router.db")
+database_url = os.environ.get("DATABASE_URL", "sqlite:///evorouter.db")
 # Fix PostgreSQL connection string for SQLAlchemy if needed
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -58,6 +58,7 @@ from routes.auth import auth_bp
 from routes.api import api_bp
 from routes.freeswitch import freeswitch_bp
 from routes.vpn import vpn
+from routes.upnp import upnp_bp
 
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(network_bp, url_prefix='/network')
@@ -66,6 +67,7 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
 app.register_blueprint(vpn, url_prefix='/vpn')
+app.register_blueprint(upnp_bp, url_prefix='/network/upnp')
 
 # Import user loader
 from models import User
