@@ -8,6 +8,9 @@
         <h2>Gestione FreeSWITCH</h2>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
+                <a href="{{ url_for('freeswitch.wizard') }}" class="btn btn-sm btn-secondary me-2">
+                    <i data-feather="settings"></i> Wizard Configurazione
+                </a>
                 <button type="button" id="restartFreeswitch" class="btn btn-sm btn-primary">
                     <i data-feather="refresh-cw"></i> Avvia/Riavvia FreeSWITCH
                 </button>

@@ -426,3 +426,80 @@ class BlacklistForm(FlaskForm):
     ])
     
     submit = SubmitField('Aggiungi a Blacklist')
+
+class FreeswitchWizardForm(FlaskForm):
+    """Wizard form for FreeSWITCH initial configuration"""
+    # General settings
+    enabled = BooleanField('Abilita FreeSWITCH', default=True)
+    sip_port = IntegerField('Porta SIP', validators=[
+        NumberRange(min=1024, max=65535, message='La porta deve essere tra 1024 e 65535')
+    ], default=5060)
+    rtp_port_start = IntegerField('Porta RTP Iniziale', validators=[
+        NumberRange(min=1024, max=65535, message='La porta deve essere tra 1024 e 65535')
+    ], default=16384)
+    rtp_port_end = IntegerField('Porta RTP Finale', validators=[
+        NumberRange(min=1024, max=65535, message='La porta deve essere tra 1024 e 65535')
+    ], default=32768)
+    
+    # Wizard step tracking
+    current_step = IntegerField('Step Corrente', default=1)
+    
+    # Advanced settings
+    voicemail_enabled = BooleanField('Abilita Voicemail', default=True)
+    voicemail_email = EmailField('Email per notifiche voicemail', validators=[
+        Optional(),
+        Email(message='Inserisci un indirizzo email valido')
+    ])
+    voicemail_attach_file = BooleanField('Allega file audio alle email', default=True)
+    voicemail_delete_after_email = BooleanField('Cancella messaggio dopo invio email', default=False)
+    
+    # Call recording
+    call_recording_enabled = BooleanField('Abilita Registrazione Chiamate', default=False)
+    record_inbound = BooleanField('Registra chiamate in entrata', default=True)
+    record_outbound = BooleanField('Registra chiamate in uscita', default=True)
+    
+    # Trunk configuration
+    configure_trunk = BooleanField('Configura Trunk SIP', default=False)
+    trunk_name = StringField('Nome Trunk', validators=[
+        Optional(),
+        Length(min=2, max=64, message='Il nome deve essere lungo tra 2 e 64 caratteri')
+    ])
+    trunk_host = StringField('Host/IP Provider', validators=[
+        Optional(),
+        Length(min=2, max=128, message='L\'host deve essere lungo tra 2 e 128 caratteri')
+    ])
+    trunk_port = IntegerField('Porta', validators=[
+        Optional(),
+        NumberRange(min=1, max=65535, message='La porta deve essere tra 1 e 65535')
+    ], default=5060)
+    trunk_username = StringField('Nome Utente', validators=[
+        Optional(),
+        Length(max=64, message='Il nome utente non può superare i 64 caratteri')
+    ])
+    trunk_password = PasswordField('Password', validators=[
+        Optional(),
+        Length(max=64, message='La password non può superare i 64 caratteri')
+    ])
+    
+    submit = SubmitField('Applica Configurazione')
+    
+    def validate(self):
+        """Custom validation logic"""
+        if not super().validate():
+            return False
+        
+        # Validate RTP port range
+        if self.rtp_port_start.data >= self.rtp_port_end.data:
+            self.rtp_port_end.errors = ['La porta finale deve essere maggiore della porta iniziale']
+            return False
+        
+        # Validate trunk configuration if enabled
+        if self.configure_trunk.data:
+            if not self.trunk_name.data:
+                self.trunk_name.errors = ['Il nome del trunk è obbligatorio']
+                return False
+            if not self.trunk_host.data:
+                self.trunk_host.errors = ['L\'host del trunk è obbligatorio']
+                return False
+        
+        return True

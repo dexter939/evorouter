@@ -6,7 +6,8 @@ from utils.freeswitch import (
     get_extensions, add_extension, update_extension, delete_extension,
     get_trunks, add_trunk, update_trunk, delete_trunk
 )
-from forms.freeswitch import ExtensionForm, TrunkForm
+from forms.freeswitch import ExtensionForm, TrunkForm, FreeswitchWizardForm
+from models import FreeswitchConfig, SipExtension, SipTrunk, db
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -272,3 +273,117 @@ def restart_freeswitch_service():
     except Exception as e:
         logger.error(f"Error restarting FreeSWITCH: {str(e)}")
         return jsonify({'success': False, 'message': f'Errore nel riavvio di FreeSWITCH: {str(e)}'}), 500
+
+@freeswitch_bp.route('/save_wizard', methods=['POST'])
+@login_required
+def save_wizard():
+    """Endpoint for the wizard form submission"""
+    # This is a simple redirect to the wizard route
+    # The actual form processing happens in the wizard route
+    return redirect(url_for('freeswitch.wizard'))
+
+@freeswitch_bp.route('/wizard', methods=['GET', 'POST'])
+@login_required
+def wizard():
+    """FreeSWITCH configuration wizard"""
+    form = FreeswitchWizardForm()
+    
+    # Pre-fill with existing configuration if available
+    if not form.is_submitted():
+        fs_config = FreeswitchConfig.query.first()
+        if fs_config:
+            form.enabled.data = fs_config.enabled
+            form.sip_port.data = fs_config.sip_port
+            form.rtp_port_start.data = fs_config.rtp_port_start
+            form.rtp_port_end.data = fs_config.rtp_port_end
+    
+    if form.validate_on_submit():
+        try:
+            # Process submitted form
+            # 1. Save FreeswitchConfig
+            freeswitch_config = FreeswitchConfig.query.first()
+            if not freeswitch_config:
+                freeswitch_config = FreeswitchConfig()
+                db.session.add(freeswitch_config)
+            
+            freeswitch_config.enabled = form.enabled.data
+            freeswitch_config.sip_port = form.sip_port.data
+            freeswitch_config.rtp_port_start = form.rtp_port_start.data
+            freeswitch_config.rtp_port_end = form.rtp_port_end.data
+            
+            # 2. Process extensions
+            # Get all extension data from the dynamic form fields
+            extension_data = []
+            for key, value in request.form.items():
+                if key.startswith('ext_number_'):
+                    idx = key.split('_')[-1]
+                    extension_data.append({
+                        'number': request.form.get(f'ext_number_{idx}', ''),
+                        'name': request.form.get(f'ext_name_{idx}', ''),
+                        'password': request.form.get(f'ext_password_{idx}', '')
+                    })
+            
+            # Create or update extensions
+            for ext_data in extension_data:
+                # Check if extension already exists
+                existing = SipExtension.query.filter_by(extension_number=ext_data['number']).first()
+                
+                if existing:
+                    # Update existing extension
+                    existing.name = ext_data['name']
+                    if ext_data['password']:  # Don't update password if not provided
+                        existing.password = ext_data['password']
+                    
+                    # Set advanced features based on form data
+                    existing.voicemail_enabled = form.voicemail_enabled.data
+                    existing.voicemail_email = form.voicemail_email.data
+                    existing.voicemail_attach_file = form.voicemail_attach_file.data
+                    existing.voicemail_delete_after_email = form.voicemail_delete_after_email.data
+                    existing.record_inbound = form.record_inbound.data if form.call_recording_enabled.data else False
+                    existing.record_outbound = form.record_outbound.data if form.call_recording_enabled.data else False
+                else:
+                    # Create new extension
+                    new_extension = SipExtension(
+                        extension_number=ext_data['number'],
+                        name=ext_data['name'],
+                        password=ext_data['password'],
+                        voicemail_enabled=form.voicemail_enabled.data,
+                        voicemail_email=form.voicemail_email.data,
+                        voicemail_attach_file=form.voicemail_attach_file.data,
+                        voicemail_delete_after_email=form.voicemail_delete_after_email.data,
+                        record_inbound=form.record_inbound.data if form.call_recording_enabled.data else False,
+                        record_outbound=form.record_outbound.data if form.call_recording_enabled.data else False
+                    )
+                    db.session.add(new_extension)
+            
+            # 3. Process trunk if configured
+            if form.configure_trunk.data:
+                # Create a new SIP trunk
+                new_trunk = SipTrunk(
+                    name=form.trunk_name.data,
+                    host=form.trunk_host.data,
+                    port=form.trunk_port.data,
+                    username=form.trunk_username.data if form.trunk_username.data else None,
+                    password=form.trunk_password.data if form.trunk_password.data else None,
+                    enabled=True
+                )
+                db.session.add(new_trunk)
+            
+            # Save all changes
+            db.session.commit()
+            
+            # Restart FreeSWITCH with new configuration
+            restart_freeswitch()
+            
+            flash("Configurazione del centralino completata con successo!", "success")
+            return redirect(url_for('freeswitch.index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error saving FreeSWITCH wizard configuration: {str(e)}")
+            flash(f"Errore durante il salvataggio della configurazione: {str(e)}", "danger")
+    
+    # If GET request or form validation failed, render the wizard template
+    return render_template('freeswitch/wizard.html', 
+                           active_page="freeswitch",
+                           form=form)
