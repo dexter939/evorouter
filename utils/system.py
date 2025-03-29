@@ -112,7 +112,7 @@ def get_system_stats():
             
             stats['system']['os_name'] = os_info.get('PRETTY_NAME', 'Unknown')
         except:
-            stats['system']['os_name'] = 'Custom BPI-R4 Router OS'
+            stats['system']['os_name'] = 'EvoRouter R4 OS'
         
         # Get kernel version
         try:
@@ -184,7 +184,7 @@ def reboot_system():
     """
     try:
         logger.info("System reboot simulated in Replit environment")
-        # In a real BPI-R4 system, we would execute:
+        # In a real EvoRouter R4 system, we would execute:
         # subprocess.Popen(['sleep', '5', '&&', 'reboot'], shell=True)
         return True
     except Exception as e:
@@ -200,7 +200,7 @@ def shutdown_system():
     """
     try:
         logger.info("System shutdown simulated in Replit environment")
-        # In a real BPI-R4 system, we would execute:
+        # In a real EvoRouter R4 system, we would execute:
         # subprocess.Popen(['sleep', '5', '&&', 'poweroff'], shell=True)
         return True
     except Exception as e:
@@ -569,12 +569,12 @@ def get_installed_packages():
     
     try:
         # In Replit environment, simulate installed packages
-        # for the BPI-R4 Router OS
+        # for the EvoRouter R4 OS
         
         # Core packages
         packages = [
             {'name': 'freeswitch', 'version': '1.10.7', 'status': 'installed'},
-            {'name': 'bpi-r4-kernel', 'version': '5.10.0', 'status': 'installed'},
+            {'name': 'evorouter-kernel', 'version': '5.10.0', 'status': 'installed'},
             {'name': 'nginx', 'version': '1.18.0', 'status': 'installed'},
             {'name': 'isc-dhcp-server', 'version': '4.4.1', 'status': 'installed'},
             {'name': 'hostapd', 'version': '2.9', 'status': 'installed'},
@@ -604,12 +604,12 @@ def check_for_updates():
     
     try:
         # In Replit environment, simulate update check results
-        # for the BPI-R4 Router OS
+        # for the EvoRouter R4 OS
         
         # Security updates available
         updates = [
             {'name': 'freeswitch', 'current_version': '1.10.7', 'new_version': '1.10.8'},
-            {'name': 'bpi-r4-kernel', 'current_version': '5.10.0', 'new_version': '5.10.1'},
+            {'name': 'evorouter-kernel', 'current_version': '5.10.0', 'new_version': '5.10.1'},
             {'name': 'openssh-server', 'current_version': '8.4p1', 'new_version': '8.4p2'},
             {'name': 'bind9', 'current_version': '9.16.1', 'new_version': '9.16.3'}
         ]
@@ -631,7 +631,7 @@ def install_update(package='all'):
     """
     try:
         # In Replit environment, simulate updating packages
-        # for the BPI-R4 Router OS
+        # for the EvoRouter R4 OS
         
         # Generate simulated output based on package
         if package == 'all':
@@ -644,36 +644,36 @@ def install_update(package='all'):
                            'Reading state information...\n' + 
                            'Calculating upgrade...\n' + 
                            'The following packages will be upgraded:\n' +
-                           '  freeswitch bpi-r4-kernel openssh-server bind9\n' +
+                           '  freeswitch evorouter-kernel openssh-server bind9\n' +
                            '4 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n' +
                            'Need to get 15.2 MB of archives.\n' +
                            'After this operation, 156 kB of additional disk space will be used.\n' +
                            'Get:1 http://deb.debian.org/debian buster/main amd64 freeswitch amd64 1.10.8 [5,642 kB]\n' +
                            'Get:2 http://security.debian.org/debian-security buster/updates/main amd64 openssh-server amd64 8.4p2 [336 kB]\n' +
-                           'Get:3 http://deb.debian.org/debian buster/main amd64 bpi-r4-kernel amd64 5.10.1 [8,724 kB]\n' +
+                           'Get:3 http://deb.debian.org/debian buster/main amd64 evorouter-kernel amd64 5.10.1 [8,724 kB]\n' +
                            'Get:4 http://security.debian.org/debian-security buster/updates/main amd64 bind9 amd64 9.16.3 [521 kB]\n' +
                            'Fetched 15.2 MB in 3s (5,067 kB/s)\n' +
                            'Preparing to unpack .../freeswitch_1.10.8_amd64.deb ...\n' +
                            'Unpacking freeswitch (1.10.8) over (1.10.7) ...\n' +
                            'Preparing to unpack .../openssh-server_8.4p2_amd64.deb ...\n' +
                            'Unpacking openssh-server (8.4p2) over (8.4p1) ...\n' +
-                           'Preparing to unpack .../bpi-r4-kernel_5.10.1_amd64.deb ...\n' +
-                           'Unpacking bpi-r4-kernel (5.10.1) over (5.10.0) ...\n' +
+                           'Preparing to unpack .../evorouter-kernel_5.10.1_amd64.deb ...\n' +
+                           'Unpacking evorouter-kernel (5.10.1) over (5.10.0) ...\n' +
                            'Preparing to unpack .../bind9_9.16.3_amd64.deb ...\n' +
                            'Unpacking bind9 (9.16.3) over (9.16.1) ...\n' +
                            'Setting up freeswitch (1.10.8) ...\n' +
                            'Setting up openssh-server (8.4p2) ...\n' +
-                           'Setting up bpi-r4-kernel (5.10.1) ...\n' +
+                           'Setting up evorouter-kernel (5.10.1) ...\n' +
                            'Setting up bind9 (9.16.3) ...\n' +
                            'Processing triggers for man-db (2.8.5-2) ...\n' +
                            'Processing triggers for systemd (241-7~deb10u10) ...'
             }
         else:
             # Simulate output for updating a specific package
-            if package in ['freeswitch', 'bpi-r4-kernel', 'openssh-server', 'bind9']:
+            if package in ['freeswitch', 'evorouter-kernel', 'openssh-server', 'bind9']:
                 # Get the current and new version information
-                current_version = '1.10.7' if package == 'freeswitch' else '5.10.0' if package == 'bpi-r4-kernel' else '8.4p1' if package == 'openssh-server' else '9.16.1'
-                new_version = '1.10.8' if package == 'freeswitch' else '5.10.1' if package == 'bpi-r4-kernel' else '8.4p2' if package == 'openssh-server' else '9.16.3'
+                current_version = '1.10.7' if package == 'freeswitch' else '5.10.0' if package == 'evorouter-kernel' else '8.4p1' if package == 'openssh-server' else '9.16.1'
+                new_version = '1.10.8' if package == 'freeswitch' else '5.10.1' if package == 'evorouter-kernel' else '8.4p2' if package == 'openssh-server' else '9.16.3'
                 
                 result = {
                     'success': True,

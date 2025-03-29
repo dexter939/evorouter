@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Banana Pi BPI-R4 Router OS{% endblock %}</title>
+    <title>{% block title %}EvoRouter R4 OS{% endblock %}</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/evonet-theme.css') }}">
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>" type="image/svg+xml">
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>" type="image/svg+xml">
     
     {% block head %}{% endblock %}
 </head>
@@ -29,8 +29,8 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard.index') }}">
-                <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Logo" width="30" height="30" class="me-2" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>'">
-                <span class="fs-4 fw-bold">BPI-R4 Router OS</span>
+                <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Logo" width="30" height="30" class="me-2" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>'">
+                <span class="fs-4 fw-bold">EvoRouter R4 OS</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

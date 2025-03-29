@@ -1,10 +1,10 @@
 """
-Configuration settings for the BPI-R4 Router OS
+Configuration settings for the EvoRouter R4
 """
 import os
 
 # Router hardware configuration
-ROUTER_MODEL = "Banana Pi BPI-R4"
+ROUTER_MODEL = "EvoRouter R4"
 CPU_MODEL = "RK3566 Quad-core ARM Cortex-A55 processor"
 RAM = "4GB LPDDR4"
 ETHERNET_PORTS = 5
