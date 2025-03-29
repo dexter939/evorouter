@@ -49,49 +49,50 @@ def get_interfaces_status():
             }
         ]
         
-        # Get real network interface information from psutil if available
+        # In Replit environment we want to use simulated interfaces
+        # with customized data to match our configuration expectations
+        
+        # We'll maintain the simulated interfaces for our router demo
+        # but try to incorporate real MAC addresses from the actual interfaces
         try:
             import psutil
             import socket
             net_if_addrs = psutil.net_if_addrs()
             net_if_stats = psutil.net_if_stats()
             
-            # Clear simulated interfaces if we have real data
-            if net_if_addrs:
-                simulated_interfaces = []
+            # Get real MAC addresses if possible
+            real_macs = {}
+            for interface_name, addrs in net_if_addrs.items():
+                if interface_name == 'lo':  # Skip loopback
+                    continue
                 
-                for interface_name, addrs in net_if_addrs.items():
-                    if interface_name == 'lo':  # Skip loopback
-                        continue
-                        
-                    interface_info = {
-                        'name': interface_name,
-                        'status': 'up' if net_if_stats.get(interface_name, None) and net_if_stats[interface_name].isup else 'down',
-                        'mac_address': '',
-                        'ip_address': '',
-                        'subnet_mask': '',
-                        'gateway': '',
-                        'mode': 'static',  # Default to static
-                        'type': 'other'  # Default to other
-                    }
+                for addr in addrs:
+                    if hasattr(addr, 'family') and addr.family == psutil.AF_LINK:
+                        real_macs[interface_name] = addr.address
+            
+            # Update our simulated interfaces with real MAC addresses if available
+            for interface in simulated_interfaces:
+                if interface['name'] in real_macs:
+                    interface['mac_address'] = real_macs[interface['name']]
                     
-                    # Get MAC and IP information
+            # Get the most likely real network interface for external access
+            real_interface = None
+            for interface_name, addrs in net_if_addrs.items():
+                if interface_name != 'lo':  # Skip loopback
                     for addr in addrs:
-                        if addr.family == psutil.AF_LINK:
-                            interface_info['mac_address'] = addr.address
-                        elif addr.family == socket.AF_INET:
-                            interface_info['ip_address'] = addr.address
-                            interface_info['subnet_mask'] = addr.netmask or '255.255.255.0'
-                    
-                    # Determine interface type based on name
-                    if interface_name == DEFAULT_LAN_INTERFACE:
-                        interface_info['type'] = 'lan'
-                    elif interface_name == DEFAULT_WAN_INTERFACE:
-                        interface_info['type'] = 'wan'
-                    elif interface_name == DEFAULT_WIFI_INTERFACE:
-                        interface_info['type'] = 'wifi'
-                    
-                    simulated_interfaces.append(interface_info)
+                        if addr.family == socket.AF_INET and not addr.address.startswith('127.'):
+                            # Found a likely external interface
+                            if 'wan_interface' not in locals():
+                                # Update the WAN interface with the real IP in our simulated data
+                                for interface in simulated_interfaces:
+                                    if interface['type'] == 'wan':
+                                        interface['ip_address'] = addr.address
+                                        interface['subnet_mask'] = addr.netmask or '255.255.255.0'
+                                        # Add possible gateway
+                                        octets = addr.address.split('.')
+                                        if len(octets) == 4:
+                                            interface['gateway'] = f"{octets[0]}.{octets[1]}.{octets[2]}.1"
+                                        break
         except Exception as psutil_err:
             logger.warning(f"Couldn't get network interfaces from psutil: {str(psutil_err)}")
         
@@ -234,30 +235,71 @@ def set_dhcp_config(enabled, start_ip, end_ip, lease_time):
             config_content = """# DHCP server disabled
 """
         else:
-            # Generate subnet information from LAN interface
-            interfaces = get_interfaces_status()
-            lan_interface = next((i for i in interfaces if i['type'] == 'lan'), None)
+            # For Replit environment, we'll use the configured LAN IP and settings
+            # rather than relying on the actual interface detected
             
-            if not lan_interface or not lan_interface['ip_address'] or not lan_interface['subnet_mask']:
-                logger.error("LAN interface not found or not configured properly")
-                return False
+            # Get the LAN IP and subnet from our default configuration
+            lan_ip = DEFAULT_LAN_IP
+            lan_subnet = DEFAULT_LAN_SUBNET
             
-            # Calculate network address and broadcast
-            lan_ip = ipaddress.IPv4Address(lan_interface['ip_address'])
-            subnet = ipaddress.IPv4Network(f"{lan_interface['ip_address']}/{lan_interface['subnet_mask']}", False)
-            network = subnet.network_address
-            broadcast = subnet.broadcast_address
+            # Calculate network address and broadcast for the default/configured LAN
+            try:
+                # Try to get network details from the local interface configuration if possible
+                interfaces = get_interfaces_status()
+                lan_interface = next((i for i in interfaces if i['type'] == 'lan'), None)
+                
+                if lan_interface and lan_interface['ip_address'] and lan_interface['subnet_mask']:
+                    # Make sure we're using the correct subnet for LAN range
+                    first_three_octets_lan = '.'.join(start_ip.split('.')[:3])
+                    first_three_octets_router = '.'.join(lan_interface['ip_address'].split('.')[:3])
+                    
+                    # If the DHCP range is in a different subnet than the router,
+                    # force the range to be in the router's subnet
+                    if first_three_octets_lan != first_three_octets_router:
+                        logger.warning(f"DHCP range {start_ip}-{end_ip} is not in the same subnet as the router ({lan_interface['ip_address']})")
+                        # Keep the same last octet but change the first three to match the router
+                        start_ip_last = start_ip.split('.')[-1]
+                        end_ip_last = end_ip.split('.')[-1]
+                        start_ip = f"{first_three_octets_router}.{start_ip_last}"
+                        end_ip = f"{first_three_octets_router}.{end_ip_last}"
+                        logger.info(f"Adjusted DHCP range to: {start_ip}-{end_ip}")
+                    
+                    lan_ip = lan_interface['ip_address']
+                    lan_subnet = lan_interface['subnet_mask']
+            except Exception as calc_error:
+                logger.warning(f"Error calculating DHCP range with interface info: {str(calc_error)}")
+                # Fall back to defaults if there's any error
             
-            # Write DHCP config
-            config_content = f"""# DHCP Server Configuration
+            try:
+                # Calculate network address and broadcast
+                subnet = ipaddress.IPv4Network(f"{lan_ip}/{lan_subnet}", False)
+                network = subnet.network_address
+                broadcast = subnet.broadcast_address
+                
+                # Write DHCP config
+                config_content = f"""# DHCP Server Configuration
 default-lease-time {int(lease_time) * 3600};
 max-lease-time {int(lease_time) * 3600 * 2};
 
-subnet {network} netmask {lan_interface['subnet_mask']} {{
+subnet {network} netmask {lan_subnet} {{
     range {start_ip} {end_ip};
-    option routers {lan_interface['ip_address']};
+    option routers {lan_ip};
     option broadcast-address {broadcast};
-    option domain-name-servers {lan_interface['ip_address']};
+    option domain-name-servers {lan_ip};
+}}
+"""
+            except Exception as subnet_error:
+                # If there's an error with the IP calculations, create a simpler config
+                logger.error(f"Error calculating subnet information: {str(subnet_error)}")
+                config_content = f"""# DHCP Server Configuration
+default-lease-time {int(lease_time) * 3600};
+max-lease-time {int(lease_time) * 3600 * 2};
+
+subnet 192.168.1.0 netmask 255.255.255.0 {{
+    range {start_ip} {end_ip};
+    option routers {DEFAULT_LAN_IP};
+    option broadcast-address 192.168.1.255;
+    option domain-name-servers {DEFAULT_LAN_IP};
 }}
 """
         
