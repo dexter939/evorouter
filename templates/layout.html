@@ -37,15 +37,141 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <!-- Notifiche -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i data-feather="bell" class="feather-small"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                2
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                            <li>
+                                <div class="dropdown-header bg-light py-2 px-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">Notifiche</h6>
+                                        <span class="badge bg-primary rounded-pill">2 nuove</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><a class="dropdown-item py-2 border-bottom" href="#">
+                                <div class="d-flex w-100">
+                                    <div class="icon-bg bg-warning rounded-circle p-2 me-2">
+                                        <i data-feather="alert-triangle" width="18" height="18" class="text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 text-dark">Aggiornamento disponibile</p>
+                                        <small class="text-muted">Nuovo firmware v1.2 disponibile</small>
+                                        <small class="text-muted d-block">2 ore fa</small>
+                                    </div>
+                                </div>
+                            </a></li>
+                            <li><a class="dropdown-item py-2 border-bottom" href="#">
+                                <div class="d-flex w-100">
+                                    <div class="icon-bg bg-danger rounded-circle p-2 me-2">
+                                        <i data-feather="shield-off" width="18" height="18" class="text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 text-dark">Rilevato tentativo di accesso</p>
+                                        <small class="text-muted">IP: 192.168.1.45</small>
+                                        <small class="text-muted d-block">Oggi, 10:45</small>
+                                    </div>
+                                </div>
+                            </a></li>
+                            <li><a class="dropdown-item text-center small py-2 bg-light" href="#">Visualizza tutte</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Menu Quick Links -->
+                    <li class="nav-item dropdown mx-2">
+                        <a class="nav-link" href="#" id="quickLinksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i data-feather="grid" class="feather-small"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickLinksDropdown" style="width: 280px;">
+                            <li>
+                                <div class="dropdown-header border-bottom py-2">
+                                    <h6 class="mb-0">Accesso Rapido</h6>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="p-2">
+                                    <div class="row g-2">
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('network.index') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="wifi" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Rete</small>
+                                            </a>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('system.index') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="settings" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Sistema</small>
+                                            </a>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('freeswitch.index') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="phone" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Telefonia</small>
+                                            </a>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('network.wizard') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="zap" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Wizard</small>
+                                            </a>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('system.diagnostics') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="search" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Diagnostica</small>
+                                            </a>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <a href="{{ url_for('system.logs') }}" class="d-block p-2 rounded-3 text-decoration-none hover-bg-light">
+                                                <i data-feather="file-text" class="text-primary"></i>
+                                                <small class="d-block mt-1 text-dark">Log</small>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Profilo Utente -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i data-feather="user" class="feather-small"></i> {{ current_user.username }}
+                            <div class="d-inline-block position-relative">
+                                <div class="avatar avatar-sm rounded-circle bg-primary d-inline-flex align-items-center justify-content-center me-1">
+                                    {{ current_user.username[0].upper() }}
+                                </div>
+                                <span class="d-none d-md-inline-block">{{ current_user.username }}</span>
+                            </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li class="dropdown-header">
+                                <h6 class="mb-0">{{ current_user.username }}</h6>
+                                <small class="text-muted">{{ current_user.email }}</small>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i data-feather="user" class="feather-small me-2"></i> Profilo Utente
+                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
                                 <i data-feather="key" class="feather-small me-2"></i> Cambia Password
                             </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i data-feather="shield" class="feather-small me-2"></i> Sicurezza
+                            </a></li>
+                            {% if current_user.is_admin %}
+                            <li><a class="dropdown-item" href="{{ url_for('api.list_tokens') }}">
+                                <i data-feather="sliders" class="feather-small me-2"></i> API Tokens
+                            </a></li>
+                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i data-feather="help-circle" class="feather-small me-2"></i> Aiuto
+                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                 <i data-feather="log-out" class="feather-small me-2"></i> Logout
                             </a></li>

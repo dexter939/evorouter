@@ -191,6 +191,37 @@ body {
   stroke-width: 2px;
 }
 
+/* Avatar styling */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+/* Icon Backgrounds */
+.icon-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* Hover utilities */
+.hover-bg-light:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s;
+}
+
 /* Dashboard cards */
 .dashboard-stat-card {
   text-align: center;
