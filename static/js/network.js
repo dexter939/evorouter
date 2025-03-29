@@ -94,8 +94,8 @@ function toggleStaticIPFields() {
   } else if (selectedMode.value === 'pppoe' && pppoeFields) {
     pppoeFields.classList.remove('d-none');
     // Make username and password required
-    const usernameInput = pppoeFields.querySelector('#pppoe_username');
-    const passwordInput = pppoeFields.querySelector('#pppoe_password');
+    const usernameInput = document.getElementById('pppoe_username');
+    const passwordInput = document.getElementById('pppoe_password');
     if (usernameInput) usernameInput.required = true;
     if (passwordInput) passwordInput.required = true;
   }
