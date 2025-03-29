@@ -164,6 +164,10 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Set up periodic data refresh
   setInterval(refreshDashboardData, 10000); // Refresh every 10 seconds
+  
+  // Update sidebar stats if available
+  updateSidebarStats();
+  setInterval(updateSidebarStats, 10000); // Update sidebar stats every 10 seconds
 });
 
 /**
@@ -272,5 +276,59 @@ function formatBitrate(mbits) {
     return (mbits / 1000).toFixed(2) + ' Gbps';
   } else {
     return mbits.toFixed(1) + ' Mbps';
+  }
+}
+
+/**
+ * Update sidebar statistics if available
+ */
+function updateSidebarStats() {
+  // Check if sidebar stats elements exist
+  const cpuStat = document.getElementById('sidebar-cpu-usage');
+  const memStat = document.getElementById('sidebar-memory-usage');
+  const uptimeStat = document.getElementById('sidebar-uptime');
+  
+  if (!cpuStat && !memStat && !uptimeStat) return;
+  
+  // Fetch system stats
+  fetch('/dashboard/api/stats')
+    .then(response => response.json())
+    .then(data => {
+      // Update CPU usage
+      if (cpuStat && data.system && data.system.cpu) {
+        cpuStat.textContent = data.system.cpu.usage + '%';
+      }
+      
+      // Update memory usage
+      if (memStat && data.system && data.system.memory) {
+        memStat.textContent = data.system.memory.percent + '%';
+      }
+      
+      // Update uptime
+      if (uptimeStat && data.system && data.system.uptime) {
+        uptimeStat.textContent = formatUptime(data.system.uptime);
+      }
+    })
+    .catch(error => {
+      console.error('Error updating sidebar stats:', error);
+    });
+}
+
+/**
+ * Format uptime seconds to human-readable string
+ * @param {number} seconds - Uptime in seconds
+ * @return {string} Formatted uptime
+ */
+function formatUptime(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
   }
 }

@@ -9,7 +9,9 @@
             <div class="col-md-8 col-lg-6 col-xl-5">
                 <div class="login-container">
                     <div class="login-logo text-center mb-4">
-                        <h1>BPI-R4 Router OS</h1>
+                        <img src="{{ url_for('static', filename='img/logo-dark.svg') }}" alt="Logo" width="80" height="80" 
+                             class="mb-3" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>'">
+                        <h1 class="fw-bold">BPI-R4 Router OS</h1>
                         <p class="text-muted">Sistema Operativo per Banana Pi BPI-R4</p>
                     </div>
                     
@@ -71,7 +73,12 @@
                             {{ form.hidden_tag() }}
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                {{ form.username(class="form-control", id="username", placeholder="Inserisci il tuo username") }}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i data-feather="user" width="18" height="18"></i>
+                                    </span>
+                                    {{ form.username(class="form-control border-start-0", id="username", placeholder="Inserisci il tuo username") }}
+                                </div>
                                 {% if form.username.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.username.errors %}
@@ -82,7 +89,12 @@
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                {{ form.password(class="form-control", id="password", placeholder="Inserisci la tua password") }}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i data-feather="lock" width="18" height="18"></i>
+                                    </span>
+                                    {{ form.password(class="form-control border-start-0", id="password", placeholder="Inserisci la tua password") }}
+                                </div>
                                 {% if form.password.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.password.errors %}
@@ -102,8 +114,16 @@
                     {% endif %}
                     
                     <div class="mt-4 text-center">
-                        <p class="text-muted">Banana Pi BPI-R4 Router OS v1.0.0</p>
+                        <p class="text-muted small">Banana Pi BPI-R4 Router OS v1.0.0</p>
                     </div>
+                    
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+</script>
                 </div>
             </div>
         </div>

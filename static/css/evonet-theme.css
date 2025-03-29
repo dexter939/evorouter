@@ -1,0 +1,278 @@
+/* 
+ * Evo-Net Theme CSS for BPI-R4 Router OS
+ * Ispirato al design del sito evo-net.it
+ */
+
+/* Override dei colori Bootstrap con la palette Evo-Net */
+:root {
+  --bs-primary: #009cde;
+  --bs-secondary: #1a365d;
+  --bs-primary-rgb: 0, 156, 222;
+  --bs-secondary-rgb: 26, 54, 93;
+}
+
+/* Font family globale */
+body {
+  font-family: 'Montserrat', sans-serif;
+  color: #333;
+}
+
+/* Navbar principale */
+.navbar {
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  color: var(--bs-secondary);
+}
+
+.navbar .nav-link {
+  color: var(--bs-secondary);
+  transition: all 0.2s;
+}
+
+.navbar .nav-link:hover {
+  color: var(--bs-primary);
+}
+
+.navbar .dropdown-item:active {
+  background-color: var(--bs-primary);
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: var(--bs-secondary);
+}
+
+/* Bottoni con stile Evo-Net */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 156, 222, 0.3);
+}
+
+.btn-outline-primary {
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 156, 222, 0.2);
+}
+
+.btn-secondary {
+  background-color: var(--bs-secondary);
+  border-color: var(--bs-secondary);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+  background-color: var(--secondary-light);
+  border-color: var(--secondary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(26, 54, 93, 0.3);
+}
+
+/* Card con stile Evo-Net */
+.card {
+  border-radius: var(--border-radius);
+  border: none;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  color: var(--bs-secondary);
+  padding: 1rem 1.5rem;
+}
+
+.card-header h5, .card-header .h5 {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Badge personalizzati */
+.badge.bg-primary {
+  background-color: var(--bs-primary) !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--bs-secondary) !important;
+}
+
+/* Alert personalizzati */
+.alert-primary {
+  color: #fff;
+  background-color: var(--bs-primary);
+  border-color: var(--primary-dark);
+}
+
+.alert-secondary {
+  color: #fff;
+  background-color: var(--bs-secondary);
+  border-color: var(--secondary-light);
+}
+
+/* Input e form */
+.form-control {
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.6rem 1rem;
+}
+
+.form-control:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.25rem rgba(0, 156, 222, 0.25);
+}
+
+.form-label {
+  font-weight: 500;
+  color: var(--bs-secondary);
+}
+
+/* Tabelle */
+.table {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.table thead {
+  background-color: rgba(26, 54, 93, 0.05);
+}
+
+.table thead th {
+  font-weight: 600;
+  color: var(--bs-secondary);
+  border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Override pagination */
+.pagination .page-link {
+  color: var(--bs-primary);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+/* Icone e animazioni */
+.feather {
+  stroke-width: 2px;
+}
+
+/* Dashboard cards */
+.dashboard-stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.dashboard-stat-card .stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--bs-primary);
+}
+
+.dashboard-stat-card .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--bs-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-stat-card .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Wizard personalizzato */
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.wizard-nav::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #e9ecef;
+  z-index: 0;
+}
+
+.wizard-step-indicator {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.wizard-step-indicator.active {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+}
+
+.wizard-step-indicator.completed {
+  background-color: var(--bs-success);
+  border-color: var(--bs-success);
+  color: white;
+}
+
+/* Footer */
+.footer {
+  background-color: var(--bs-secondary);
+  color: white;
+  padding: 2rem 0;
+  margin-top: 3rem;
+}
+
+.footer a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: white;
+}

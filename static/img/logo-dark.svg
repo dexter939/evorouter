@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <style>
+    .primary { fill: #009cde; }
+    .secondary { fill: #1a365d; }
+  </style>
+  <circle class="secondary" cx="50" cy="50" r="48" />
+  <path class="primary" d="M30,25 L70,25 L70,35 L50,35 L50,75 L30,75 Z" />
+  <path class="primary" d="M60,45 L70,45 L70,75 L60,75 Z" />
+  <rect class="primary" x="25" y="65" width="50" height="15" />
+</svg>
