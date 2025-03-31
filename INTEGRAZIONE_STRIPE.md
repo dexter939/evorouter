@@ -1,8 +1,8 @@
-# Integrazione con Stripe per Pagamenti
+# Integrazione con Stripe per Dimostrazioni
 
 ## Introduzione
 
-Il Router OS per BPI-R4 supporta l'integrazione con Stripe per gestire pagamenti ricorrenti, abbonamenti per servizi premium o altri costi associati al funzionamento del dispositivo. Questa guida mostra come configurare e utilizzare l'integrazione con Stripe nel sistema.
+Il sistema EvoRouter R4 OS è completamente gratuito e non prevede funzionalità a pagamento o abbonamenti. Questa guida è inclusa esclusivamente per scopi dimostrativi, per mostrare come potrebbe essere implementata un'integrazione con Stripe, senza che questa venga effettivamente utilizzata nel sistema.
 
 ## Prerequisiti
 
@@ -20,28 +20,28 @@ export STRIPE_SECRET_KEY="sk_test_..."  # Usa sk_live_... in produzione
 
 Per rendere questa configurazione permanente, aggiungi questa riga al file `/etc/environment` o includi nel file di servizio systemd.
 
-## Funzionalità Integrate
+## Funzionalità che Potrebbero Essere Teoricamente Integrate
 
-### 1. Pagamenti Una Tantum
+### 1. Esempi di Pagamenti Una Tantum
 
-Il sistema supporta pagamenti una tantum per sbloccare funzionalità premium o per servizi specifici.
+In un sistema con funzionalità a pagamento, si potrebbero implementare pagamenti una tantum per sbloccare funzionalità premium.
 
-#### Esempio di Flusso di Pagamento:
+#### Esempio di Flusso di Pagamento (Non Implementato):
 
-1. L'utente seleziona un servizio o funzionalità premium nel pannello di controllo
+1. L'utente seleziona un servizio o funzionalità nel pannello di controllo
 2. Viene reindirizzato alla pagina di checkout di Stripe
 3. Dopo il pagamento, l'utente viene reindirizzato alla pagina di successo
-4. La funzionalità viene sbloccata nel sistema
+4. La funzionalità verrebbe attivata
 
-### 2. Abbonamenti Ricorrenti
+### 2. Esempi di Abbonamenti Ricorrenti
 
-Per servizi continuativi, come manutenzione remota o backup automatici, sono disponibili abbonamenti ricorrenti.
+In altri sistemi, per servizi continuativi, potrebbero essere implementati abbonamenti ricorrenti.
 
-#### Piani di Abbonamento Predefiniti:
+#### Esempi di Possibili Piani (Non Implementati in EvoRouter R4):
 
-- **Base**: Supporto email, aggiornamenti di sicurezza
-- **Premium**: Supporto prioritario, backup remoti giornalieri
-- **Business**: Monitoraggio 24/7, assistenza telefonica, backup ridondanti
+- **Esempio Base**: Supporto email, aggiornamenti
+- **Esempio Premium**: Supporto prioritario, backup remoti
+- **Esempio Business**: Monitoraggio 24/7, assistenza telefonica avanzata
 
 ## Implementazione Tecnica
 
@@ -186,6 +186,8 @@ Prima di utilizzare l'integrazione, devi configurare prodotti e prezzi nel dashb
    - Controlla che l'ambiente (test/live) sia configurato correttamente
    - Verifica che i prodotti e i prezzi esistano nel tuo account Stripe
 
-## Esempio di Implementazione Completa
+## Nota Conclusiva
 
-Per un'implementazione completa dell'integrazione Stripe, è possibile fare riferimento al codice sorgente nella directory `/utils/payments.py` e nelle route API in `/routes/payments.py`.
+**Questa guida è puramente dimostrativa**. Il sistema EvoRouter R4 OS è completamente gratuito e non implementa né utilizza alcuna funzionalità di pagamento. Nessun codice relativo a Stripe o sistemi di pagamento è presente nel sistema attuale.
+
+Tutte le funzionalità del router sono disponibili gratuitamente senza limitazioni, abbonamenti o costi aggiuntivi.
