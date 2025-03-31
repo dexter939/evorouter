@@ -255,14 +255,33 @@ set +a
 
 # Crea la directory instance per SQLite se necessario
 mkdir -p $INSTALL_DIR/instance
-chmod 777 $INSTALL_DIR/instance
+# Imposta permessi molto permissivi per assicurare l'accesso
+chmod -R 777 $INSTALL_DIR/instance
 
-# In caso di SQLite, verifica che l'utente corrente possa scrivere nella directory
+# Crea un file vuoto per il database con i permessi corretti
 if [[ "$DATABASE_URL" == sqlite* ]]; then
-    # Imposta i permessi corretti per la directory dell'applicazione
-    chmod -R 755 $INSTALL_DIR
-    chmod -R 777 $INSTALL_DIR/instance
-    print_message "info" "Permessi impostati per database SQLite in $INSTALL_DIR/instance"
+    # Estrai il percorso del file database dall'URL
+    DB_FILE_PATH=${DATABASE_URL#sqlite:///}
+    
+    # Se è un percorso relativo, lo rendiamo assoluto
+    if [[ "$DB_FILE_PATH" != /* ]]; then
+        DB_FILE_PATH="$INSTALL_DIR/$DB_FILE_PATH"
+    fi
+    
+    # Crea le directory necessarie per il database
+    DB_DIR=$(dirname "$DB_FILE_PATH")
+    mkdir -p "$DB_DIR"
+    
+    # Tocca il file del database per crearlo e imposta permessi molto permissivi
+    touch "$DB_FILE_PATH"
+    chmod 666 "$DB_FILE_PATH"
+    
+    # Imposta i permessi corretti per le directory
+    chmod -R 777 "$DB_DIR"
+    chown -R www-data:www-data "$DB_DIR" 2>/dev/null || true
+    
+    print_message "info" "File database SQLite creato in $DB_FILE_PATH con permessi corretti"
+    print_message "info" "Permessi impostati per database SQLite in $DB_DIR"
 fi
 
 # Esegui create_admin.py con messaggi di errore dettagliati

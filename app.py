@@ -106,22 +106,57 @@ from models import User
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# Create database tables
-with app.app_context():
-    db.create_all()
-    
-    # Create default admin user if no users exist
-    if not User.query.first():
-        from werkzeug.security import generate_password_hash
-        default_admin = User(
-            username="admin",
-            email="admin@localhost",
-            password_hash=generate_password_hash("admin123"),
-            is_admin=True
-        )
-        db.session.add(default_admin)
-        db.session.commit()
-        logger.info("Created default admin user")
+# Create database tables with proper error handling
+try:
+    with app.app_context():
+        # Verifica che il percorso del database SQLite esista e sia scrivibile
+        if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:///"):
+            import os
+            from urllib.parse import urlparse
+            
+            # Estrai il percorso dal URI
+            path = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
+            
+            # Se è un percorso relativo, aggiungi il percorso dell'app
+            if not path.startswith("/"):
+                path = os.path.join(app.instance_path, path)
+            
+            # Assicurati che la directory esista
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            
+            # Verifica i permessi
+            dir_path = os.path.dirname(path)
+            if not os.access(dir_path, os.W_OK):
+                logger.warning(f"La directory {dir_path} non è scrivibile! Tentativo di correzione...")
+                os.chmod(dir_path, 0o777)
+            
+            # Tocca il file del database se non esiste
+            if not os.path.exists(path):
+                logger.info(f"Creazione del file di database SQLite: {path}")
+                with open(path, 'w'):
+                    pass
+                os.chmod(path, 0o666)
+        
+        # Crea le tabelle
+        logger.info("Creazione delle tabelle del database...")
+        db.create_all()
+        
+        # Create default admin user if no users exist
+        if not User.query.first():
+            from werkzeug.security import generate_password_hash
+            default_admin = User(
+                username="admin",
+                email="admin@localhost",
+                password_hash=generate_password_hash("admin123"),
+                is_admin=True
+            )
+            db.session.add(default_admin)
+            db.session.commit()
+            logger.info("Created default admin user")
+except Exception as e:
+    logger.error(f"Errore durante l'inizializzazione del database: {str(e)}")
+    # Non solleviamo nuovamente l'eccezione qui per permettere l'esecuzione
+    # dell'app anche in caso di errore, per permettere il debugging
 
 logger.info("Application initialized")
 
