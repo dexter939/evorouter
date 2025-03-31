@@ -70,3 +70,9 @@ htmlcov/
 # Replit files
 .replit
 replit.nix
+
+# Bundle files
+evorouter.bundle
+github_bundle/
+*.tar.gz
+*.zip
