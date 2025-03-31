@@ -1,7 +1,7 @@
 import os
 import logging
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
@@ -68,7 +68,7 @@ from routes.upnp import upnp_bp
 from routes.firewall import firewall
 from routes.qos import qos
 
-app.register_blueprint(dashboard_bp)
+app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(network_bp, url_prefix='/network')
 app.register_blueprint(system_bp, url_prefix='/system')
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -105,3 +105,8 @@ with app.app_context():
         logger.info("Created default admin user")
 
 logger.info("Application initialized")
+
+# Add a route for the root URL that redirects to the dashboard
+@app.route('/')
+def index():
+    return redirect(url_for('dashboard.index'))
