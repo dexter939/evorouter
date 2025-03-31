@@ -302,18 +302,40 @@ print_message "info" "Passo 5: Configurazione di Nginx..."
 print_message "info" "Creazione del file di configurazione Nginx..."
 cat > $NGINX_CONF << EOF
 server {
-    listen 80;
+    listen 80 default_server;
+    listen [::]:80 default_server;
     server_name _;
+
+    # Rimuove la pagina di default di Nginx
+    root /var/www/html;
+    index index.html index.htm;
+
+    # Rimuovi il file default se esiste
+    location = /index.nginx-debian.html {
+        return 301 /;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Timeout più lunghi per consentire la corretta inizializzazione
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
     }
 }
 EOF
 check_command "Impossibile creare il file di configurazione Nginx."
+
+# Rimuovi la configurazione di default di Nginx se esiste
+if [ -f /etc/nginx/sites-enabled/default ]; then
+    print_message "info" "Rimozione della configurazione di default di Nginx..."
+    rm -f /etc/nginx/sites-enabled/default
+fi
 
 # Abilita il sito e verifica la configurazione
 print_message "info" "Abilitazione del sito web in Nginx..."
@@ -322,6 +344,7 @@ nginx -t
 check_command "La configurazione di Nginx non è valida."
 
 # Riavvio di Nginx
+print_message "info" "Riavvio di Nginx..."
 systemctl restart nginx
 check_command "Impossibile riavviare Nginx."
 
@@ -334,12 +357,19 @@ cat > $SERVICE_FILE << EOF
 [Unit]
 Description=EvoRouter R4 OS
 After=network.target
+Wants=nginx.service
 
 [Service]
 User=root
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$INSTALL_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 main:app
+# Carica le variabili d'ambiente dal file .env
+EnvironmentFile=-$INSTALL_DIR/.env
+ExecStartPre=/bin/bash -c "mkdir -p $INSTALL_DIR/instance && chmod 777 $INSTALL_DIR/instance"
+ExecStart=$INSTALL_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 --timeout 120 main:app
 Restart=always
+RestartSec=5
+# Aggiungi un tempo di avvio più lungo per garantire che l'app abbia tempo di inizializzare
+TimeoutStartSec=90
 
 [Install]
 WantedBy=multi-user.target
@@ -347,14 +377,27 @@ EOF
 check_command "Impossibile creare il file di servizio systemd."
 
 # Ricarica la configurazione di systemd
+print_message "info" "Ricaricamento della configurazione di systemd..."
 systemctl daemon-reload
 check_command "Impossibile ricaricare la configurazione di systemd."
 
-# Abilita e avvia il servizio
-print_message "info" "Avvio del servizio EvoRouter..."
+# Abilita e avvia il servizio con messaggi più dettagliati
+print_message "info" "Abilitazione del servizio EvoRouter..."
 systemctl enable evorouter.service
+check_command "Impossibile abilitare il servizio EvoRouter."
+
+print_message "info" "Avvio del servizio EvoRouter..."
 systemctl start evorouter.service
-check_command "Impossibile avviare il servizio EvoRouter."
+
+# Verifica lo stato in modo più dettagliato
+sleep 5
+if ! systemctl is-active --quiet evorouter.service; then
+    print_message "warning" "Il servizio EvoRouter non è stato avviato correttamente."
+    print_message "info" "Consultare i log per maggiori dettagli: journalctl -u evorouter.service -n 50"
+    # Non usciamo con errore per consentire all'installazione di completarsi
+else
+    print_message "success" "Il servizio EvoRouter è stato avviato con successo!"
+fi
 
 # Passo 7: Verifica dell'installazione
 print_message "info" "Passo 7: Verifica dell'installazione..."
@@ -370,6 +413,48 @@ fi
 # Ottieni l'indirizzo IP per il login
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
 
+# Verifica finale dell'applicazione web
+print_message "info" "Verifica dell'applicazione web..."
+# Utilizziamo curl per controllare se l'applicazione risponde correttamente
+sleep 5  # Attendiamo che l'applicazione si inizializzi completamente
+ATTEMPT=1
+MAX_ATTEMPTS=3
+APP_OK=false
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    print_message "info" "Tentativo $ATTEMPT di $MAX_ATTEMPTS per verificare che l'applicazione web risponda..."
+    if curl -s --max-time 10 http://127.0.0.1/ | grep -q "EvoRouter"; then
+        APP_OK=true
+        break
+    else
+        if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+            print_message "warning" "L'applicazione non risponde ancora. Nuovo tentativo tra 5 secondi..."
+            # Controlla eventuali errori nei log
+            journalctl -u evorouter.service -n 10 --no-pager
+            sleep 5
+        fi
+    fi
+    ATTEMPT=$((ATTEMPT+1))
+done
+
+if [ "$APP_OK" = true ]; then
+    print_message "success" "L'applicazione web è attiva e raggiungibile!"
+else
+    print_message "warning" "L'applicazione web non risponde correttamente. Verificare i log:"
+    print_message "info" "journalctl -u evorouter.service -n 50"
+    print_message "info" "journalctl -u nginx.service -n 20"
+    
+    # Tentativi di recupero
+    print_message "info" "Tentativo di correzione automatica..."
+    
+    # Riavvia entrambi i servizi in sequenza
+    systemctl restart evorouter.service
+    sleep 2
+    systemctl restart nginx.service
+    
+    print_message "info" "I servizi sono stati riavviati. Si consiglia di verificare manualmente la connessione all'applicazione."
+fi
+
 # Informazioni finali
 print_message "success" "##############################################"
 print_message "success" "Installazione di EvoRouter R4 OS completata!"
@@ -382,6 +467,11 @@ print_message "info" "  Username: admin"
 print_message "info" "  Password: admin123"
 print_message "info" ""
 print_message "warning" "IMPORTANTE: Cambia la password di admin al primo accesso!"
+print_message "info" ""
+print_message "info" "Se vedi la pagina di default di Nginx invece dell'interfaccia EvoRouter:"
+print_message "info" "1. Controlla lo stato dei servizi: systemctl status evorouter.service nginx.service"
+print_message "info" "2. Riavvia i servizi: systemctl restart evorouter.service nginx.service"
+print_message "info" "3. Verifica i log: journalctl -u evorouter.service -n 50"
 print_message "info" ""
 print_message "info" "Per installare il centralino telefonico (FreeSWITCH):"
 print_message "info" "1. Accedi all'interfaccia web con le credenziali sopra indicate"
