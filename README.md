@@ -1,6 +1,14 @@
-# EvoRouter R4 OS v1.3.0
+# EvoRouter R4 OS v1.4.0
 
 Sistema operativo personalizzato per router EvoRouter R4 con interfaccia web avanzata, centralino integrato e funzionalità VPN.
+
+## Novità della versione 1.4.0
+
+- **Script di Installazione Semplificati**: Nuovi script `install_evorouter.sh` e `install_evorouter_complete.sh` per installazione automatizzata
+- **Installazione All-in-One**: Opzione per installare sistema e centralino in un unico passaggio
+- **Rilevamento Automatico del Sistema**: Configurazione ottimizzata per diverse distribuzioni Debian
+- **Aggiornamento Documentazione**: Aggiornamento delle guide di installazione con i nuovi metodi semplificati
+- **Compatibilità Migliorata**: Verifica e correzione delle dipendenze durante l'installazione
 
 ## Novità della versione 1.3.0
 
@@ -35,6 +43,16 @@ Sistema operativo personalizzato per router EvoRouter R4 con interfaccia web ava
 - **Hardware**: EvoRouter R4 (MT7988a)
 
 ## Installazione
+
+### Installazione Rapida
+
+```bash
+# Installazione solo sistema
+curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh | sudo bash
+
+# Installazione completa (sistema + centralino)
+curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_complete.sh | sudo bash
+```
 
 Per istruzioni dettagliate sull'installazione, consulta [INSTALL.md](INSTALL.md).
 

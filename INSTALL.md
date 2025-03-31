@@ -10,7 +10,38 @@ Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4, un
 - Computer con lettore di schede SD
 - Connessione Internet per il download dei pacchetti
 
-## Passi per l'installazione
+## Installazione Semplificata (Raccomandata)
+
+Per semplificare l'installazione, abbiamo preparato degli script automatizzati che gestiscono l'intero processo:
+
+### Opzione 1: Installazione Solo Sistema
+```bash
+# Scarica lo script di installazione
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh
+
+# Rendi lo script eseguibile
+chmod +x install_evorouter.sh
+
+# Esegui lo script
+sudo ./install_evorouter.sh
+```
+
+### Opzione 2: Installazione Completa (Sistema + Centralino)
+```bash
+# Scarica lo script di installazione completa
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_complete.sh
+
+# Rendi lo script eseguibile
+chmod +x install_evorouter_complete.sh
+
+# Esegui lo script
+sudo ./install_evorouter_complete.sh
+```
+
+Lo script di installazione completa automatizza tutti i passaggi descritti sotto, inclusa l'installazione del centralino FreeSWITCH.
+
+## Installazione Manuale
+Se preferisci installare manualmente il sistema o desideri maggiore controllo sul processo di installazione, segui i passaggi dettagliati qui sotto.
 
 ### 1. Preparazione dell'ambiente sul dispositivo
 
