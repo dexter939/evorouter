@@ -1,6 +1,14 @@
-# EvoRouter R4 OS
+# EvoRouter R4 OS v1.2.0
 
 Sistema operativo personalizzato per router EvoRouter R4 con interfaccia web avanzata, centralino integrato e funzionalità VPN.
+
+## Novità della versione 1.2.0
+
+- **Miglioramento Firewall**: Riorganizzazione della sezione firewall con spostamento UPnP nella sezione appropriata
+- **Sicurezza Migliorata**: Implementazione completa della protezione CSRF nei form
+- **QoS Ottimizzato**: Correzione dei problemi nella funzionalità Quality of Service 
+- **Supporto IPv6**: Supporto completo per IPv6 in tutte le componenti di rete
+- **UPnP Avanzato**: Miglioramento della funzionalità UPnP con status e gestione avanzata
 
 ## Caratteristiche
 
