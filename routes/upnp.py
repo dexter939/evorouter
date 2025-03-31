@@ -39,7 +39,7 @@ def index():
     db.session.commit()
     
     return render_template(
-        'network/upnp.html',
+        'firewall/upnp.html',
         config=config,
         port_mappings=port_mappings, 
         upnp_status=upnp_status

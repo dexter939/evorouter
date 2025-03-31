@@ -74,8 +74,8 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
 app.register_blueprint(vpn, url_prefix='/vpn')
-app.register_blueprint(upnp_bp, url_prefix='/network/upnp')
 app.register_blueprint(firewall, url_prefix='/firewall')
+app.register_blueprint(upnp_bp, url_prefix='/firewall/upnp')
 app.register_blueprint(qos, url_prefix='/qos')
 
 # Import user loader
