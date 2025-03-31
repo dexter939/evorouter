@@ -24,10 +24,10 @@
     </div>
 
     <form id="save-config-form" action="{{ url_for('firewall.save_config') }}" method="post" style="display: none;">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     <form id="load-config-form" action="{{ url_for('firewall.load_config') }}" method="post" style="display: none;">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -256,7 +256,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                         <form action="{{ url_for('firewall.flush_rules') }}" method="post">
-                            {{ csrf_token() }}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-warning">Conferma</button>
                         </form>
                     </div>
