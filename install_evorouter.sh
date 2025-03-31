@@ -98,7 +98,7 @@ check_command "Impossibile creare l'ambiente virtuale Python."
 # Attivazione dell'ambiente virtuale e installazione delle dipendenze
 print_message "info" "Installazione delle dipendenze Python..."
 source venv/bin/activate
-pip install flask flask-login flask-jwt-extended flask-sqlalchemy flask-wtf gunicorn psutil psycopg2-binary email-validator miniupnpc
+pip install flask flask-login flask-jwt-extended flask-sqlalchemy flask-wtf gunicorn psutil psycopg2-binary email-validator miniupnpc stripe
 check_command "Impossibile installare le dipendenze Python."
 
 # Passo 3: Download e installazione dei file di EvoRouter
@@ -175,6 +175,7 @@ FLASK_APP=main.py
 FLASK_ENV=production
 SESSION_SECRET=$(openssl rand -hex 32)
 DATABASE_URL=sqlite:///instance/evorouter.db
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
 EOF
         ;;
     2)
@@ -231,6 +232,7 @@ PGPORT=$pg_port
 PGDATABASE=$pg_dbname
 PGUSER=$pg_user
 PGPASSWORD=$pg_password
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
 EOF
         ;;
     *)

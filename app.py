@@ -116,7 +116,7 @@ with app.app_context():
         default_admin = User(
             username="admin",
             email="admin@localhost",
-            password_hash=generate_password_hash("admin"),
+            password_hash=generate_password_hash("admin123"),
             is_admin=True
         )
         db.session.add(default_admin)
