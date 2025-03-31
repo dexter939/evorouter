@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # Configurazione per Python e pip
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    assignees:
+      - "dexter939"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "pip"
+      include: "scope"
+    security-updates-only: true
+    
+  # Configurazione per le GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    assignees:
+      - "dexter939"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "github-actions"
+      include: "scope"
