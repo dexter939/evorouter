@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% set active_page = "payments" %}
+
+{% block title %}Pagamento Completato - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <div class="py-5">
+                        <i data-feather="check-circle" style="width: 80px; height: 80px;" class="text-success mb-4"></i>
+                        
+                        <h2 class="mb-4">Pagamento Completato con Successo</h2>
+                        
+                        <p class="lead mb-4">Grazie per il tuo acquisto (dimostrativo)!</p>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <i class="feather-sm me-2" data-feather="info"></i>
+                            <strong>Nota:</strong> Questa è solo una pagina dimostrativa. Nessun pagamento è stato effettivamente processato.
+                        </div>
+                        
+                        <div class="mt-5">
+                            <a href="{{ url_for('payments.payments_index') }}" class="btn btn-primary">
+                                <i data-feather="arrow-left" class="feather-sm me-2"></i>
+                                Torna alla Documentazione
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Re-init Feather Icons after the page loads
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+</script>
+{% endblock %}

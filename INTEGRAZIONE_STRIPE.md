@@ -4,6 +4,8 @@
 
 Il sistema EvoRouter R4 OS è completamente gratuito e non prevede funzionalità a pagamento o abbonamenti. Questa guida è inclusa esclusivamente per scopi dimostrativi, per mostrare come potrebbe essere implementata un'integrazione con Stripe, senza che questa venga effettivamente utilizzata nel sistema.
 
+> **NOTA IMPORTANTE**: Una versione dimostrativa di questa integrazione è stata implementata nel sistema e può essere visualizzata attraverso il menu "Documentazione Stripe" nella sidebar. Non inserire mai dati di carte di credito reali in questa dimostrazione.
+
 ## Prerequisiti
 
 1. Un account Stripe (puoi registrarti su [stripe.com](https://stripe.com))
@@ -186,8 +188,19 @@ Prima di utilizzare l'integrazione, devi configurare prodotti e prezzi nel dashb
    - Controlla che l'ambiente (test/live) sia configurato correttamente
    - Verifica che i prodotti e i prezzi esistano nel tuo account Stripe
 
+## Implementazione Dimostrativa
+
+Una implementazione dimostrativa di questa integrazione è stata aggiunta al sistema principalmente per scopi educativi. Questa implementazione:
+
+1. Non processa pagamenti effettivi
+2. Non memorizza dati di pagamento
+3. È accessibile attraverso il menu "Documentazione Stripe" nella sidebar
+4. È progettata per mostrare l'architettura di un'integrazione con Stripe senza effettivamente processare transazioni
+
+Per visualizzare il codice di esempio, consulta il file `routes/payments.py` che contiene l'implementazione degli endpoint discussi in questa guida.
+
 ## Nota Conclusiva
 
-**Questa guida è puramente dimostrativa**. Il sistema EvoRouter R4 OS è completamente gratuito e non implementa né utilizza alcuna funzionalità di pagamento. Nessun codice relativo a Stripe o sistemi di pagamento è presente nel sistema attuale.
+**Questa guida e l'implementazione associata sono puramente dimostrative**. Il sistema EvoRouter R4 OS è completamente gratuito e non richiede pagamenti per alcuna funzionalità. L'implementazione di Stripe è inclusa solo come esempio di architettura di integrazione con sistemi di pagamento.
 
 Tutte le funzionalità del router sono disponibili gratuitamente senza limitazioni, abbonamenti o costi aggiuntivi.

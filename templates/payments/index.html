@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+
+{% set active_page = "payments" %}
+
+{% block title %}Documentazione Stripe - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-primary mb-4">
+                        <i class="feather-sm me-2" data-feather="file-text"></i>
+                        Documentazione Stripe
+                    </h2>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="feather-sm me-2" data-feather="info"></i>
+                        <strong>Importante:</strong> Questa pagina è puramente dimostrativa. EvoRouter R4 OS è completamente gratuito e non implementa funzionalità a pagamento.
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Introduzione</h4>
+                        <p>
+                            Questa sezione illustra come è stata implementata l'integrazione dimostrativa con Stripe
+                            nel sistema EvoRouter R4 OS. L'integrazione è presente solo per scopi educativi e
+                            non processa pagamenti reali.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Implementazione</h4>
+                        <p>
+                            L'integrazione dimostrativa con Stripe include:
+                        </p>
+                        <ul>
+                            <li>Un endpoint per la creazione di sessioni di checkout</li>
+                            <li>Gestione dei webhook per gli eventi di pagamento</li>
+                            <li>Redirezione alla pagina di checkout di Stripe</li>
+                            <li>Gestione delle notifiche di successo e cancellazione</li>
+                        </ul>
+                        
+                        <p>
+                            Il codice di implementazione si trova nel file <code>routes/payments.py</code>.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Documentazione Completa</h4>
+                        <p>
+                            Per una documentazione completa dell'integrazione con Stripe, consulta il file 
+                            <a href="https://github.com/dexter939/evorouter/blob/main/INTEGRAZIONE_STRIPE.md" target="_blank">INTEGRAZIONE_STRIPE.md</a> 
+                            nel repository GitHub.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Sicurezza</h4>
+                        <p>
+                            Anche se questa è solo una dimostrazione, è importante ricordare le best practice di sicurezza:
+                        </p>
+                        <ul>
+                            <li><strong>Non memorizzare mai</strong> i dati delle carte di credito</li>
+                            <li>Utilizzare sempre <strong>HTTPS</strong> per tutte le comunicazioni</li>
+                            <li>Proteggere le chiavi API e non includerle mai nel codice sorgente</li>
+                            <li>Validare e verificare tutte le risposte dai servizi di pagamento</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-primary mb-4">Esempio di UI Pagamento</h2>
+                    
+                    <div class="alert alert-warning" role="alert">
+                        <i class="feather-sm me-2" data-feather="alert-triangle"></i>
+                        <strong>Attenzione:</strong> Questa è solo una dimostrazione grafica - nessun pagamento verrà processato.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white text-center py-3">
+                                    <h5 class="mb-0">Piano Base</h5>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h3 class="card-title text-center">€9.99 <small class="text-muted fw-light">/mese</small></h3>
+                                    <hr>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 1</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 2</li>
+                                        <li class="mb-2"><i data-feather="x" class="text-muted feather-sm me-2"></i> Esempio funzionalità 3</li>
+                                        <li class="mb-2"><i data-feather="x" class="text-muted feather-sm me-2"></i> Esempio funzionalità 4</li>
+                                    </ul>
+                                    <button type="button" class="btn btn-outline-primary mt-auto" disabled>Sottoscrivi (Demo)</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white text-center py-3">
+                                    <h5 class="mb-0">Piano Premium</h5>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h3 class="card-title text-center">€24.99 <small class="text-muted fw-light">/mese</small></h3>
+                                    <hr>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 1</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 2</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 3</li>
+                                        <li class="mb-2"><i data-feather="x" class="text-muted feather-sm me-2"></i> Esempio funzionalità 4</li>
+                                    </ul>
+                                    <button type="button" class="btn btn-primary mt-auto" disabled>Sottoscrivi (Demo)</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white text-center py-3">
+                                    <h5 class="mb-0">Piano Enterprise</h5>
+                                    <span class="badge bg-warning">Consigliato</span>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h3 class="card-title text-center">€49.99 <small class="text-muted fw-light">/mese</small></h3>
+                                    <hr>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 1</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 2</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 3</li>
+                                        <li class="mb-2"><i data-feather="check" class="text-success feather-sm me-2"></i> Esempio funzionalità 4</li>
+                                    </ul>
+                                    <button type="button" class="btn btn-primary mt-auto" disabled>Sottoscrivi (Demo)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <div class="alert alert-success" role="alert">
+                            <i class="feather-sm me-2" data-feather="info"></i>
+                            In EvoRouter R4 OS, <strong>tutte le funzionalità sono già disponibili gratuitamente</strong> senza necessità di pagamenti.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Re-init Feather Icons after the page loads
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+</script>
+{% endblock %}

@@ -84,6 +84,7 @@ from routes.vpn import vpn
 from routes.upnp import upnp_bp
 from routes.firewall import firewall
 from routes.qos import qos
+from routes.payments import payments_bp
 
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(network_bp, url_prefix='/network')
@@ -96,6 +97,7 @@ app.register_blueprint(vpn, url_prefix='/vpn')
 app.register_blueprint(firewall, url_prefix='/firewall')
 app.register_blueprint(upnp_bp, url_prefix='/firewall/upnp')
 app.register_blueprint(qos, url_prefix='/qos')
+app.register_blueprint(payments_bp, url_prefix='/payments')
 
 # Import user loader
 from models import User
