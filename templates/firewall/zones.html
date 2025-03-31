@@ -1,0 +1,203 @@
+{% extends "layout.html" %}
+
+{% block title %}Zone del Firewall - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Zone del Firewall</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('firewall.new_zone') }}" class="btn btn-sm btn-primary">
+                <i data-feather="plus"></i> Nuova Zona
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Zone Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Zone Configurate</h5>
+                </div>
+                <div class="card-body">
+                    {% if zones %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Interfacce</th>
+                                        <th>Policy Predefinita</th>
+                                        <th>Masquerade</th>
+                                        <th>Priorità</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for zone in zones %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if zone.name == 'wan' %}
+                                                    <i data-feather="globe" class="me-2 text-primary"></i>
+                                                {% elif zone.name == 'lan' %}
+                                                    <i data-feather="home" class="me-2 text-success"></i>
+                                                {% elif zone.name == 'dmz' %}
+                                                    <i data-feather="server" class="me-2 text-warning"></i>
+                                                {% else %}
+                                                    <i data-feather="layers" class="me-2 text-secondary"></i>
+                                                {% endif %}
+                                                <span>{{ zone.name|upper }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ zone.interfaces }}</td>
+                                        <td>
+                                            <span class="badge {% if zone.default_policy == 'accept' %}bg-success{% elif zone.default_policy == 'drop' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                {{ zone.default_policy|upper }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if zone.masquerade %}
+                                                <span class="text-success"><i data-feather="check"></i></span>
+                                            {% else %}
+                                                <span class="text-danger"><i data-feather="x"></i></span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ zone.priority }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('firewall.edit_zone', zone_id=zone.id) }}" 
+                                                   class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Modifica">
+                                                    <i data-feather="edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-danger" 
+                                                        data-bs-toggle="modal" data-bs-target="#deleteZoneModal{{ zone.id }}"
+                                                        {% if zone.name in ['wan', 'lan'] %}disabled{% endif %}
+                                                        title="Elimina">
+                                                    <i data-feather="trash-2"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Delete Confirmation Modal -->
+                                    <div class="modal fade" id="deleteZoneModal{{ zone.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Elimina Zona</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Sei sicuro di voler eliminare la zona <strong>{{ zone.name|upper }}</strong>?</p>
+                                                    {% if zone.rules|length > 0 %}
+                                                    <div class="alert alert-warning">
+                                                        <i data-feather="alert-triangle" class="me-2"></i>
+                                                        Questa zona contiene {{ zone.rules|length }} regole che verranno eliminate.
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                                                    <form action="{{ url_for('firewall.delete_zone', zone_id=zone.id) }}" method="post">
+                                                        {{ csrf_token() }}
+                                                        <button type="submit" class="btn btn-danger">Elimina</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i data-feather="alert-circle" style="width: 48px; height: 48px; color: #ccc;"></i>
+                            <p class="mt-3 text-muted">Nessuna zona di firewall configurata.</p>
+                            <a href="{{ url_for('firewall.new_zone') }}" class="btn btn-primary">
+                                <i data-feather="plus"></i> Crea Zona
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informazioni sulle Zone di Firewall</h5>
+                </div>
+                <div class="card-body">
+                    <p>Le zone di firewall raggruppano le interfacce di rete e definiscono le policy di sicurezza per controllare il traffico.</p>
+                    
+                    <h6 class="mt-4">Zone Predefinite</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Zona</th>
+                                    <th>Descrizione</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-primary">WAN</span></td>
+                                    <td>Interfacce connesse a Internet o reti non fidate. Per impostazione predefinita tutto il traffico in entrata viene bloccato.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">LAN</span></td>
+                                    <td>Interfacce connesse alla rete locale. Generalmente considerata fidata e permette la comunicazione tra dispositivi interni.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">DMZ</span></td>
+                                    <td>Zona demilitarizzata per server accessibili dall'esterno. Offre protezione limitata rispetto alla rete LAN.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">GUEST</span></td>
+                                    <td>Rete per ospiti, isolata dalla LAN principale. Permette solo l'accesso a Internet ma non alle risorse interne.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h6 class="mt-4">Policy Predefinite</h6>
+                    <ul>
+                        <li><strong>Accept</strong>: Tutto il traffico viene accettato per impostazione predefinita, a meno che non sia bloccato da una regola.</li>
+                        <li><strong>Drop</strong>: Tutto il traffico viene bloccato silenziosamente, a meno che non sia consentito da una regola.</li>
+                        <li><strong>Reject</strong>: Tutto il traffico viene bloccato, ma con notifica al mittente (più sicuro di Drop ma rivela la presenza del firewall).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i tooltip di Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

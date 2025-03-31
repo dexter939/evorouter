@@ -1,0 +1,249 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>{{ title }}</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('firewall.port_forwarding') }}" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="arrow-left"></i> Torna al Port Forwarding
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ 'Modifica Port Forwarding' if forward else 'Crea Nuovo Port Forwarding' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Nome descrittivo per il port forwarding (es. "Server Web").</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=2) }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.source_zone.label(class="form-label") }}
+                                    {{ form.source_zone(class="form-select" + (" is-invalid" if form.source_zone.errors else "")) }}
+                                    {% if form.source_zone.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.source_zone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Zona di origine (tipicamente WAN).</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.dest_zone.label(class="form-label") }}
+                                    {{ form.dest_zone(class="form-select" + (" is-invalid" if form.dest_zone.errors else "")) }}
+                                    {% if form.dest_zone.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.dest_zone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Zona di destinazione (tipicamente LAN).</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    {{ form.protocol.label(class="form-label") }}
+                                    {{ form.protocol(class="form-select" + (" is-invalid" if form.protocol.errors else "")) }}
+                                    {% if form.protocol.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.protocol.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.src_dip.label(class="form-label") }}
+                                    {{ form.src_dip(class="form-control" + (" is-invalid" if form.src_dip.errors else "")) }}
+                                    {% if form.src_dip.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.src_dip.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Opzionale: IP di destinazione esterno specifico.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.src_port.label(class="form-label") }}
+                                    {{ form.src_port(class="form-control" + (" is-invalid" if form.src_port.errors else "")) }}
+                                    {% if form.src_port.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.src_port.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Porta esterna da inoltrare (es. 8080).</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.dest_ip.label(class="form-label") }}
+                                    {{ form.dest_ip(class="form-control" + (" is-invalid" if form.dest_ip.errors else "")) }}
+                                    {% if form.dest_ip.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.dest_ip.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Indirizzo IP del dispositivo interno (es. 192.168.1.100).</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.dest_port.label(class="form-label") }}
+                                    {{ form.dest_port(class="form-control" + (" is-invalid" if form.dest_port.errors else "")) }}
+                                    {% if form.dest_port.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.dest_port.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Porta del dispositivo interno (es. 80 per web server).</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.enabled(class="form-check-input" + (" is-invalid" if form.enabled.errors else "")) }}
+                            {{ form.enabled.label(class="form-check-label") }}
+                            {% if form.enabled.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.enabled.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('firewall.port_forwarding') }}" class="btn btn-secondary me-md-2">Annulla</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-12 mt-4 mt-lg-0">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Guida al Port Forwarding</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Come Funziona</h6>
+                    <p>Il port forwarding inoltra il traffico proveniente da Internet indirizzato a una porta specifica del tuo router verso un dispositivo sulla tua rete locale.</p>
+                    
+                    <img src="https://via.placeholder.com/360x180?text=Port+Forwarding+Diagram" class="img-fluid my-3 rounded" alt="Port Forwarding Diagram">
+                    
+                    <h6 class="mt-3">Esempi Comuni</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Servizio</th>
+                                    <th>Porta Esterna</th>
+                                    <th>Porta Interna</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Server Web</td>
+                                    <td>8080</td>
+                                    <td>80</td>
+                                </tr>
+                                <tr>
+                                    <td>Server HTTPS</td>
+                                    <td>8443</td>
+                                    <td>443</td>
+                                </tr>
+                                <tr>
+                                    <td>Server SSH</td>
+                                    <td>2222</td>
+                                    <td>22</td>
+                                </tr>
+                                <tr>
+                                    <td>Server FTP</td>
+                                    <td>2121</td>
+                                    <td>21</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h6 class="mt-3">Suggerimenti</h6>
+                    <ul>
+                        <li>Usa porte esterne non standard per maggiore sicurezza</li>
+                        <li>Configura indirizzi IP statici per i dispositivi interni</li>
+                        <li>Controlla che il servizio sia attivo sul dispositivo interno</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

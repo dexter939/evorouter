@@ -1,0 +1,346 @@
+{% extends "layout.html" %}
+
+{% block title %}Firewall - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Firewall</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" id="saveFirewallConfig" class="btn btn-sm btn-outline-secondary" 
+                        onclick="document.getElementById('save-config-form').submit();">
+                    <i data-feather="save"></i> Salva Configurazione
+                </button>
+                <button type="button" id="loadFirewallConfig" class="btn btn-sm btn-outline-secondary"
+                        onclick="document.getElementById('load-config-form').submit();">
+                    <i data-feather="download"></i> Carica Configurazione
+                </button>
+            </div>
+            <button type="button" id="restartFirewall" class="btn btn-sm btn-primary">
+                <i data-feather="refresh-cw"></i> Riavvia Firewall
+            </button>
+        </div>
+    </div>
+
+    <form id="save-config-form" action="{{ url_for('firewall.save_config') }}" method="post" style="display: none;">
+        {{ csrf_token() }}
+    </form>
+    <form id="load-config-form" action="{{ url_for('firewall.load_config') }}" method="post" style="display: none;">
+        {{ csrf_token() }}
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        <!-- Firewall Status Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Stato Firewall</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3 d-flex align-items-center">
+                                    <span class="status-indicator {% if firewall_status.active %}status-up{% else %}status-down{% endif %} me-2"></span>
+                                    <span>Stato: <strong>{{ 'Attivo' if firewall_status.active else 'Disattivo' }}</strong></span>
+                                </div>
+                                <div class="mb-3">
+                                    <span>Backend: <strong>{{ firewall_status.backend|upper }}</strong></span>
+                                </div>
+                                <div class="mb-3">
+                                    <span>Versione: <strong>{{ firewall_status.version }}</strong></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <span>Zone configurate: <strong>{{ zones|length }}</strong></span>
+                                </div>
+                                <div class="mb-3">
+                                    <span>Regole attive: <strong>{{ rules_count }}</strong></span>
+                                </div>
+                                <div class="mb-3">
+                                    <span>Port forwarding: <strong>{{ forwards_count }}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Firewall Management Panels -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Zone</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p>Gestisci le zone di firewall (WAN, LAN, DMZ, ecc.) e configura i loro parametri e interfacce.</p>
+                        <div class="mt-auto">
+                            <a href="{{ url_for('firewall.zones') }}" class="btn btn-primary btn-sm w-100">
+                                <i data-feather="layers"></i> Gestisci Zone
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Regole</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p>Configura le regole di firewall per controllare il traffico tra zone, definendo politiche di sicurezza avanzate.</p>
+                        <div class="mt-auto">
+                            <a href="{{ url_for('firewall.rules') }}" class="btn btn-primary btn-sm w-100">
+                                <i data-feather="shield"></i> Gestisci Regole
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Port Forwarding</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p>Configura il port forwarding per rendere accessibili i servizi della rete interna da internet.</p>
+                        <div class="mt-auto">
+                            <a href="{{ url_for('firewall.port_forwarding') }}" class="btn btn-primary btn-sm w-100">
+                                <i data-feather="corner-up-right"></i> Gestisci Port Forwarding
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Strumenti Avanzati</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-2">
+                            <a href="{{ url_for('firewall.ipsets') }}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                                <i data-feather="list"></i> IP Sets
+                            </a>
+                        </div>
+                        <div class="mb-2">
+                            <a href="{{ url_for('firewall.service_groups') }}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                                <i data-feather="package"></i> Gruppi di Servizi
+                            </a>
+                        </div>
+                        <div class="mt-auto">
+                            <a href="{{ url_for('firewall.logs') }}" class="btn btn-outline-secondary btn-sm w-100">
+                                <i data-feather="file-text"></i> Log Firewall
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Connections -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Connessioni Attive</h5>
+                        <button class="btn btn-sm btn-outline-secondary" id="refreshConnections">
+                            <i data-feather="refresh-cw"></i> Aggiorna
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Protocollo</th>
+                                        <th>Origine</th>
+                                        <th>Porta</th>
+                                        <th>Destinazione</th>
+                                        <th>Porta</th>
+                                        <th>Stato</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="connections-table-body">
+                                    {% if active_connections %}
+                                        {% for conn in active_connections %}
+                                        <tr>
+                                            <td>{{ conn.protocol|upper }}</td>
+                                            <td>{{ conn.source }}</td>
+                                            <td>{{ conn.sport }}</td>
+                                            <td>{{ conn.destination }}</td>
+                                            <td>{{ conn.dport }}</td>
+                                            <td>{{ conn.state }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">Nessuna connessione attiva rilevata</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if active_connections|length > 0 %}
+                        <div class="text-center mt-2">
+                            <a href="#" class="btn btn-sm btn-outline-primary">Visualizza tutte le connessioni</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Actions -->
+        <div class="row mt-4 mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Azioni Amministrative</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#flushRulesModal">
+                                    <i data-feather="trash-2"></i> Cancella tutte le regole
+                                </button>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <button class="btn btn-danger" id="disableFirewall" data-bs-toggle="modal" data-bs-target="#disableFirewallModal">
+                                    <i data-feather="power"></i> Disabilita Firewall
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modals -->
+        <div class="modal fade" id="flushRulesModal" tabindex="-1" aria-labelledby="flushRulesModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="flushRulesModalLabel">Cancella tutte le regole</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i data-feather="alert-triangle" class="me-2"></i>
+                            <strong>Attenzione!</strong> Questa operazione cancellerà tutte le regole di firewall. Questa azione è irreversibile.
+                        </div>
+                        <p>Continuare con l'operazione?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <form action="{{ url_for('firewall.flush_rules') }}" method="post">
+                            {{ csrf_token() }}
+                            <button type="submit" class="btn btn-warning">Conferma</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal fade" id="disableFirewallModal" tabindex="-1" aria-labelledby="disableFirewallModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="disableFirewallModalLabel">Disabilita Firewall</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <i data-feather="alert-triangle" class="me-2"></i>
+                            <strong>Attenzione!</strong> Disabilitare il firewall lascerà la rete senza protezione. Tutti i dispositivi saranno esposti a potenziali minacce.
+                        </div>
+                        <p>Sei sicuro di voler disabilitare il firewall?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <button type="button" class="btn btn-danger" id="confirmDisableFirewall">Disabilita</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza il pulsante di refresh connessioni
+    const refreshButton = document.getElementById('refreshConnections');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            // In una implementazione reale, questa sarebbe una chiamata AJAX
+            // per ottenere i dati aggiornati delle connessioni
+            refreshButton.disabled = true;
+            
+            // Simulazione di aggiornamento
+            setTimeout(function() {
+                refreshButton.disabled = false;
+                // Ricarica la pagina (in un'app reale si aggiornerebbe solo la tabella)
+                window.location.reload();
+            }, 500);
+        });
+    }
+    
+    // Abilita i tooltip di Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Gestisci il pulsante di disabilitazione del firewall
+    const confirmDisableButton = document.getElementById('confirmDisableFirewall');
+    if (confirmDisableButton) {
+        confirmDisableButton.addEventListener('click', function() {
+            // In un'implementazione reale si invierebbe una richiesta al backend
+            alert('Funzionalità non implementata in questa demo');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('disableFirewallModal'));
+            modal.hide();
+        });
+    }
+    
+    // Gestisci il pulsante di riavvio del firewall
+    const restartButton = document.getElementById('restartFirewall');
+    if (restartButton) {
+        restartButton.addEventListener('click', function() {
+            // In un'implementazione reale si invierebbe una richiesta al backend
+            alert('Riavvio del firewall in corso...');
+            restartButton.disabled = true;
+            
+            // Simulazione di riavvio
+            setTimeout(function() {
+                restartButton.disabled = false;
+                window.location.reload();
+            }, 2000);
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -59,6 +59,7 @@ from routes.api import api_bp
 from routes.freeswitch import freeswitch_bp
 from routes.vpn import vpn
 from routes.upnp import upnp_bp
+from routes.firewall import firewall
 
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(network_bp, url_prefix='/network')
@@ -68,6 +69,7 @@ app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
 app.register_blueprint(vpn, url_prefix='/vpn')
 app.register_blueprint(upnp_bp, url_prefix='/network/upnp')
+app.register_blueprint(firewall, url_prefix='/firewall')
 
 # Import user loader
 from models import User

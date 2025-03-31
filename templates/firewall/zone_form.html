@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>{{ title }}</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('firewall.zones') }}" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="arrow-left"></i> Torna alle Zone
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ 'Modifica Zona' if zone else 'Crea Nuova Zona' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Nome della zona (es. wan, lan, dmz, guest). Usa solo lettere, numeri e underscore.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=3) }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.interfaces.label(class="form-label") }}
+                            {{ form.interfaces(class="form-control" + (" is-invalid" if form.interfaces.errors else "")) }}
+                            {% if form.interfaces.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.interfaces.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Elenco di interfacce separate da virgola (es. wan0,ppp0)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.default_policy.label(class="form-label") }}
+                            {{ form.default_policy(class="form-select" + (" is-invalid" if form.default_policy.errors else "")) }}
+                            {% if form.default_policy.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.default_policy.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Policy predefinita per il traffico non corrispondente a nessuna regola.</div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.masquerade(class="form-check-input" + (" is-invalid" if form.masquerade.errors else "")) }}
+                            {{ form.masquerade.label(class="form-check-label") }}
+                            {% if form.masquerade.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.masquerade.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Abilita il NAT masquerading (traduzione indirizzi di rete) per questa zona.</div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.mss_clamping(class="form-check-input" + (" is-invalid" if form.mss_clamping.errors else "")) }}
+                            {{ form.mss_clamping.label(class="form-check-label") }}
+                            {% if form.mss_clamping.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.mss_clamping.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Abilita MSS clamping per risolvere problemi con MTU in connessioni VPN.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.priority.label(class="form-label") }}
+                            {{ form.priority(class="form-control" + (" is-invalid" if form.priority.errors else ""), type="number", min="0", max="999") }}
+                            {% if form.priority.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.priority.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Priorità della zona (numero minore = priorità maggiore).</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('firewall.zones') }}" class="btn btn-secondary me-md-2">Annulla</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-12 mt-4 mt-lg-0">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Guida alla Configurazione</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Cosa sono le zone?</h6>
+                    <p>Le zone di firewall raggruppano le interfacce di rete e definiscono le policy di sicurezza predefinite.</p>
+                    
+                    <h6 class="mt-3">Zone Comuni</h6>
+                    <ul>
+                        <li><strong>WAN</strong>: Interfacce verso Internet (non fidate)</li>
+                        <li><strong>LAN</strong>: Rete locale (fidata)</li>
+                        <li><strong>DMZ</strong>: Zona demilitarizzata per server esposti</li>
+                        <li><strong>GUEST</strong>: Rete per ospiti</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">Suggerimenti</h6>
+                    <ul>
+                        <li>Usa "drop" come policy predefinita per massima sicurezza</li>
+                        <li>Attiva il masquerading per zone WAN per permettere l'accesso a Internet</li>
+                        <li>Assegna nomi descrittivi e facili da ricordare</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

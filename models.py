@@ -394,3 +394,114 @@ class VpnClient(db.Model):
     
     def __repr__(self):
         return f'<VpnClient {self.name}>'
+
+# Modelli per il firewall
+class FirewallZone(db.Model):
+    """Zona di firewall (ad es. WAN, LAN, DMZ)"""
+    __tablename__ = 'firewall_zone'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False, unique=True)
+    description = db.Column(db.String(255))
+    interfaces = db.Column(db.String(255))  # Elenco di interfacce separate da virgola
+    default_policy = db.Column(db.String(16), default='drop')  # accept, drop, reject
+    masquerade = db.Column(db.Boolean, default=False)  # Enable NAT masquerading
+    mss_clamping = db.Column(db.Boolean, default=False)  # MSS clamping per VPN
+    priority = db.Column(db.Integer, default=0)  # Per ordinare le zone
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relazioni
+    rules = db.relationship('FirewallRule', backref='zone', lazy=True, 
+                           foreign_keys='FirewallRule.zone_id',
+                           cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<FirewallZone {self.name}>'
+
+class FirewallRule(db.Model):
+    """Regola di firewall"""
+    __tablename__ = 'firewall_rule'
+    id = db.Column(db.Integer, primary_key=True)
+    zone_id = db.Column(db.Integer, db.ForeignKey('firewall_zone.id'), nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(255))
+    source = db.Column(db.String(255))  # IP, subnet o any
+    destination = db.Column(db.String(255))  # IP, subnet o any
+    protocol = db.Column(db.String(16))  # tcp, udp, icmp, all
+    src_port = db.Column(db.String(64))  # Può essere singola porta, intervallo o lista
+    dst_port = db.Column(db.String(64))  # Può essere singola porta, intervallo o lista
+    action = db.Column(db.String(16), nullable=False)  # accept, drop, reject
+    log = db.Column(db.Boolean, default=False)  # Loggare le connessioni
+    enabled = db.Column(db.Boolean, default=True)
+    priority = db.Column(db.Integer, default=0)  # Priorità di esecuzione
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<FirewallRule {self.name}>'
+
+class FirewallPortForwarding(db.Model):
+    """Port forwarding (DNAT)"""
+    __tablename__ = 'firewall_port_forwarding'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(255))
+    source_zone = db.Column(db.String(32), default='wan')  # Tipicamente WAN
+    dest_zone = db.Column(db.String(32), default='lan')  # Tipicamente LAN
+    protocol = db.Column(db.String(16), nullable=False)  # tcp, udp, tcp+udp
+    src_dip = db.Column(db.String(64))  # Destinazione esterna (opzionale)
+    src_port = db.Column(db.String(16), nullable=False)  # Porta esterna
+    dest_ip = db.Column(db.String(64), nullable=False)  # IP interno
+    dest_port = db.Column(db.String(16), nullable=False)  # Porta interna
+    enabled = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<FirewallPortForwarding {self.name}>'
+
+class FirewallServiceGroup(db.Model):
+    """Gruppo di servizi (insiemi di porte/protocolli)"""
+    __tablename__ = 'firewall_service_group'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(255))
+    services = db.Column(db.Text)  # JSON format di servizi (proto:porta)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<FirewallServiceGroup {self.name}>'
+
+class FirewallIPSet(db.Model):
+    """Set di indirizzi IP/network"""
+    __tablename__ = 'firewall_ipset'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(255))
+    type = db.Column(db.String(16), default='hash:ip')  # hash:ip, hash:net, ecc.
+    addresses = db.Column(db.Text)  # Elenco di IP/subnet in formato JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<FirewallIPSet {self.name}>'
+
+class FirewallLog(db.Model):
+    """Log eventi firewall"""
+    __tablename__ = 'firewall_log'
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    source_ip = db.Column(db.String(45))  # IPv4/IPv6
+    destination_ip = db.Column(db.String(45))
+    source_port = db.Column(db.Integer)
+    destination_port = db.Column(db.Integer)
+    protocol = db.Column(db.String(8))
+    action = db.Column(db.String(16))  # accept, drop, reject
+    rule_id = db.Column(db.Integer)  # ID della regola che ha generato il log (se disponibile)
+    interface = db.Column(db.String(16))  # Interfaccia
+    packets = db.Column(db.Integer, default=1)
+    bytes = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<FirewallLog {self.id}>'

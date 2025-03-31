@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}Regole del Firewall - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Regole del Firewall</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('firewall.new_rule') }}" class="btn btn-sm btn-primary">
+                <i data-feather="plus"></i> Nuova Regola
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Rules by Zone -->
+    {% set current_zone = None %}
+    {% for rule in rules %}
+        {% if rule.zone_id != current_zone %}
+            {% set current_zone = rule.zone_id %}
+            
+            {% if not loop.first %}
+                </tbody>
+                </table>
+                </div>
+                </div>
+                </div>
+                </div>
+            {% endif %}
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i data-feather="{{ 'globe' if zones[rule.zone_id].name == 'wan' else 'home' if zones[rule.zone_id].name == 'lan' else 'server' if zones[rule.zone_id].name == 'dmz' else 'layers' }}"
+                                   class="me-2 {{ 'text-primary' if zones[rule.zone_id].name == 'wan' else 'text-success' if zones[rule.zone_id].name == 'lan' else 'text-warning' if zones[rule.zone_id].name == 'dmz' else 'text-secondary' }}"></i>
+                                Zona: {{ zones[rule.zone_id].name|upper }}
+                            </h5>
+                            <a href="{{ url_for('firewall.new_rule') }}?zone_id={{ rule.zone_id }}" class="btn btn-sm btn-outline-primary">
+                                <i data-feather="plus"></i> Nuova Regola
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Priorità</th>
+                                            <th>Nome</th>
+                                            <th>Sorgente</th>
+                                            <th>Destinazione</th>
+                                            <th>Protocollo</th>
+                                            <th>Porte</th>
+                                            <th>Azione</th>
+                                            <th>Stato</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+        {% endif %}
+        
+        <tr class="{{ 'table-secondary' if not rule.enabled else '' }}">
+            <td>{{ rule.priority }}</td>
+            <td>
+                <div {% if rule.description %}data-bs-toggle="tooltip" title="{{ rule.description }}"{% endif %}>
+                    {{ rule.name }}
+                </div>
+            </td>
+            <td>{{ rule.source if rule.source else 'any' }}</td>
+            <td>{{ rule.destination if rule.destination else 'any' }}</td>
+            <td>{{ rule.protocol|upper }}</td>
+            <td>
+                {% if rule.src_port or rule.dst_port %}
+                    {% if rule.src_port and rule.src_port != 'any' %}
+                        <small>SRC: {{ rule.src_port }}</small><br>
+                    {% endif %}
+                    {% if rule.dst_port and rule.dst_port != 'any' %}
+                        <small>DST: {{ rule.dst_port }}</small>
+                    {% endif %}
+                {% else %}
+                    any
+                {% endif %}
+            </td>
+            <td>
+                <span class="badge {% if rule.action == 'accept' %}bg-success{% elif rule.action == 'drop' %}bg-danger{% else %}bg-warning{% endif %}">
+                    {{ rule.action|upper }}
+                </span>
+                {% if rule.log %}
+                    <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="Registrazione nei log abilitata">
+                        LOG
+                    </span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="status-indicator {% if rule.enabled %}status-up{% else %}status-down{% endif %} me-1"></span>
+                {{ 'Attiva' if rule.enabled else 'Disattiva' }}
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('firewall.edit_rule', rule_id=rule.id) }}" 
+                       class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Modifica">
+                        <i data-feather="edit"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" 
+                            data-bs-toggle="modal" data-bs-target="#deleteRuleModal{{ rule.id }}"
+                            title="Elimina">
+                        <i data-feather="trash-2"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteRuleModal{{ rule.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Elimina Regola</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sei sicuro di voler eliminare la regola <strong>{{ rule.name }}</strong>?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <form action="{{ url_for('firewall.delete_rule', rule_id=rule.id) }}" method="post">
+                            {{ csrf_token() }}
+                            <button type="submit" class="btn btn-danger">Elimina</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i data-feather="shield-off" style="width: 48px; height: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">Non ci sono regole del firewall configurate.</p>
+                        <p class="text-muted">Crea regole per controllare il traffico tra le diverse zone di rete.</p>
+                        <a href="{{ url_for('firewall.new_rule') }}" class="btn btn-primary">
+                            <i data-feather="plus"></i> Crea Nuova Regola
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    
+    {% if rules %}
+        </tbody>
+        </table>
+        </div>
+        </div>
+        </div>
+        </div>
+    {% endif %}
+
+    <!-- Firewall Rules Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informazioni sulle Regole del Firewall</h5>
+                </div>
+                <div class="card-body">
+                    <p>Le regole del firewall determinano quali connessioni di rete sono consentite o bloccate.</p>
+                    
+                    <h6 class="mt-4">Suggerimenti per le Regole</h6>
+                    <ul>
+                        <li><strong>Ordine di valutazione</strong>: Le regole vengono valutate in base alla priorità (numero più basso = priorità più alta).</li>
+                        <li><strong>Specificità</strong>: Crea regole specifiche per servizi, porte o indirizzi IP specifici piuttosto che regole generiche.</li>
+                        <li><strong>Registro</strong>: Attiva l'opzione "Registra nei log" per le regole critiche per monitorare possibili tentativi di intrusione.</li>
+                        <li><strong>Test</strong>: Dopo aver aggiunto regole restrittive, verifica che i servizi necessari funzionino ancora correttamente.</li>
+                    </ul>
+                    
+                    <h6 class="mt-4">Esempi di Regole Comuni</h6>
+                    <ul>
+                        <li>Consentire il traffico SSH (porta 22) da LAN a Router</li>
+                        <li>Consentire richieste DNS (porta 53) da LAN a WAN</li>
+                        <li>Bloccare l'accesso ai siti web indesiderati verso specifici indirizzi IP</li>
+                        <li>Consentire connessioni dalla zona DMZ solo verso servizi specifici</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i tooltip di Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

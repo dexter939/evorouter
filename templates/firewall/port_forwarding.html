@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+{% block title %}Port Forwarding - EvoRouter R4 OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2>Port Forwarding</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('firewall.add_port_forwarding') }}" class="btn btn-primary">
+                <i data-feather="plus"></i> Aggiungi Port Forwarding
+            </a>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Regole Port Forwarding</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" id="refreshPortForwarding">
+                                <i data-feather="refresh-cw"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="15%">Nome</th>
+                                    <th width="10%">Protocollo</th>
+                                    <th width="15%">Porta Esterna</th>
+                                    <th width="25%">Destinazione</th>
+                                    <th width="15%">Stato</th>
+                                    <th width="15%">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if port_forwards %}
+                                    {% for pf in port_forwards %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ pf.name }}</td>
+                                        <td>{{ pf.protocol }}</td>
+                                        <td>{{ pf.src_dip + ":" if pf.src_dip else "" }}{{ pf.src_port }}</td>
+                                        <td>{{ pf.dest_ip }}:{{ pf.dest_port }}</td>
+                                        <td>
+                                            {% if pf.enabled %}
+                                            <span class="badge bg-success">Attivo</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Disattivato</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('firewall.edit_port_forwarding', id=pf.id) }}" class="btn btn-sm btn-outline-primary" title="Modifica">
+                                                    <i data-feather="edit" class="feather-small"></i>
+                                                </a>
+                                                <form action="{{ url_for('firewall.toggle_port_forwarding', id=pf.id) }}" method="post" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if pf.enabled else 'success' }}" title="{{ 'Disattiva' if pf.enabled else 'Attiva' }}">
+                                                        <i data-feather="{{ 'pause' if pf.enabled else 'play' }}" class="feather-small"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="{{ url_for('firewall.delete_port_forwarding', id=pf.id) }}" method="post" class="d-inline delete-form">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                                                        <i data-feather="trash-2" class="feather-small"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <i data-feather="info" class="mb-3" style="width: 48px; height: 48px; stroke: #6c757d;"></i>
+                                                <h5 class="text-muted mb-3">Nessuna regola di port forwarding configurata</h5>
+                                                <p class="text-muted mb-3">Il port forwarding consente di inoltrare il traffico dalla rete esterna verso servizi sulla rete interna.</p>
+                                                <a href="{{ url_for('firewall.add_port_forwarding') }}" class="btn btn-primary">
+                                                    <i data-feather="plus"></i> Aggiungi Port Forwarding
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Che cos'è il Port Forwarding?</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Il Port Forwarding (inoltro delle porte) è una funzionalità che consente di rendere accessibili i servizi sulla tua rete locale da Internet.</p>
+                    <p>Quando una richiesta arriva alla porta specificata sul router, questa viene reindirizzata automaticamente all'indirizzo IP e alla porta del dispositivo interno, rendendo possibile l'accesso al servizio dalla rete esterna.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Casi d'uso comuni</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="icon-bg bg-primary rounded-circle p-2 me-3">
+                                <i data-feather="globe" width="18" height="18" class="text-white"></i>
+                            </div>
+                            <div>
+                                <strong>Server Web</strong>
+                                <p class="mb-0 small text-muted">Accesso a siti o applicazioni web ospitati internamente</p>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="icon-bg bg-success rounded-circle p-2 me-3">
+                                <i data-feather="video" width="18" height="18" class="text-white"></i>
+                            </div>
+                            <div>
+                                <strong>Videosorveglianza</strong>
+                                <p class="mb-0 small text-muted">Accesso alle telecamere di sicurezza da remoto</p>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="icon-bg bg-info rounded-circle p-2 me-3">
+                                <i data-feather="hard-drive" width="18" height="18" class="text-white"></i>
+                            </div>
+                            <div>
+                                <strong>Condivisione file</strong>
+                                <p class="mb-0 small text-muted">Accesso a server di storage o NAS interni</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestione form eliminazione
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (confirm('Sei sicuro di voler eliminare questa regola di port forwarding?')) {
+                    this.submit();
+                }
+            });
+        });
+        
+        // Refresh della tabella
+        document.getElementById('refreshPortForwarding').addEventListener('click', function() {
+            location.reload();
+        });
+    });
+</script>
+{% endblock %}
