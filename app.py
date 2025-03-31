@@ -62,6 +62,7 @@ from routes.system import system_bp
 from routes.auth import auth_bp
 from routes.api import api_bp
 from routes.freeswitch import freeswitch_bp
+from routes.freeswitch_install import freeswitch_install_bp
 from routes.vpn import vpn
 from routes.upnp import upnp_bp
 from routes.firewall import firewall
@@ -73,6 +74,7 @@ app.register_blueprint(system_bp, url_prefix='/system')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(freeswitch_bp, url_prefix='/freeswitch')
+app.register_blueprint(freeswitch_install_bp, url_prefix='/freeswitch')
 app.register_blueprint(vpn, url_prefix='/vpn')
 app.register_blueprint(firewall, url_prefix='/firewall')
 app.register_blueprint(upnp_bp, url_prefix='/firewall/upnp')

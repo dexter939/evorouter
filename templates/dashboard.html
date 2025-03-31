@@ -209,16 +209,20 @@
                                         </a>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td>FreeSWITCH</td>
-                                    <td>
-                                        <span class="status-indicator status-up"></span>
-                                        Attivo
+                                <tr id="freeswitch-service-row">
+                                    <td>Centralino (FreeSWITCH)</td>
+                                    <td id="freeswitchStatus">
+                                        <span class="badge bg-secondary">Verifica in corso...</span>
                                     </td>
                                     <td>
-                                        <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
-                                            <i data-feather="settings" class="feather-small"></i>
-                                        </a>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('freeswitch.index') }}" class="btn btn-sm btn-outline-secondary">
+                                                <i data-feather="settings" class="feather-small"></i>
+                                            </a>
+                                            <a href="{{ url_for('freeswitch_install.install_page') }}" class="btn btn-sm btn-outline-primary">
+                                                <i data-feather="download" class="feather-small"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr>
@@ -258,6 +262,12 @@
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
+                            <div class="col-md-12 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">Versione:</div>
+                                    <div id="freeswitchVersion">Verifica in corso...</div>
+                                </div>
+                            </div>
                             <div class="col-sm-6">
                                 <div class="card bg-light">
                                     <div class="card-body py-2 px-3">

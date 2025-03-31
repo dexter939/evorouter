@@ -1,0 +1,231 @@
+{% extends 'layout.html' %}
+
+{% block title %}Installazione FreeSWITCH - EvoRouter R4{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Installazione FreeSWITCH</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('freeswitch.index') }}">Centralino</a></li>
+        <li class="breadcrumb-item active">Installazione FreeSWITCH</li>
+    </ol>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-download me-1"></i>
+                    Installazione FreeSWITCH
+                </div>
+                <div class="card-body">
+                    {% if freeswitch_installed %}
+                        <div class="alert alert-success" role="alert">
+                            <h4 class="alert-heading"><i class="fas fa-check-circle"></i> FreeSWITCH è già installato!</h4>
+                            <p>FreeSWITCH è già installato e disponibile nel sistema.</p>
+                            <hr>
+                            <p class="mb-0">Puoi procedere con la configurazione del centralino telefonico.</p>
+                            <div class="mt-3">
+                                <a href="{{ url_for('freeswitch.index') }}" class="btn btn-primary">
+                                    <i class="fas fa-cog"></i> Configura Centralino
+                                </a>
+                            </div>
+                        </div>
+                    {% elif installation_status.in_progress %}
+                        <div class="alert alert-info" role="alert">
+                            <h4 class="alert-heading"><i class="fas fa-spinner fa-spin"></i> Installazione in corso...</h4>
+                            <p>L'installazione di FreeSWITCH è in corso. Questo processo potrebbe richiedere diversi minuti.</p>
+                            <p>Metodo di installazione: <strong>{{ installation_status.method }}</strong></p>
+                            <p>Tempo trascorso: <span id="elapsed-time">0s</span></p>
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                Log di installazione in tempo reale
+                            </div>
+                            <div class="card-body">
+                                <div id="installation-log" style="height: 400px; overflow-y: auto; background-color: #1a1a1a; color: #f0f0f0; padding: 10px; font-family: monospace; border-radius: 5px;">
+                                    {% for line in installation_status.log %}
+                                        <div>{{ line }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% elif installation_status.complete %}
+                        {% if installation_status.success %}
+                            <div class="alert alert-success" role="alert">
+                                <h4 class="alert-heading"><i class="fas fa-check-circle"></i> Installazione completata con successo!</h4>
+                                <p>FreeSWITCH è stato installato correttamente sul sistema.</p>
+                                <p>Metodo utilizzato: <strong>{{ installation_status.method }}</strong></p>
+                                <p>Tempo impiegato: {{ ((installation_status.end_time - installation_status.start_time) / 60)|round(1) }} minuti</p>
+                                <hr>
+                                <p class="mb-0">Ora puoi procedere con la configurazione del centralino telefonico.</p>
+                                <div class="mt-3">
+                                    <a href="{{ url_for('freeswitch.index') }}" class="btn btn-primary">
+                                        <i class="fas fa-cog"></i> Configura Centralino
+                                    </a>
+                                    <form action="{{ url_for('freeswitch_install.reset_install') }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-secondary">
+                                            <i class="fas fa-redo"></i> Reset
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger" role="alert">
+                                <h4 class="alert-heading"><i class="fas fa-times-circle"></i> Installazione fallita</h4>
+                                <p>Si è verificato un problema durante l'installazione di FreeSWITCH.</p>
+                                <p>Metodo utilizzato: <strong>{{ installation_status.method }}</strong></p>
+                                <p>Tempo impiegato: {{ ((installation_status.end_time - installation_status.start_time) / 60)|round(1) }} minuti</p>
+                                <hr>
+                                <p class="mb-0">Controlla i log per maggiori dettagli e riprova.</p>
+                                <div class="mt-3">
+                                    <form action="{{ url_for('freeswitch_install.reset_install') }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-secondary">
+                                            <i class="fas fa-redo"></i> Reset
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                Log di installazione
+                            </div>
+                            <div class="card-body">
+                                <div style="height: 400px; overflow-y: auto; background-color: #1a1a1a; color: #f0f0f0; padding: 10px; font-family: monospace; border-radius: 5px;">
+                                    {% for line in installation_status.log %}
+                                        <div>{{ line }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">
+                            <h4 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> FreeSWITCH non rilevato</h4>
+                            <p>FreeSWITCH non è attualmente installato nel sistema.</p>
+                            <hr>
+                            <p class="mb-0">Seleziona un metodo di installazione per procedere:</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-box"></i> Installazione da Repository</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Questo metodo installa FreeSWITCH dai repository ufficiali. È l'opzione più veloce e consigliata per la maggior parte degli utenti.</p>
+                                        <ul>
+                                            <li><i class="fas fa-check text-success"></i> Veloce (5-10 minuti)</li>
+                                            <li><i class="fas fa-check text-success"></i> Facile da aggiornare</li>
+                                            <li><i class="fas fa-check text-success"></i> Versione stabile</li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer">
+                                        <form action="{{ url_for('freeswitch_install.start_install') }}" method="post">
+                                            <input type="hidden" name="method" value="repository">
+                                            <button type="submit" class="btn btn-primary btn-block">
+                                                <i class="fas fa-download"></i> Installa da Repository
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-code"></i> Installazione dai Sorgenti</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Questo metodo compila FreeSWITCH dai sorgenti. È consigliato per utenti avanzati che necessitano di configurazioni personalizzate.</p>
+                                        <ul>
+                                            <li><i class="fas fa-exclamation-triangle text-warning"></i> Lenta (30-60 minuti)</li>
+                                            <li><i class="fas fa-check text-success"></i> Altamente personalizzabile</li>
+                                            <li><i class="fas fa-check text-success"></i> Versione più recente</li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer">
+                                        <form action="{{ url_for('freeswitch_install.start_install') }}" method="post">
+                                            <input type="hidden" name="method" value="source">
+                                            <button type="submit" class="btn btn-secondary btn-block">
+                                                <i class="fas fa-code-branch"></i> Installa dai Sorgenti
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Aggiornamento in tempo reale se l'installazione è in corso
+        {% if installation_status.in_progress %}
+            const startTime = {{ installation_status.start_time or 'null' }};
+            const logElement = document.getElementById('installation-log');
+            
+            // Aggiornamento del timer
+            function updateElapsedTime() {
+                if (startTime) {
+                    const elapsedSeconds = Math.floor(Date.now() / 1000 - startTime);
+                    const minutes = Math.floor(elapsedSeconds / 60);
+                    const seconds = elapsedSeconds % 60;
+                    document.getElementById('elapsed-time').textContent = 
+                        minutes + 'm ' + seconds + 's';
+                }
+            }
+            
+            // Aggiornamento dello stato dell'installazione
+            function updateInstallationStatus() {
+                $.ajax({
+                    url: '{{ url_for("freeswitch_install.get_install_status") }}',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        // Aggiunta delle nuove linee di log
+                        const currentLines = logElement.querySelectorAll('div').length;
+                        if (data.log.length > currentLines) {
+                            for (let i = currentLines; i < data.log.length; i++) {
+                                const line = document.createElement('div');
+                                line.textContent = data.log[i];
+                                logElement.appendChild(line);
+                            }
+                            // Auto-scroll verso il fondo
+                            logElement.scrollTop = logElement.scrollHeight;
+                        }
+                        
+                        // Se l'installazione è completata, ricarica la pagina
+                        if (data.complete && data.in_progress) {
+                            location.reload();
+                        }
+                    },
+                    error: function() {
+                        console.error('Errore durante il recupero dello stato dell\'installazione');
+                    }
+                });
+            }
+            
+            // Aggiornamento periodico
+            setInterval(updateElapsedTime, 1000);
+            setInterval(updateInstallationStatus, 2000);
+            
+            // Scroll iniziale verso il fondo del log
+            logElement.scrollTop = logElement.scrollHeight;
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -8,7 +8,7 @@ from app import db
 from models import User, ApiToken, NetworkConfig, PbxConfig, SipExtension, SipTrunk
 from utils.network import get_interfaces_status, configure_interface, restart_network
 from utils.system import get_system_stats, reboot_system
-from utils.freeswitch import get_extensions, add_extension, update_extension, delete_extension
+from utils.freeswitch import get_extensions, add_extension, update_extension, delete_extension, check_freeswitch_status
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -257,6 +257,20 @@ def api_delete_extension(extension_id):
             
     except Exception as e:
         logger.error(f"API error in delete extension: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/freeswitch/status', methods=['GET'])
+def api_freeswitch_status():
+    """API endpoint to get FreeSWITCH status"""
+    try:
+        status = check_freeswitch_status()
+        
+        return jsonify({
+            "status": "success",
+            "data": status
+        })
+    except Exception as e:
+        logger.error(f"API error in get FreeSWITCH status: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @api_bp.route('/tokens', methods=['GET'])

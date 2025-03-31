@@ -1,5 +1,5 @@
 /**
- * Dashboard scripts for Banana Pi BPI-R4 Router OS
+ * Dashboard scripts for EvoRouter R4 Router OS
  * Handles dashboard UI interactions, charts, and data refreshing
  */
 
@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof feather !== 'undefined') {
     feather.replace();
   }
+  
+  // Check FreeSWITCH status
+  checkFreeswitchStatus();
   
   // Initialize CPU usage chart
   const cpuCtx = document.getElementById('cpuChart');
@@ -168,6 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update sidebar stats if available
   updateSidebarStats();
   setInterval(updateSidebarStats, 10000); // Update sidebar stats every 10 seconds
+  
+  // Check FreeSWITCH status periodically
+  setInterval(checkFreeswitchStatus, 30000); // Check every 30 seconds
 });
 
 /**
@@ -331,4 +337,49 @@ function formatUptime(seconds) {
   } else {
     return `${minutes}m`;
   }
+}
+
+/**
+ * Check FreeSWITCH status and update UI accordingly
+ */
+function checkFreeswitchStatus() {
+  // Check if FreeSWITCH status element exists
+  const fsStatusEl = document.getElementById('freeswitchStatus');
+  if (!fsStatusEl) return;
+  
+  fetch('/api/freeswitch/status')
+    .then(response => response.json())
+    .then(data => {
+      // Update FreeSWITCH status in UI
+      if (data.status === 'success' && data.data) {
+        const status = data.data;
+        
+        // Update status icon and text
+        if (status.installed) {
+          if (status.running) {
+            fsStatusEl.innerHTML = '<span class="badge bg-success">Attivo</span>';
+          } else {
+            fsStatusEl.innerHTML = '<span class="badge bg-warning">Installato (non attivo)</span>';
+          }
+        } else {
+          fsStatusEl.innerHTML = '<span class="badge bg-danger">Non installato</span>';
+        }
+        
+        // Update version if available
+        const fsVersionEl = document.getElementById('freeswitchVersion');
+        if (fsVersionEl && status.version) {
+          fsVersionEl.textContent = status.version;
+        } else if (fsVersionEl) {
+          fsVersionEl.textContent = 'N/A';
+        }
+      } else {
+        fsStatusEl.innerHTML = '<span class="badge bg-secondary">Stato sconosciuto</span>';
+      }
+    })
+    .catch(error => {
+      console.error('Error checking FreeSWITCH status:', error);
+      if (fsStatusEl) {
+        fsStatusEl.innerHTML = '<span class="badge bg-danger">Errore</span>';
+      }
+    });
 }

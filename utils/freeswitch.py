@@ -479,3 +479,60 @@ def update_freeswitch_config():
     except Exception as e:
         logger.error(f"Error updating PBX configuration: {str(e)}")
         return False
+
+def check_freeswitch_status():
+    """
+    Verifica lo stato di FreeSWITCH sull'hardware effettivo
+    
+    Returns:
+        dict: Dictionary with FreeSWITCH status information
+    """
+    status = {
+        'installed': False,
+        'running': False,
+        'port_listening': False,
+        'status': 'not_installed',
+        'version': None
+    }
+    
+    try:
+        # Metodo 1: Verifica se il pacchetto è installato
+        result = subprocess.run(['which', 'freeswitch'], capture_output=True, text=True)
+        if result.returncode == 0:
+            status['installed'] = True
+            status['status'] = 'installed'
+            
+            # Se è installato, verifica la versione
+            try:
+                version_result = subprocess.run(['freeswitch', '-version'], capture_output=True, text=True)
+                if version_result.returncode == 0:
+                    version_match = re.search(r'([\d\.]+)', version_result.stdout)
+                    if version_match:
+                        status['version'] = version_match.group(1)
+            except Exception as e:
+                logger.warning(f"Errore nella verifica della versione di FreeSWITCH: {str(e)}")
+        
+        # Metodo 2: Verifica se il servizio è in esecuzione
+        if status['installed']:
+            service_result = subprocess.run(['systemctl', 'is-active', 'freeswitch'], capture_output=True, text=True)
+            if service_result.stdout.strip() == 'active':
+                status['running'] = True
+                status['status'] = 'active'
+            else:
+                # Alternativa per sistemi senza systemd
+                ps_result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
+                if 'freeswitch' in ps_result.stdout:
+                    status['running'] = True
+                    status['status'] = 'active'
+        
+        # Metodo 3: Verifica se la porta di FreeSWITCH è in ascolto
+        if status['installed']:
+            netstat_result = subprocess.run(['ss', '-tuln'], capture_output=True, text=True)
+            # Verifica se la porta SIP (5060) è in ascolto
+            if ':5060' in netstat_result.stdout:
+                status['port_listening'] = True
+            
+        return status
+    except Exception as e:
+        logger.error(f"Errore nel controllo dello stato di FreeSWITCH: {str(e)}")
+        return status
