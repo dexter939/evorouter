@@ -83,7 +83,7 @@ check_command "Impossibile aggiornare le liste dei pacchetti. Verifica la connes
 
 # Installazione delle dipendenze di sistema
 print_message "info" "Installazione delle dipendenze di sistema..."
-apt-get install -y python3 python3-pip python3-venv nginx curl wget unzip git
+apt-get install -y python3 python3-pip python3-venv python3-miniupnpc nginx curl wget unzip git
 check_command "Impossibile installare le dipendenze di sistema."
 
 # Passo 2: Configurazione dell'ambiente Python
@@ -98,7 +98,7 @@ check_command "Impossibile creare l'ambiente virtuale Python."
 # Attivazione dell'ambiente virtuale e installazione delle dipendenze
 print_message "info" "Installazione delle dipendenze Python..."
 source venv/bin/activate
-pip install flask flask-login flask-jwt-extended flask-sqlalchemy flask-wtf gunicorn psutil psycopg2-binary email-validator
+pip install flask flask-login flask-jwt-extended flask-sqlalchemy flask-wtf gunicorn psutil psycopg2-binary email-validator miniupnpc
 check_command "Impossibile installare le dipendenze Python."
 
 # Passo 3: Download e installazione dei file di EvoRouter
