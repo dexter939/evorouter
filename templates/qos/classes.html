@@ -1,0 +1,222 @@
+{% extends "layout.html" %}
+
+{% block title %}Classi di Traffico QoS - EvoRouter R4 OS{% endblock %}
+
+{% set active_page = "qos" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.index') }}">QoS</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Classi di Traffico</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2><i data-feather="layers" class="feather-lg me-2"></i> Classi di Traffico QoS</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('qos.new_class') }}" class="btn btn-sm btn-primary">
+                <i data-feather="plus"></i> Nuova Classe
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informazioni QoS</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Stato QoS</label>
+                                <div class="h6 mb-0 d-flex align-items-center">
+                                    <span class="badge bg-{{ 'success' if qos_config.enabled else 'secondary' }} me-2">{{ 'Attivo' if qos_config.enabled else 'Disattivato' }}</span>
+                                    {% if not qos_config.enabled %}
+                                    <span class="text-warning small">
+                                        <i data-feather="alert-triangle" class="feather-small me-1"></i>
+                                        Il QoS è disabilitato. Le modifiche alle classi non saranno applicate finché non sarà attivato.
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Interfaccia</label>
+                                <div class="h6 mb-0">{{ qos_config.interface }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Classe Predefinita</label>
+                                <div class="h6 mb-0">{{ qos_config.default_class }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Banda Totale</label>
+                                <div class="h6 mb-0">Download: {{ qos_config.download_bandwidth }} kbps / Upload: {{ qos_config.upload_bandwidth }} kbps</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Elenco Classi di Traffico</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Descrizione</th>
+                                    <th width="15%">Priorità</th>
+                                    <th width="25%">Banda</th>
+                                    <th width="15%">Regole</th>
+                                    <th width="15%">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if classes %}
+                                    {% for class in classes %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ class.name }}</td>
+                                        <td class="text-muted small">{{ class.description }}</td>
+                                        <td>
+                                            {% set priority_color = {
+                                                1: 'danger',
+                                                2: 'danger',
+                                                3: 'warning',
+                                                4: 'warning',
+                                                5: 'success',
+                                                6: 'success',
+                                                7: 'secondary'
+                                            } %}
+                                            <span class="badge bg-{{ priority_color.get(class.priority, 'secondary') }}">
+                                                {{ class.priority }} - {{ {
+                                                    1: 'Altissima',
+                                                    2: 'Alta',
+                                                    3: 'Medio-alta',
+                                                    4: 'Media',
+                                                    5: 'Medio-bassa',
+                                                    6: 'Bassa',
+                                                    7: 'Bassissima'
+                                                }.get(class.priority, 'Media') }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1 me-2">
+                                                    <div class="progress" style="height: 6px;">
+                                                        <div class="progress-bar" role="progressbar" 
+                                                            style="width: {{ class.min_bandwidth }}%;" 
+                                                            aria-valuenow="{{ class.min_bandwidth }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                        <div class="progress-bar bg-info opacity-50" role="progressbar" 
+                                                            style="width: {{ class.max_bandwidth - class.min_bandwidth }}%;" 
+                                                            aria-valuenow="{{ class.max_bandwidth - class.min_bandwidth }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span class="small">{{ class.min_bandwidth }}% - {{ class.max_bandwidth }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('qos.rules') }}?class_id={{ class.id }}" class="text-decoration-none">
+                                                {{ class_counts.get(class.id, 0) }} regole
+                                                <i data-feather="chevron-right" class="feather-small"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('qos.edit_class', class_id=class.id) }}" class="btn btn-sm btn-outline-primary" title="Modifica">
+                                                    <i data-feather="edit" class="feather-small"></i>
+                                                </a>
+                                                {% if qos_config.default_class != class.name %}
+                                                <form action="{{ url_for('qos.delete_class', class_id=class.id) }}" method="post" class="d-inline delete-form">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                                                        <i data-feather="trash-2" class="feather-small"></i>
+                                                    </button>
+                                                </form>
+                                                {% else %}
+                                                <button class="btn btn-sm btn-outline-secondary" disabled title="Classe predefinita, non eliminabile">
+                                                    <i data-feather="lock" class="feather-small"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <i data-feather="info" class="mb-3" style="width: 48px; height: 48px; stroke: #6c757d;"></i>
+                                                <h5 class="text-muted mb-3">Nessuna classe di traffico configurata</h5>
+                                                <p class="text-muted mb-3">Le classi di traffico permettono di assegnare priorità e larghezza di banda al traffico di rete.</p>
+                                                <a href="{{ url_for('qos.new_class') }}" class="btn btn-primary">
+                                                    <i data-feather="plus"></i> Crea Classe di Traffico
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 small text-muted">
+                            <i data-feather="info" class="feather-small me-1"></i>
+                            La priorità delle classi determina l'ordine di servizio dei pacchetti (priorità 1 = massima).
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <a href="{{ url_for('qos.index') }}" class="btn btn-outline-secondary">
+                                <i data-feather="arrow-left"></i> Torna alla Dashboard QoS
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestione form eliminazione
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (confirm('Sei sicuro di voler eliminare questa classe di traffico? Tutte le regole associate verranno eliminate.')) {
+                    this.submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block head %}
+<style>
+    .feather-small {
+        width: 1em;
+        height: 1em;
+    }
+</style>
+{% endblock %}

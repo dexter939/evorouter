@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurazione QoS - EvoRouter R4 OS{% endblock %}
+
+{% set active_page = "qos" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.index') }}">QoS</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Configurazione</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2><i data-feather="settings" class="feather-lg me-2"></i> Configurazione QoS</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Impostazioni Quality of Service</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('qos.config') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-check form-switch mb-4">
+                            {{ form.enabled(class="form-check-input") }}
+                            {{ form.enabled.label(class="form-check-label") }}
+                            <div class="form-text text-muted">
+                                Attiva o disattiva il sistema di Quality of Service su questa interfaccia
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.interface.label(class="form-label") }}
+                            {{ form.interface(class="form-select") }}
+                            {% if form.interface.errors %}
+                                {% for error in form.interface.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text text-muted">
+                                L'interfaccia di rete su cui applicare il QoS (solitamente quella WAN)
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.download_bandwidth.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.download_bandwidth(class="form-control") }}
+                                        <span class="input-group-text">kbps</span>
+                                    </div>
+                                    {% if form.download_bandwidth.errors %}
+                                        {% for error in form.download_bandwidth.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text text-muted">
+                                        {{ form.download_bandwidth.description }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.upload_bandwidth.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.upload_bandwidth(class="form-control") }}
+                                        <span class="input-group-text">kbps</span>
+                                    </div>
+                                    {% if form.upload_bandwidth.errors %}
+                                        {% for error in form.upload_bandwidth.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text text-muted">
+                                        {{ form.upload_bandwidth.description }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.default_class.label(class="form-label") }}
+                            {{ form.default_class(class="form-control") }}
+                            {% if form.default_class.errors %}
+                                {% for error in form.default_class.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text text-muted">
+                                {{ form.default_class.description }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-4">
+                            {{ form.hierarchical(class="form-check-input") }}
+                            {{ form.hierarchical.label(class="form-check-label") }}
+                            <div class="form-text text-muted">
+                                {{ form.hierarchical.description }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('qos.index') }}" class="btn btn-outline-secondary me-md-2">Annulla</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informazioni</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Consigli per la configurazione</h6>
+                    <div class="mb-3">
+                        <p><strong>Larghezza di banda</strong>: Imposta i valori di download e upload leggermente inferiori (90-95%) rispetto alla banda massima fornita dal tuo ISP per ottenere risultati ottimali.</p>
+                        
+                        <p><strong>Classe predefinita</strong>: Assegna una priorità media al traffico non classificato. Il nome della classe deve corrispondere a una delle classi di traffico create.</p>
+                        
+                        <p><strong>Modalità gerarchica</strong>: La modalità HTB (Hierarchical Token Bucket) è consigliata per la maggior parte delle configurazioni in quanto offre una gestione più flessibile della banda.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Nota</strong>: Dopo aver salvato la configurazione, ricordati di creare o modificare le classi di traffico e le regole QoS per ottenere i risultati desiderati.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} - EvoRouter R4 OS{% endblock %}
+
+{% set active_page = "qos" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.index') }}">QoS</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.classes') }}">Classi di Traffico</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2><i data-feather="layers" class="feather-lg me-2"></i> {{ title }}</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Dettagli Classe di Traffico</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                {% for error in form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text text-muted small">
+                                Il nome deve contenere solo lettere, numeri, trattini e underscore.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text text-muted small">
+                                Una breve descrizione dello scopo di questa classe di traffico.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.priority.label(class="form-label") }}
+                            {{ form.priority(class="form-select") }}
+                            {% if form.priority.errors %}
+                                {% for error in form.priority.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text text-muted small">
+                                La priorità determina quale traffico viene servito per primo quando c'è congestione.
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.min_bandwidth.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.min_bandwidth(class="form-control") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.min_bandwidth.errors %}
+                                        {% for error in form.min_bandwidth.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text text-muted small">
+                                        {{ form.min_bandwidth.description }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.max_bandwidth.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.max_bandwidth(class="form-control") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.max_bandwidth.errors %}
+                                        {% for error in form.max_bandwidth.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text text-muted small">
+                                        {{ form.max_bandwidth.description }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Anteprima Allocazione Banda</label>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 me-2">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar progress-bar-min" role="progressbar" 
+                                            style="width: 0%;" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
+                                            <span class="min-value">0%</span>
+                                        </div>
+                                        <div class="progress-bar bg-info progress-bar-max" role="progressbar" 
+                                            style="width: 0%;" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
+                                            <span class="max-value">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text text-muted small">
+                                Visualizzazione dell'allocazione di banda garantita (blu scuro) e massima (blu chiaro).
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('qos.classes') }}" class="btn btn-outline-secondary me-md-2">Annulla</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informazioni</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Suggerimenti per le Classi QoS</h6>
+                    
+                    <div class="mb-3">
+                        <p><strong>Priorità</strong></p>
+                        <ul class="small">
+                            <li><span class="badge bg-danger">1-2: Alta</span> - Traffico sensibile a ritardi come VoIP, videoconferenze</li>
+                            <li><span class="badge bg-warning">3-4: Media</span> - Navigazione web, email, streaming</li>
+                            <li><span class="badge bg-success">5-6: Bassa</span> - Download, backup, aggiornamenti</li>
+                            <li><span class="badge bg-secondary">7: Bassissima</span> - Peer-to-peer, traffico a bassa priorità</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p><strong>Banda Minima e Massima</strong></p>
+                        <p class="small">La banda minima rappresenta la percentuale di larghezza di banda garantita per questa classe in caso di congestione. La banda massima è il limite superiore che questa classe può utilizzare quando c'è banda disponibile.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Nota</strong>: Assicurati che la somma delle bande minime di tutte le classi non superi il 100%.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const minBandwidthInput = document.getElementById('min_bandwidth');
+        const maxBandwidthInput = document.getElementById('max_bandwidth');
+        const progressBarMin = document.querySelector('.progress-bar-min');
+        const progressBarMax = document.querySelector('.progress-bar-max');
+        const minValueText = document.querySelector('.min-value');
+        const maxValueText = document.querySelector('.max-value');
+        
+        function updateProgressBar() {
+            let minValue = parseInt(minBandwidthInput.value) || 0;
+            let maxValue = parseInt(maxBandwidthInput.value) || 0;
+            
+            // Validazione
+            if (minValue < 0) minValue = 0;
+            if (minValue > 100) minValue = 100;
+            if (maxValue < minValue) maxValue = minValue;
+            if (maxValue > 100) maxValue = 100;
+            
+            // Aggiorna la progress bar
+            progressBarMin.style.width = minValue + '%';
+            progressBarMax.style.width = (maxValue - minValue) + '%';
+            
+            // Aggiorna il testo
+            minValueText.textContent = minValue > 0 ? minValue + '%' : '';
+            maxValueText.textContent = (maxValue - minValue) > 0 ? maxValue + '%' : '';
+        }
+        
+        // Aggiorna all'inizio
+        updateProgressBar();
+        
+        // Aggiorna quando vengono modificati i valori
+        minBandwidthInput.addEventListener('input', updateProgressBar);
+        maxBandwidthInput.addEventListener('input', updateProgressBar);
+    });
+</script>
+{% endblock %}
+
+{% block head %}
+<style>
+    .progress {
+        height: 24px;
+        background-color: #f0f0f0;
+        border-radius: 0.25rem;
+    }
+    
+    .progress-bar {
+        background-color: #009cde;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}

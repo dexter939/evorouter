@@ -1,0 +1,270 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} - EvoRouter R4 OS{% endblock %}
+
+{% set active_page = "qos" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.index') }}">QoS</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('qos.rules') }}">Regole</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h2><i data-feather="filter" class="feather-lg me-2"></i> {{ title }}</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Dettagli Regola QoS</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                {% for error in form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=2) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.class_id.label(class="form-label") }}
+                            {{ form.class_id(class="form-select") }}
+                            {% if form.class_id.errors %}
+                                {% for error in form.class_id.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Criteri di Corrispondenza</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.source.label(class="form-label") }}
+                                            {{ form.source(class="form-control") }}
+                                            {% if form.source.errors %}
+                                                {% for error in form.source.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="form-text text-muted small">
+                                                {{ form.source.description }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.destination.label(class="form-label") }}
+                                            {{ form.destination(class="form-control") }}
+                                            {% if form.destination.errors %}
+                                                {% for error in form.destination.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="form-text text-muted small">
+                                                {{ form.destination.description }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.protocol.label(class="form-label") }}
+                                            {{ form.protocol(class="form-select") }}
+                                            {% if form.protocol.errors %}
+                                                {% for error in form.protocol.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.src_port.label(class="form-label") }}
+                                            {{ form.src_port(class="form-control") }}
+                                            {% if form.src_port.errors %}
+                                                {% for error in form.src_port.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="form-text text-muted small">
+                                                {{ form.src_port.description }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.dst_port.label(class="form-label") }}
+                                            {{ form.dst_port(class="form-control") }}
+                                            {% if form.dst_port.errors %}
+                                                {% for error in form.dst_port.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="form-text text-muted small">
+                                                {{ form.dst_port.description }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.dscp.label(class="form-label") }}
+                                            {{ form.dscp(class="form-control") }}
+                                            {% if form.dscp.errors %}
+                                                {% for error in form.dscp.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            <div class="form-text text-muted small">
+                                                {{ form.dscp.description }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.direction.label(class="form-label") }}
+                                            {{ form.direction(class="form-select") }}
+                                            {% if form.direction.errors %}
+                                                {% for error in form.direction.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.priority.label(class="form-label") }}
+                                    {{ form.priority(class="form-control", type="number") }}
+                                    {% if form.priority.errors %}
+                                        {% for error in form.priority.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text text-muted small">
+                                        {{ form.priority.description }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label d-block mb-3">Stato</label>
+                                    <div class="form-check form-switch">
+                                        {{ form.enabled(class="form-check-input") }}
+                                        {{ form.enabled.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('qos.rules') }}" class="btn btn-outline-secondary me-md-2">Annulla</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informazioni</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Suggerimenti per le Regole QoS</h6>
+                    
+                    <div class="mb-3">
+                        <p><strong>Criteri di corrispondenza</strong></p>
+                        <p class="small">Puoi specificare uno o più criteri per individuare il traffico da classificare. Se un campo è lasciato vuoto, sarà considerato "qualsiasi".</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p><strong>Esempi comuni</strong></p>
+                        <ul class="small">
+                            <li><strong>VoIP/Videoconferenze</strong>: Protocollo UDP, porte 5060-5090 (SIP), 10000-20000 (RTP)</li>
+                            <li><strong>Streaming video</strong>: Destinazioni servizi di streaming, porte 443, 80</li>
+                            <li><strong>Download a bassa priorità</strong>: Protocollo TCP, porte BitTorrent (6881-6889)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>Priorità</strong>: Le regole con priorità inferiore (valore numerico più basso) vengono valutate per prime.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Logica per abilitare/disabilitare i campi delle porte in base al protocollo selezionato
+        const protocolSelect = document.getElementById('protocol');
+        const srcPortInput = document.getElementById('src_port');
+        const dstPortInput = document.getElementById('dst_port');
+        
+        function updatePortsVisibility() {
+            const protocol = protocolSelect.value;
+            const isPortProtocol = protocol === 'tcp' || protocol === 'udp' || protocol === 'tcp,udp';
+            
+            // Imposta disabled invece di nascondere, così i valori esistenti vengono conservati
+            srcPortInput.disabled = !isPortProtocol;
+            dstPortInput.disabled = !isPortProtocol;
+            
+            // Aggiorna l'aspetto visivo
+            if (!isPortProtocol) {
+                srcPortInput.classList.add('text-muted', 'bg-light');
+                dstPortInput.classList.add('text-muted', 'bg-light');
+            } else {
+                srcPortInput.classList.remove('text-muted', 'bg-light');
+                dstPortInput.classList.remove('text-muted', 'bg-light');
+            }
+        }
+        
+        // Inizializza lo stato
+        updatePortsVisibility();
+        
+        // Aggiungi evento change
+        protocolSelect.addEventListener('change', updatePortsVisibility);
+    });
+</script>
+{% endblock %}

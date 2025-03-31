@@ -417,6 +417,67 @@ class FirewallZone(db.Model):
     
     def __repr__(self):
         return f'<FirewallZone {self.name}>'
+        
+# Modelli per QoS
+class QoSConfig(db.Model):
+    """Configurazione principale QoS"""
+    __tablename__ = 'qos_config'
+    id = db.Column(db.Integer, primary_key=True)
+    enabled = db.Column(db.Boolean, default=False)
+    interface = db.Column(db.String(32), nullable=False)  # Interfaccia di rete (es. eth0, wan)
+    download_bandwidth = db.Column(db.Integer)  # Banda massima in download (kbps)
+    upload_bandwidth = db.Column(db.Integer)  # Banda massima in upload (kbps)
+    default_class = db.Column(db.String(32), default='default')  # Classe predefinita per traffico non classificato
+    hierarchical = db.Column(db.Boolean, default=True)  # Utilizza HTB (hierarchical token bucket)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relazioni
+    classes = db.relationship('QoSClass', backref='config', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<QoSConfig {self.interface} {"enabled" if self.enabled else "disabled"}>'
+
+class QoSClass(db.Model):
+    """Classe di traffico QoS"""
+    __tablename__ = 'qos_class'
+    id = db.Column(db.Integer, primary_key=True)
+    config_id = db.Column(db.Integer, db.ForeignKey('qos_config.id'), nullable=False)
+    name = db.Column(db.String(32), nullable=False)
+    priority = db.Column(db.Integer, default=3)  # 1 (più alta) a 7 (più bassa)
+    min_bandwidth = db.Column(db.Integer, default=0)  # Banda minima garantita (%)
+    max_bandwidth = db.Column(db.Integer, default=100)  # Banda massima (%)
+    description = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relazioni
+    rules = db.relationship('QoSRule', backref='traffic_class', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<QoSClass {self.name} (priority: {self.priority})>'
+
+class QoSRule(db.Model):
+    """Regola per classificazione traffico QoS"""
+    __tablename__ = 'qos_rule'
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('qos_class.id'), nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(255))
+    source = db.Column(db.String(255))  # IP/rete sorgente (opzionale)
+    destination = db.Column(db.String(255))  # IP/rete destinazione (opzionale)
+    protocol = db.Column(db.String(16))  # tcp, udp, icmp, all
+    src_port = db.Column(db.String(64))  # Porta o range di porte sorgente
+    dst_port = db.Column(db.String(64))  # Porta o range di porte destinazione
+    dscp = db.Column(db.String(16))  # Differentiated Services Code Point (opzionale)
+    direction = db.Column(db.String(8), default='both')  # in, out, both
+    priority = db.Column(db.Integer, default=0)  # Priorità della regola (più basso = priorità maggiore)
+    enabled = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<QoSRule {self.name}>'
 
 class FirewallRule(db.Model):
     """Regola di firewall"""
