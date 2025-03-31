@@ -1,5 +1,7 @@
 import os
 import logging
+from pathlib import Path
+import sys
 
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +13,21 @@ from flask_wtf.csrf import CSRFProtect
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Carica variabili d'ambiente dal file .env se esiste
+env_file = Path('.env')
+if env_file.exists():
+    logger.info(f"Caricamento variabili d'ambiente da {env_file.absolute()}")
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            os.environ[key] = value
+    logger.info("Variabili d'ambiente caricate con successo")
+else:
+    logger.info("File .env non trovato, utilizzo delle variabili d'ambiente di sistema")
 
 # Create a base class for SQLAlchemy models
 class Base(DeclarativeBase):

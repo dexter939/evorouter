@@ -156,10 +156,111 @@ esac
 # Passo 4: Configurazione del database
 print_message "info" "Passo 4: Configurazione del database..."
 
+# Chiedi all'utente se vuole utilizzare SQLite o PostgreSQL
+echo ""
+echo "Seleziona il tipo di database da utilizzare:"
+echo "1) SQLite (più semplice, consigliato per installazioni singole)"
+echo "2) PostgreSQL (più robusto, consigliato per ambienti di produzione)"
+read -p "Scelta (1/2): " db_choice
+
+case $db_choice in
+    1)
+        # Configurazione SQLite
+        print_message "info" "Configurazione database SQLite..."
+        
+        # Crea un file .env con la configurazione
+        cat > $INSTALL_DIR/.env << EOF
+# Configurazione EvoRouter
+FLASK_APP=main.py
+FLASK_ENV=production
+SESSION_SECRET=$(openssl rand -hex 32)
+DATABASE_URL=sqlite:///instance/evorouter.db
+EOF
+        ;;
+    2)
+        # Configurazione PostgreSQL
+        print_message "info" "Configurazione database PostgreSQL..."
+        
+        # Chiedi dettagli della connessione
+        read -p "Host PostgreSQL (default: localhost): " pg_host
+        pg_host=${pg_host:-localhost}
+        
+        read -p "Porta PostgreSQL (default: 5432): " pg_port
+        pg_port=${pg_port:-5432}
+        
+        read -p "Nome database (default: evorouter): " pg_dbname
+        pg_dbname=${pg_dbname:-evorouter}
+        
+        read -p "Utente PostgreSQL: " pg_user
+        
+        read -s -p "Password PostgreSQL: " pg_password
+        echo ""  # Nuova linea dopo input password
+        
+        # Verifica se postgresql-client è installato
+        if ! command -v psql &> /dev/null; then
+            print_message "info" "Installazione di postgresql-client..."
+            apt-get install -y postgresql-client
+            check_command "Impossibile installare postgresql-client."
+        fi
+        
+        # Verifica la connessione al database
+        print_message "info" "Verifica della connessione al database PostgreSQL..."
+        if PGPASSWORD="$pg_password" psql -h "$pg_host" -p "$pg_port" -U "$pg_user" -d "$pg_dbname" -c "SELECT 1" &> /dev/null; then
+            print_message "success" "Connessione al database PostgreSQL riuscita!"
+        else
+            # Prova a creare il database se non esiste
+            print_message "warning" "Database '$pg_dbname' non trovato. Tentativo di creazione..."
+            if PGPASSWORD="$pg_password" psql -h "$pg_host" -p "$pg_port" -U "$pg_user" -c "CREATE DATABASE $pg_dbname;" &> /dev/null; then
+                print_message "success" "Database '$pg_dbname' creato con successo!"
+            else
+                print_message "error" "Impossibile connettersi al database o creare il database. Verifica le credenziali e che PostgreSQL sia in esecuzione."
+                print_message "info" "Puoi riprovare l'installazione o selezionare SQLite come alternativa."
+                exit 1
+            fi
+        fi
+        
+        # Crea un file .env con la configurazione
+        cat > $INSTALL_DIR/.env << EOF
+# Configurazione EvoRouter
+FLASK_APP=main.py
+FLASK_ENV=production
+SESSION_SECRET=$(openssl rand -hex 32)
+DATABASE_URL=postgresql://$pg_user:$pg_password@$pg_host:$pg_port/$pg_dbname
+PGHOST=$pg_host
+PGPORT=$pg_port
+PGDATABASE=$pg_dbname
+PGUSER=$pg_user
+PGPASSWORD=$pg_password
+EOF
+        ;;
+    *)
+        print_message "error" "Opzione non valida. Installazione annullata."
+        exit 1
+        ;;
+esac
+
+# Imposta i permessi corretti
+chmod 600 $INSTALL_DIR/.env
+check_command "Impossibile impostare i permessi sul file .env"
+
+# Carica le variabili d'ambiente e inizializza il database
+print_message "info" "Inizializzazione del database..."
 cd $INSTALL_DIR
 source venv/bin/activate
-python create_admin.py
-check_command "Impossibile inizializzare il database."
+set -a
+source .env
+set +a
+
+# Esegui create_admin.py con messaggi di errore dettagliati
+python create_admin.py 2> db_error.log
+if [ $? -ne 0 ]; then
+    print_message "error" "Impossibile inizializzare il database. Consultare il file $INSTALL_DIR/db_error.log per i dettagli dell'errore."
+    cat db_error.log
+    print_message "info" "Puoi tentare di risolvere il problema manualmente e poi eseguire: cd $INSTALL_DIR && source venv/bin/activate && python create_admin.py"
+    exit 1
+else
+    print_message "success" "Database inizializzato con successo!"
+fi
 
 # Passo 5: Configurazione di Nginx
 print_message "info" "Passo 5: Configurazione di Nginx..."
