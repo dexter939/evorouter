@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script per creare un bundle Git per il repository GitHub di EvoRouter R4 OS
 
-echo "Creazione del bundle Git per EvoRouter R4 OS v1.2.0..."
+echo "Creazione del bundle Git per EvoRouter R4 OS v1.3.0..."
 
 # Nome del file bundle
 BUNDLE_FILE="evorouter.bundle"
