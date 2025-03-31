@@ -1,13 +1,14 @@
 # Guida all'Installazione del Router OS per EvoRouter R4
 
-Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4.
+Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4, un sistema operativo completo per la gestione del router e del centralino telefonico integrato.
 
 ## Prerequisiti
 - EvoRouter R4
-- Scheda microSD (minimo 8GB)
-- Alimentatore compatibile
+- Scheda microSD (minimo 16GB consigliati)
+- Alimentatore compatibile (12V, 2A minimo)
 - Cavo Ethernet
 - Computer con lettore di schede SD
+- Connessione Internet per il download dei pacchetti
 
 ## Passi per l'installazione
 
@@ -21,9 +22,10 @@ Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4.
 2. Installa le dipendenze di sistema necessarie:
    ```
    apt update
-   apt install -y python3 python3-pip python3-venv nginx
-   apt install -y freeswitch freeswitch-mod-console freeswitch-mod-sofia freeswitch-mod-event-socket
+   apt install -y python3 python3-pip python3-venv nginx curl wget unzip
    ```
+
+> **Nota**: A differenza delle versioni precedenti, FreeSWITCH non viene più installato automaticamente con apt. Il software include ora un sistema di installazione guidata accessibile dall'interfaccia web.
 
 ### 2. Configurazione dell'ambiente Python
 
@@ -141,6 +143,20 @@ git clone https://github.com/tuo-username/evorouter .
      - Username: admin
      - Password: admin123
 
+### 8. Installazione guidata del Centralino (FreeSWITCH)
+
+Dopo aver effettuato l'accesso all'interfaccia web, puoi installare il centralino telefonico seguendo questi passaggi:
+
+1. Dalla dashboard, trova la sezione "Servizi di Sistema" e individua la riga "Centralino (FreeSWITCH)"
+2. Fai clic sull'icona di download accanto al servizio
+3. Nella pagina di installazione, scegli tra:
+   - **Installazione Standard**: utilizza i pacchetti precompilati (consigliata)
+   - **Installazione da Sorgente**: compila FreeSWITCH dai sorgenti (richiede più tempo)
+4. Fai clic su "Avvia Installazione" e attendi il completamento del processo
+5. Al termine, il sistema ti reindirizzerà alla dashboard dove potrai verificare lo stato del centralino
+
+> **Importante**: L'installazione da sorgente può richiedere fino a 30-60 minuti, a seconda delle prestazioni del dispositivo.
+
 ## Risoluzione dei problemi
 
 Se riscontri problemi durante l'installazione, puoi controllare i log:
@@ -153,6 +169,17 @@ Per problemi relativi a Nginx:
 journalctl -u nginx.service -f
 ```
 
+Per problemi relativi all'installazione o al funzionamento del Centralino (FreeSWITCH):
+```
+# Controlla lo stato del servizio
+systemctl status freeswitch
+
+# Visualizza i log di FreeSWITCH
+tail -f /var/log/freeswitch/freeswitch.log
+```
+
 ## Note di sicurezza
 
-Si consiglia vivamente di cambiare la password dell'utente admin al primo accesso!
+- Si consiglia vivamente di cambiare la password dell'utente admin al primo accesso!
+- L'API del sistema è protetta tramite autenticazione JWT. Puoi generare e gestire i token API dalla sezione impostazioni.
+- Il sistema è pronto per l'uso in rete protetta. Per l'esposizione su Internet, si raccomanda di configurare HTTPS tramite Let's Encrypt.

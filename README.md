@@ -1,6 +1,14 @@
-# EvoRouter R4 OS v1.2.0
+# EvoRouter R4 OS v1.3.0
 
 Sistema operativo personalizzato per router EvoRouter R4 con interfaccia web avanzata, centralino integrato e funzionalità VPN.
+
+## Novità della versione 1.3.0
+
+- **Installazione Centralino Migliorata**: Nuovo sistema di installazione guidata del centralino telefonico accessibile dall'interfaccia web
+- **API Stato Centralino**: Nuovo endpoint API per verificare lo stato di FreeSWITCH con informazioni dettagliate
+- **Dashboard Potenziata**: Visualizzazione in tempo reale dello stato del centralino con monitoraggio automatico
+- **Documentazione Aggiornata**: Guida all'installazione e documentazione API aggiornate per riflettere le nuove funzionalità
+- **Stabilità Generale**: Numerosi miglioramenti di stabilità e prestazioni in tutto il sistema
 
 ## Novità della versione 1.2.0
 

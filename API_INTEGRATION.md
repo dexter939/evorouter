@@ -2,7 +2,7 @@
 
 ## Introduzione
 
-Il sistema operativo BPI-R4 Router offre un'API RESTful completa che consente l'integrazione con sistemi di gestione remota e altri servizi. Questa guida spiega come utilizzare le API disponibili per automatizzare e controllare remotamente il tuo dispositivo BPI-R4.
+Il sistema operativo EvoRouter R4 offre un'API RESTful completa che consente l'integrazione con sistemi di gestione remota e altri servizi. Questa guida spiega come utilizzare le API disponibili per automatizzare e controllare remotamente il tuo dispositivo EvoRouter R4.
 
 ## Autenticazione
 
@@ -141,7 +141,28 @@ Risposta:
 }
 ```
 
-### 3. Configurazione FreeSWITCH
+### 3. Configurazione Centralino (FreeSWITCH)
+
+#### Ottieni Stato Centralino
+
+```
+GET /api/freeswitch/status
+```
+
+Risposta:
+
+```json
+{
+  "status": {
+    "installed": true,
+    "running": true,
+    "version": "1.10.9",
+    "uptime": "2 days, 5 hours, 12 minutes",
+    "active_calls": 2,
+    "registered_extensions": 5
+  }
+}
+```
 
 #### Ottieni Estensioni SIP
 
@@ -338,7 +359,7 @@ Codici di errore comuni:
 import requests
 import json
 
-API_BASE_URL = "http://your-bpir4-ip/api"
+API_BASE_URL = "http://your-evorouter-ip/api"
 USERNAME = "admin"
 PASSWORD = "your_password"
 
