@@ -253,6 +253,18 @@ set -a
 source .env
 set +a
 
+# Crea la directory instance per SQLite se necessario
+mkdir -p $INSTALL_DIR/instance
+chmod 777 $INSTALL_DIR/instance
+
+# In caso di SQLite, verifica che l'utente corrente possa scrivere nella directory
+if [[ "$DATABASE_URL" == sqlite* ]]; then
+    # Imposta i permessi corretti per la directory dell'applicazione
+    chmod -R 755 $INSTALL_DIR
+    chmod -R 777 $INSTALL_DIR/instance
+    print_message "info" "Permessi impostati per database SQLite in $INSTALL_DIR/instance"
+fi
+
 # Esegui create_admin.py con messaggi di errore dettagliati
 python create_admin.py 2> db_error.log
 if [ $? -ne 0 ]; then
