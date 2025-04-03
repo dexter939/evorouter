@@ -284,15 +284,54 @@ if [[ "$DATABASE_URL" == sqlite* ]]; then
     print_message "info" "Permessi impostati per database SQLite in $DB_DIR"
 fi
 
-# Esegui create_admin.py con messaggi di errore dettagliati
-python create_admin.py 2> db_error.log
+# Inizializza il database con gestione degli errori migliorata
+print_message "info" "Inizializzazione del database e creazione tabelle..."
+cd $INSTALL_DIR
+# Esegui le migrazioni del database
+python -c "from app import app, db; app.app_context().push(); db.create_all()" 2> db_error.log
 if [ $? -ne 0 ]; then
     print_message "error" "Impossibile inizializzare il database. Consultare il file $INSTALL_DIR/db_error.log per i dettagli dell'errore."
     cat db_error.log
-    print_message "info" "Puoi tentare di risolvere il problema manualmente e poi eseguire: cd $INSTALL_DIR && source venv/bin/activate && python create_admin.py"
-    exit 1
+    
+    # Controlli aggiuntivi per SQLite
+    if [[ "$DATABASE_URL" == sqlite* ]]; then
+        # Estrai il percorso del file database dall'URL
+        DB_FILE_PATH=${DATABASE_URL#sqlite:///}
+        
+        # Se è un percorso relativo, lo rendiamo assoluto
+        if [[ "$DB_FILE_PATH" != /* ]]; then
+            DB_FILE_PATH="$INSTALL_DIR/$DB_FILE_PATH"
+        fi
+        
+        # Verifica i permessi nella directory del database
+        DB_DIR=$(dirname "$DB_FILE_PATH")
+        print_message "info" "Tentativo di correzione dei permessi per SQLite..."
+        mkdir -p "$DB_DIR"
+        chmod -R 777 "$DB_DIR"
+        chown -R root:root "$DB_DIR" 2>/dev/null || true
+        
+        # Prova a creare il DB di nuovo
+        python -c "from app import app, db; app.app_context().push(); db.create_all()" 2> db_error_retry.log
+        if [ $? -ne 0 ]; then
+            print_message "error" "Secondo tentativo fallito. Consultare il file $INSTALL_DIR/db_error_retry.log"
+            cat db_error_retry.log
+        else
+            print_message "success" "Correzione riuscita! Database inizializzato con successo!"
+        fi
+    fi
+    
+    print_message "info" "Puoi tentare di risolvere il problema manualmente e poi eseguire: cd $INSTALL_DIR && source venv/bin/activate && python -c 'from app import app, db; app.app_context().push(); db.create_all()'"
+fi
+
+# Esegui create_admin.py con gestione degli errori migliorata
+print_message "info" "Creazione dell'account amministratore predefinito..."
+python create_admin.py 2> admin_error.log
+if [ $? -ne 0 ]; then
+    print_message "warning" "Impossibile creare l'account amministratore. Consultare il file $INSTALL_DIR/admin_error.log per i dettagli."
+    cat admin_error.log
+    print_message "info" "Puoi creare l'amministratore manualmente eseguendo: cd $INSTALL_DIR && source venv/bin/activate && python create_admin.py"
 else
-    print_message "success" "Database inizializzato con successo!"
+    print_message "success" "Account amministratore creato con successo!"
 fi
 
 # Passo 5: Configurazione di Nginx
@@ -306,15 +345,19 @@ server {
     listen [::]:80 default_server;
     server_name _;
 
-    # Rimuove la pagina di default di Nginx
+    # Impostazioni generali
     root /var/www/html;
     index index.html index.htm;
-
-    # Rimuovi il file default se esiste
+    
+    # Aumenta il buffer per le intestazioni
+    large_client_header_buffers 4 32k;
+    
+    # Elimina la pagina di default di Nginx
     location = /index.nginx-debian.html {
         return 301 /;
     }
 
+    # Configurazione del proxy per l'applicazione EvoRouter
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
@@ -322,10 +365,31 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         
-        # Timeout più lunghi per consentire la corretta inizializzazione
+        # Timeout estesi per operazioni di lunga durata
         proxy_connect_timeout 300s;
         proxy_send_timeout 300s;
         proxy_read_timeout 300s;
+        
+        # Buffering migliorato
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+        
+        # Gestione degli errori quando il backend non è disponibile
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
+    }
+    
+    # Pagina di errore personalizzata quando l'applicazione non è raggiungibile
+    location = /50x.html {
+        root /var/www/html;
+        internal;
+    }
+    
+    # Permettere l'accesso alle risorse statiche direttamente
+    location /static/ {
+        alias $INSTALL_DIR/static/;
+        expires 7d;
     }
 }
 EOF
@@ -381,20 +445,34 @@ print_message "info" "Ricaricamento della configurazione di systemd..."
 systemctl daemon-reload
 check_command "Impossibile ricaricare la configurazione di systemd."
 
-# Abilita e avvia il servizio con messaggi più dettagliati
-print_message "info" "Abilitazione del servizio EvoRouter..."
-systemctl enable evorouter.service
+# Verifica se il file di servizio è valido prima di abilitarlo
+print_message "info" "Verifica del file di servizio systemd..."
+systemctl is-enabled --quiet evorouter.service || systemctl enable evorouter.service
 check_command "Impossibile abilitare il servizio EvoRouter."
 
 print_message "info" "Avvio del servizio EvoRouter..."
-systemctl start evorouter.service
+systemctl restart evorouter.service
 
 # Verifica lo stato in modo più dettagliato
-sleep 5
+print_message "info" "Verifica dello stato del servizio dopo l'avvio..."
+sleep 5  # Attendiamo che il servizio abbia tempo di inizializzare
 if ! systemctl is-active --quiet evorouter.service; then
     print_message "warning" "Il servizio EvoRouter non è stato avviato correttamente."
-    print_message "info" "Consultare i log per maggiori dettagli: journalctl -u evorouter.service -n 50"
-    # Non usciamo con errore per consentire all'installazione di completarsi
+    print_message "info" "Controllo dei log per maggiori dettagli..."
+    journalctl -u evorouter.service -n 20 --no-pager
+    
+    # Secondo tentativo di avvio con opzioni diverse
+    print_message "info" "Tentativo di riavvio con impostazioni alternative..."
+    systemctl start evorouter.service
+    sleep 5
+    
+    if ! systemctl is-active --quiet evorouter.service; then
+        print_message "warning" "Secondo tentativo fallito. Verifica manuale richiesta."
+        journalctl -u evorouter.service -n 10 --no-pager
+        # Non usciamo con errore per consentire all'installazione di completarsi
+    else
+        print_message "success" "Secondo tentativo riuscito! Servizio EvoRouter avviato con successo!"
+    fi
 else
     print_message "success" "Il servizio EvoRouter è stato avviato con successo!"
 fi
