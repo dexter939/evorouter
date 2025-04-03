@@ -1,6 +1,6 @@
-# Guida all'Installazione del Router OS per EvoRouter R4
+# Guida all'Installazione, Aggiornamento e Disinstallazione del Router OS per EvoRouter R4
 
-Questa guida spiega come installare il Router OS sviluppato per EvoRouter R4, un sistema operativo completo per la gestione del router e del centralino telefonico integrato.
+Questa guida spiega come installare, aggiornare e disinstallare il Router OS sviluppato per EvoRouter R4, un sistema operativo completo per la gestione del router e del centralino telefonico integrato.
 
 ## Prerequisiti
 - EvoRouter R4
@@ -214,3 +214,125 @@ tail -f /var/log/freeswitch/freeswitch.log
 - Si consiglia vivamente di cambiare la password dell'utente admin al primo accesso!
 - L'API del sistema è protetta tramite autenticazione JWT. Puoi generare e gestire i token API dalla sezione impostazioni.
 - Il sistema è pronto per l'uso in rete protetta. Per l'esposizione su Internet, si raccomanda di configurare HTTPS tramite Let's Encrypt.
+
+## Aggiornamento del Sistema
+
+È possibile aggiornare EvoRouter R4 OS utilizzando lo script di aggiornamento automatico fornito. L'aggiornamento manterrà tutte le configurazioni e i dati esistenti.
+
+### Aggiornamento Automatico (Raccomandato)
+
+```bash
+# Se lo script è già presente nel sistema
+sudo ./update_evorouter.sh
+
+# In alternativa, scarica lo script dal repository
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/update_evorouter.sh
+chmod +x update_evorouter.sh
+sudo ./update_evorouter.sh
+```
+
+Lo script di aggiornamento offre due metodi:
+
+1. **Download dal repository GitHub** (consigliato):
+   - Scarica automaticamente l'ultima versione dal repository ufficiale
+   - Crea un backup completo della configurazione attuale
+   - Aggiorna i file di sistema e le dipendenze
+   - Esegue la migrazione del database
+   - Riavvia i servizi necessari
+
+2. **Trasferimento manuale di un archivio ZIP**:
+   - Richiede un file ZIP scaricato manualmente
+   - Esegue gli stessi passaggi di backup e aggiornamento
+
+Durante l'aggiornamento, viene creato automaticamente un backup completo dell'installazione corrente in `/opt/evorouter_backup_[DATA_ORA]/`. In caso di problemi, il sistema tenterà di ripristinare automaticamente la versione precedente.
+
+I backup vengono conservati per 7 giorni, dopodiché vengono eliminati automaticamente per risparmiare spazio.
+
+### Verifica dell'Aggiornamento
+
+Dopo l'aggiornamento, verifica che il sistema funzioni correttamente:
+
+```bash
+# Controlla lo stato del servizio
+systemctl status evorouter.service
+
+# Verifica i log per eventuali errori
+journalctl -u evorouter.service -n 50
+```
+
+## Disinstallazione del Sistema
+
+Per rimuovere completamente EvoRouter R4 OS dal tuo dispositivo, segui questi passaggi.
+
+### Disinstallazione Manuale
+
+```bash
+# Arresta e disabilita i servizi
+sudo systemctl stop evorouter.service
+sudo systemctl disable evorouter.service
+
+# Rimuovi il file di configurazione del servizio
+sudo rm /etc/systemd/system/evorouter.service
+sudo systemctl daemon-reload
+
+# Rimuovi la directory di installazione
+sudo rm -rf /opt/evorouter
+
+# Rimuovi eventuali backup se non ti servono più
+sudo rm -rf /opt/evorouter_backup_*
+
+# Rimuovi la configurazione di Nginx
+sudo rm -f /etc/nginx/sites-enabled/evorouter
+sudo rm -f /etc/nginx/sites-available/evorouter
+sudo systemctl restart nginx
+
+# Rimuovi i file di log
+sudo rm -f /var/log/evorouter*
+```
+
+### Script di Disinstallazione
+
+Puoi creare uno script di disinstallazione per automatizzare i passaggi precedenti. Ecco un esempio:
+
+```bash
+#!/bin/bash
+
+echo "Inizializzazione disinstallazione di EvoRouter R4 OS..."
+echo "ATTENZIONE: Questa operazione rimuoverà completamente l'applicazione e i suoi dati."
+read -p "Continuare? (s/n): " confirm
+
+if [ "$confirm" != "s" ] && [ "$confirm" != "S" ]; then
+    echo "Disinstallazione annullata."
+    exit 0
+fi
+
+echo "Arresto dei servizi..."
+systemctl stop evorouter.service
+systemctl disable evorouter.service
+
+echo "Rimozione della configurazione del servizio..."
+rm -f /etc/systemd/system/evorouter.service
+systemctl daemon-reload
+
+echo "Rimozione dei file dell'applicazione..."
+rm -rf /opt/evorouter
+rm -rf /opt/evorouter_backup_*
+
+echo "Rimozione delle configurazioni di Nginx (se presenti)..."
+rm -f /etc/nginx/sites-enabled/evorouter
+rm -f /etc/nginx/sites-available/evorouter
+systemctl restart nginx
+
+echo "Pulizia dei file di log..."
+rm -f /var/log/evorouter*
+
+echo "Disinstallazione completata con successo!"
+echo "Nota: Se utilizzavi un database PostgreSQL, potrebbe essere necessario rimuoverlo manualmente."
+echo "Grazie per aver utilizzato EvoRouter R4 OS."
+```
+
+Salva questo script come `uninstall_evorouter.sh`, rendilo eseguibile con `chmod +x uninstall_evorouter.sh` e quindi eseguilo con `sudo ./uninstall_evorouter.sh`.
+
+### Ripristino delle Impostazioni di Rete
+
+Dopo la disinstallazione, potrebbe essere necessario ripristinare le configurazioni di rete predefinite del dispositivo, poiché EvoRouter R4 OS potrebbe aver modificato alcune impostazioni di rete. Consulta la documentazione del hardware per le procedure di ripristino delle impostazioni di fabbrica.
