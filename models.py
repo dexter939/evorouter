@@ -331,8 +331,8 @@ class VoicemailMessage(db.Model):
     listened = db.Column(db.Boolean, default=False)
     forwarded_to_email = db.Column(db.Boolean, default=False)
     
-    # Relazione alla extension
-    extension = db.relationship('SipExtension')
+    # Relazione alla extension (con gestione sovrapposizioni)
+    extension = db.relationship('SipExtension', overlaps="mailbox,voicemail_messages")
     
     def __repr__(self):
         return f'<VoicemailMessage {self.id} for {self.extension_id}>'
