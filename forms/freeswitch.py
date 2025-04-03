@@ -6,7 +6,7 @@ class ExtensionForm(FlaskForm):
     """Form for managing FreeSWITCH extensions"""
     extension_number = StringField('Numero Estensione', validators=[
         DataRequired(message='Il numero estensione è obbligatorio'),
-        Regexp(r'^\d{3,6}$', message='Il numero estensione deve essere composto da 3-6 cifre')
+        Regexp(r'^[0-9]{3,6}$', message='Il numero estensione deve essere composto da 3-6 cifre')
     ])
     
     name = StringField('Nome', validators=[
@@ -28,7 +28,7 @@ class ExtensionForm(FlaskForm):
     caller_id_number = StringField('Numero Chiamante (Caller ID)', validators=[
         Optional(),
         Length(max=32, message='Il numero del chiamante non può superare i 32 caratteri'),
-        Regexp(r'^\d*$', message='Il numero del chiamante deve essere composto solo da cifre')
+        Regexp(r'^[0-9]*$', message='Il numero del chiamante deve essere composto solo da cifre')
     ])
     
     # Voicemail settings
@@ -36,7 +36,7 @@ class ExtensionForm(FlaskForm):
     
     voicemail_pin = StringField('PIN Casella Vocale', validators=[
         Optional(),
-        Regexp(r'^\d{4,10}$', message='Il PIN deve essere composto da 4-10 cifre numeriche')
+        Regexp(r'^[0-9]{4,10}$', message='Il PIN deve essere composto da 4-10 cifre numeriche')
     ])
     
     voicemail_email = EmailField('Email per notifiche voicemail', validators=[
@@ -58,7 +58,7 @@ class ExtensionForm(FlaskForm):
     
     hot_desk_pin = StringField('PIN Hot Desking', validators=[
         Optional(),
-        Regexp(r'^\d{4,10}$', message='Il PIN deve essere composto da 4-10 cifre numeriche')
+        Regexp(r'^[0-9]{4,10}$', message='Il PIN deve essere composto da 4-10 cifre numeriche')
     ])
     
     submit = SubmitField('Salva Estensione')
@@ -339,7 +339,7 @@ class InboundRouteForm(FlaskForm):
     did_number = StringField('Numero DID/DDI', validators=[
         DataRequired(message='Il numero DID è obbligatorio'),
         Length(min=3, max=32, message='Il numero deve essere lungo tra 3 e 32 caratteri'),
-        Regexp(r'^\d+$', message='Il numero deve essere composto solo da cifre')
+        Regexp(r'^[0-9]+$', message='Il numero deve essere composto solo da cifre')
     ])
     
     trunk_id = SelectField('Trunk SIP', coerce=int)
@@ -392,7 +392,7 @@ class OutboundRouteForm(FlaskForm):
     prefix = StringField('Prefisso da Aggiungere', validators=[
         Optional(),
         Length(max=16, message='Il prefisso non può superare i 16 caratteri'),
-        Regexp(r'^\d*$', message='Il prefisso deve essere composto solo da cifre')
+        Regexp(r'^[0-9]*$', message='Il prefisso deve essere composto solo da cifre')
     ])
     
     strip = IntegerField('Cifre da Rimuovere', validators=[
@@ -417,7 +417,7 @@ class BlacklistForm(FlaskForm):
     number = StringField('Numero da Bloccare', validators=[
         DataRequired(message='Il numero è obbligatorio'),
         Length(min=3, max=32, message='Il numero deve essere lungo tra 3 e 32 caratteri'),
-        Regexp(r'^\d+$', message='Il numero deve essere composto solo da cifre')
+        Regexp(r'^[0-9]+$', message='Il numero deve essere composto solo da cifre')
     ])
     
     description = StringField('Descrizione', validators=[
@@ -489,7 +489,7 @@ class FreeswitchWizardForm(FlaskForm):
             return False
         
         # Validate RTP port range
-        if self.rtp_port_start.data >= self.rtp_port_end.data:
+        if self.rtp_port_start.data is not None and self.rtp_port_end.data is not None and self.rtp_port_start.data >= self.rtp_port_end.data:
             self.rtp_port_end.errors = ['La porta finale deve essere maggiore della porta iniziale']
             return False
         

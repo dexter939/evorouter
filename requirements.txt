@@ -16,3 +16,4 @@ stripe
 miniupnpc
 stripe
 speedtest-cli
+sqlalchemy==2.0.28
