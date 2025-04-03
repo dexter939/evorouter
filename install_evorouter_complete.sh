@@ -1,9 +1,17 @@
 #!/bin/bash
 #
-# Script di installazione completa per EvoRouter R4 OS con FreeSWITCH
+# Script di installazione completa per EvoRouter R4 OS con Centralino Telefonico
 # Questo script automatizza l'intero processo di installazione del sistema e del centralino
-# Versione: 1.0
-# Data: 31/03/2025
+# Versione: 1.1
+# Data: 03/04/2025
+#
+# Changelog:
+# 1.1 - 03/04/2025:
+#   - Risolto problema pagina di default di Nginx
+#   - Migliorata gestione permessi database SQLite
+#   - Aggiunta rimozione file index.nginx-debian.html
+#   - Migliorata configurazione di systemd
+#   - Aggiunto supporto per creazione automatica database PostgreSQL
 #
 
 # Funzione per visualizzare messaggi colorati

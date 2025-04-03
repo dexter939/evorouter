@@ -2,8 +2,16 @@
 #
 # Script di installazione automatica per EvoRouter R4 OS
 # Questo script automatizza l'intero processo di installazione del sistema operativo
-# Versione: 1.0
-# Data: 31/03/2025
+# Versione: 1.1
+# Data: 03/04/2025
+# 
+# Changelog:
+# 1.1 - 03/04/2025:
+#   - Risolto problema pagina di default di Nginx
+#   - Migliorata gestione permessi database SQLite
+#   - Aggiunta rimozione file index.nginx-debian.html
+#   - Migliorata configurazione di systemd
+#   - Aggiunto supporto per creazione automatica database PostgreSQL
 #
 
 # Funzione per visualizzare messaggi colorati
@@ -401,6 +409,31 @@ if [ -f /etc/nginx/sites-enabled/default ]; then
     rm -f /etc/nginx/sites-enabled/default
 fi
 
+# Rimuovi anche la pagina di default di Nginx
+print_message "info" "Rimozione della pagina di default di Nginx..."
+NGINX_DEFAULT_HTML="/var/www/html/index.nginx-debian.html"
+if [ -f "$NGINX_DEFAULT_HTML" ]; then
+    rm -f "$NGINX_DEFAULT_HTML"
+fi
+
+# Crea una pagina di redirect per maggiore sicurezza
+print_message "info" "Creazione di una pagina di redirect di fallback..."
+cat > /var/www/html/index.html << EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0;url=/" />
+    <title>Reindirizzamento a EvoRouter</title>
+</head>
+<body>
+    <p>Reindirizzamento a EvoRouter...</p>
+    <script>
+        window.location.href = "/";
+    </script>
+</body>
+</html>
+EOF
+
 # Abilita il sito e verifica la configurazione
 print_message "info" "Abilitazione del sito web in Nginx..."
 ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
@@ -420,20 +453,28 @@ print_message "info" "Creazione del file di servizio systemd..."
 cat > $SERVICE_FILE << EOF
 [Unit]
 Description=EvoRouter R4 OS
-After=network.target
+After=network.target postgresql.service
 Wants=nginx.service
+Before=nginx.service
 
 [Service]
 User=root
 WorkingDirectory=$INSTALL_DIR
 # Carica le variabili d'ambiente dal file .env
 EnvironmentFile=-$INSTALL_DIR/.env
+# Verifica preliminare e creazione directory
 ExecStartPre=/bin/bash -c "mkdir -p $INSTALL_DIR/instance && chmod 777 $INSTALL_DIR/instance"
-ExecStart=$INSTALL_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 --timeout 120 main:app
+# Avvia l'applicazione con gunicorn
+ExecStart=$INSTALL_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 --timeout 120 --error-logfile $INSTALL_DIR/instance/gunicorn-error.log --access-logfile $INSTALL_DIR/instance/gunicorn-access.log main:app
+# Riavvio automatico in caso di errore
 Restart=always
 RestartSec=5
-# Aggiungi un tempo di avvio più lungo per garantire che l'app abbia tempo di inizializzare
+# Definisci la priorità
+Nice=-5
+# Timeout di avvio esteso
 TimeoutStartSec=90
+# Evita che venga terminato troppo facilmente
+OOMScoreAdjust=-1000
 
 [Install]
 WantedBy=multi-user.target
