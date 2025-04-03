@@ -3,6 +3,8 @@
 Questa guida spiega come installare, aggiornare e disinstallare il Router OS sviluppato per EvoRouter R4, un sistema operativo completo per la gestione del router e del centralino telefonico integrato.
 
 ## Prerequisiti
+
+### Per installazione su hardware EvoRouter R4
 - EvoRouter R4
 - Scheda microSD (minimo 16GB consigliati)
 - Alimentatore compatibile (12V, 2A minimo)
@@ -10,11 +12,18 @@ Questa guida spiega come installare, aggiornare e disinstallare il Router OS svi
 - Computer con lettore di schede SD
 - Connessione Internet per il download dei pacchetti
 
+### Per installazione su Ubuntu/Debian
+- Ubuntu 18.04 LTS o successivo, o Debian 10 o successivo
+- Minimo 2GB di RAM
+- Minimo 2GB di spazio libero
+- Connessione Internet per il download dei pacchetti
+- Utente con privilegi sudo
+
 ## Installazione Semplificata (Raccomandata)
 
 Per semplificare l'installazione, abbiamo preparato degli script automatizzati che gestiscono l'intero processo:
 
-### Opzione 1: Installazione Solo Sistema
+### Opzione 1: Installazione Standard su EvoRouter R4
 ```bash
 # Scarica lo script di installazione
 wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh
@@ -26,7 +35,26 @@ chmod +x install_evorouter.sh
 sudo ./install_evorouter.sh
 ```
 
-### Opzione 2: Installazione Completa (Sistema + Centralino)
+### Opzione 2: Installazione su Ubuntu/Debian
+```bash
+# Scarica lo script di installazione specifico per Ubuntu/Debian
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_ubuntu.sh
+
+# Rendi lo script eseguibile
+chmod +x install_evorouter_ubuntu.sh
+
+# Esegui lo script
+sudo ./install_evorouter_ubuntu.sh
+```
+
+Lo script per Ubuntu/Debian presenta funzionalità aggiuntive:
+- Rileva automaticamente la distribuzione e i pacchetti disponibili
+- Supporta sia server web Nginx che Apache2
+- Verifica i requisiti minimi di sistema
+- Offre migliori diagnostiche in caso di problemi
+- Identificazione automatica dell'utente del server web
+
+### Opzione 3: Installazione Completa (Sistema + Centralino)
 ```bash
 # Scarica lo script di installazione completa
 wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_complete.sh
@@ -190,6 +218,8 @@ Dopo aver effettuato l'accesso all'interfaccia web, puoi installare il centralin
 
 ## Risoluzione dei problemi
 
+### Controllo dei log
+
 Se riscontri problemi durante l'installazione, puoi controllare i log:
 ```
 journalctl -u evorouter.service -f
@@ -209,6 +239,32 @@ systemctl status freeswitch
 tail -f /var/log/freeswitch/freeswitch.log
 ```
 
+### Risoluzione problemi del database
+
+Se riscontri errori del tipo "unable to open database file" o altri problemi relativi al database SQLite, puoi utilizzare lo script di riparazione del database:
+
+```bash
+# Scarica lo script di riparazione
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/fix_database_permissions.sh
+
+# Rendi lo script eseguibile
+chmod +x fix_database_permissions.sh
+
+# Esegui lo script
+sudo ./fix_database_permissions.sh
+```
+
+Questo script:
+- Corregge i permessi della directory `instance` e del file database
+- Aggiorna il file di servizio systemd per garantire la creazione della directory all'avvio
+- Ripristina l'ownership corretta dei file
+- Tenta di inizializzare il database e creare l'utente admin se necessario
+
+Se il problema persiste dopo l'esecuzione dello script, verifica che:
+1. Il percorso del database nel file `.env` sia corretto
+2. L'utente che esegue l'applicazione abbia i permessi necessari
+3. Non ci siano errori di sintassi nel file `app.py` o nei modelli del database
+
 ## Note di sicurezza
 
 - Si consiglia vivamente di cambiare la password dell'utente admin al primo accesso!
@@ -217,9 +273,11 @@ tail -f /var/log/freeswitch/freeswitch.log
 
 ## Aggiornamento del Sistema
 
-È possibile aggiornare EvoRouter R4 OS utilizzando lo script di aggiornamento automatico fornito. L'aggiornamento manterrà tutte le configurazioni e i dati esistenti.
+È possibile aggiornare EvoRouter R4 OS utilizzando diversi metodi, a seconda delle tue esigenze e preferenze.
 
 ### Aggiornamento Automatico (Raccomandato)
+
+Il metodo più semplice è utilizzare lo script di aggiornamento automatico fornito:
 
 ```bash
 # Se lo script è già presente nel sistema
@@ -247,6 +305,78 @@ Lo script di aggiornamento offre due metodi:
 Durante l'aggiornamento, viene creato automaticamente un backup completo dell'installazione corrente in `/opt/evorouter_backup_[DATA_ORA]/`. In caso di problemi, il sistema tenterà di ripristinare automaticamente la versione precedente.
 
 I backup vengono conservati per 7 giorni, dopodiché vengono eliminati automaticamente per risparmiare spazio.
+
+### Aggiornamento Tramite GitHub
+
+Se hai clonato il repository GitHub sul tuo sistema e desideri mantenerlo sincronizzato con la versione upstream, puoi utilizzare il seguente procedimento:
+
+```bash
+# Naviga nella directory di installazione
+cd /opt/evorouter
+
+# Assicurati che sia configurato come repository Git
+if [ ! -d ".git" ]; then
+    git init
+    git remote add origin https://github.com/dexter939/evorouter.git
+fi
+
+# Recupera gli ultimi aggiornamenti
+git fetch origin
+
+# Backup dei file di configurazione importanti
+mkdir -p /tmp/evorouter_config_backup
+cp -f .env /tmp/evorouter_config_backup/ 2>/dev/null || true
+cp -rf instance/ /tmp/evorouter_config_backup/ 2>/dev/null || true
+
+# Pull degli aggiornamenti (evitando conflitti sui file locali)
+git reset --hard origin/main
+
+# Ripristina i file di configurazione
+cp -f /tmp/evorouter_config_backup/.env . 2>/dev/null || true
+cp -rf /tmp/evorouter_config_backup/instance/ . 2>/dev/null || true
+rm -rf /tmp/evorouter_config_backup
+
+# Aggiorna le dipendenze Python
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Aggiorna il database
+python -c "from app import app, db; app.app_context().push(); db.create_all()"
+
+# Riavvia il servizio
+systemctl restart evorouter.service
+```
+
+### Aggiornamento e Sincronizzazione per Sviluppatori
+
+Se sei uno sviluppatore e hai apportato modifiche al codice, puoi utilizzare Git per mantenere le tue modifiche sincronizzate con il repository upstream:
+
+1. **Fork del repository** su GitHub (se non l'hai già fatto)
+2. **Clona il tuo fork** sul tuo computer di sviluppo:
+   ```bash
+   git clone https://github.com/TUO-USERNAME/evorouter.git
+   cd evorouter
+   ```
+3. **Aggiungi il repository upstream** come remote:
+   ```bash
+   git remote add upstream https://github.com/dexter939/evorouter.git
+   ```
+4. **Sincronizza** il tuo fork con il repository upstream:
+   ```bash
+   git fetch upstream
+   git checkout main
+   git merge upstream/main
+   ```
+5. **Risolvi eventuali conflitti** che possono verificarsi durante il merge
+6. **Invia gli aggiornamenti** al tuo fork:
+   ```bash
+   git push origin main
+   ```
+7. **Crea un bundle** per l'installazione:
+   ```bash
+   ./create_github_bundle.sh
+   ```
+8. **Trasferisci il bundle** sul dispositivo EvoRouter e segui la procedura di aggiornamento tramite archivio ZIP
 
 ### Verifica dell'Aggiornamento
 
