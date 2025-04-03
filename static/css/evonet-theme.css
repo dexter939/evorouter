@@ -1,309 +1,459 @@
-/* 
- * Evo-Net Theme CSS for BPI-R4 Router OS
- * Ispirato al design del sito evo-net.it
+/**
+ * EvoNet Theme Styles
+ * Custom stylesheet with EvoNet brand colors and theme elements
  */
 
-/* Override dei colori Bootstrap con la palette Evo-Net */
 :root {
-  --bs-primary: #009cde;
-  --bs-secondary: #1a365d;
-  --bs-primary-rgb: 0, 156, 222;
-  --bs-secondary-rgb: 26, 54, 93;
+    /* EvoNet Color Palette */
+    --evonet-primary: #1a365d;      /* Blu scuro primario */
+    --evonet-secondary: #009cde;    /* Azzurro secondario */
+    --evonet-accent: #ff5722;       /* Arancione per accento */
+    --evonet-light: #f8f9fa;        /* Grigio chiaro di sfondo */
+    --evonet-dark: #2c3e50;         /* Blu scuro per testo */
+    --evonet-success: #28a745;      /* Verde successo */
+    --evonet-warning: #ffc107;      /* Giallo avviso */
+    --evonet-danger: #dc3545;       /* Rosso pericolo */
+    --evonet-info: #17a2b8;         /* Azzurro info */
+    
+    /* Override Bootstrap variables */
+    --bs-primary: var(--evonet-primary);
+    --bs-secondary: var(--evonet-secondary);
+    --bs-success: var(--evonet-success);
+    --bs-info: var(--evonet-info);
+    --bs-warning: var(--evonet-warning);
+    --bs-danger: var(--evonet-danger);
+    --bs-light: var(--evonet-light);
+    --bs-dark: var(--evonet-dark);
+    
+    /* Custom variables */
+    --sidebar-width: 250px;
+    --navbar-height: 60px;
+    --sidebar-bg: var(--evonet-primary);
+    --content-bg: #f5f7fa;
 }
 
-/* Font family globale */
+/* Base styles */
 body {
-  font-family: 'Montserrat', sans-serif;
-  color: #333;
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--content-bg);
+    color: #495057;
 }
 
-/* Navbar principale */
-.navbar {
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.navbar-brand {
-  font-weight: 600;
-  color: var(--bs-secondary);
-}
-
-.navbar .nav-link {
-  color: var(--bs-secondary);
-  transition: all 0.2s;
-}
-
-.navbar .nav-link:hover {
-  color: var(--bs-primary);
-}
-
-.navbar .dropdown-item:active {
-  background-color: var(--bs-primary);
-}
-
-/* Sidebar */
-.sidebar {
-  background-color: var(--bs-secondary);
-}
-
-/* Bottoni con stile Evo-Net */
+/* Buttons */
 .btn-primary {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-  border-radius: var(--border-radius);
-  font-weight: 500;
-  transition: all 0.2s;
+    background-color: var(--evonet-primary);
+    border-color: var(--evonet-primary);
 }
 
-.btn-primary:hover, .btn-primary:focus {
-  background-color: var(--primary-dark);
-  border-color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 156, 222, 0.3);
-}
-
-.btn-outline-primary {
-  color: var(--bs-primary);
-  border-color: var(--bs-primary);
-  border-radius: var(--border-radius);
-  font-weight: 500;
-}
-
-.btn-outline-primary:hover {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 156, 222, 0.2);
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: #142d4c !important;
+    border-color: #142d4c !important;
 }
 
 .btn-secondary {
-  background-color: var(--bs-secondary);
-  border-color: var(--bs-secondary);
-  border-radius: var(--border-radius);
-  font-weight: 500;
+    background-color: var(--evonet-secondary);
+    border-color: var(--evonet-secondary);
 }
 
-.btn-secondary:hover, .btn-secondary:focus {
-  background-color: var(--secondary-light);
-  border-color: var(--secondary-light);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(26, 54, 93, 0.3);
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active {
+    background-color: #0089c1 !important;
+    border-color: #0089c1 !important;
 }
 
-/* Card con stile Evo-Net */
-.card {
-  border-radius: var(--border-radius);
-  border: none;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
+.btn-accent {
+    background-color: var(--evonet-accent);
+    border-color: var(--evonet-accent);
+    color: white;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+.btn-accent:hover, .btn-accent:focus, .btn-accent:active {
+    background-color: #e64a19;
+    border-color: #e64a19;
+    color: white;
 }
 
-.card-header {
-  background-color: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-  color: var(--bs-secondary);
-  padding: 1rem 1.5rem;
+/* Links */
+a {
+    color: var(--evonet-secondary);
+    text-decoration: none;
 }
 
-.card-header h5, .card-header .h5 {
-  margin-bottom: 0;
-  font-weight: 600;
+a:hover {
+    color: #0076a8;
 }
 
-.card-body {
-  padding: 1.5rem;
-}
-
-/* Badge personalizzati */
+/* Badge custom styles */
 .badge.bg-primary {
-  background-color: var(--bs-primary) !important;
+    background-color: var(--evonet-primary) !important;
 }
 
 .badge.bg-secondary {
-  background-color: var(--bs-secondary) !important;
+    background-color: var(--evonet-secondary) !important;
 }
 
-/* Alert personalizzati */
-.alert-primary {
-  color: #fff;
-  background-color: var(--bs-primary);
-  border-color: var(--primary-dark);
-}
-
-.alert-secondary {
-  color: #fff;
-  background-color: var(--bs-secondary);
-  border-color: var(--secondary-light);
-}
-
-/* Input e form */
-.form-control {
-  border-radius: var(--border-radius);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0.6rem 1rem;
-}
-
-.form-control:focus {
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 0.25rem rgba(0, 156, 222, 0.25);
-}
-
-.form-label {
-  font-weight: 500;
-  color: var(--bs-secondary);
-}
-
-/* Tabelle */
-.table {
-  border-radius: var(--border-radius);
-  overflow: hidden;
-}
-
-.table thead {
-  background-color: rgba(26, 54, 93, 0.05);
-}
-
-.table thead th {
-  font-weight: 600;
-  color: var(--bs-secondary);
-  border-bottom: 2px solid var(--bs-primary);
-}
-
-/* Override pagination */
-.pagination .page-link {
-  color: var(--bs-primary);
-}
-
-.pagination .page-item.active .page-link {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-}
-
-/* Icone e animazioni */
-.feather {
-  stroke-width: 2px;
-}
-
-/* Avatar styling */
+/* Avatar component */
 .avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  color: white;
-  overflow: hidden;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
 }
 
 .avatar-sm {
-  width: 32px;
-  height: 32px;
-  font-size: 14px;
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
 }
 
-/* Icon Backgrounds */
+.avatar-lg {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+}
+
+/* Navbar styles */
+.navbar {
+    background-color: white;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    height: var(--navbar-height);
+    padding: 0.5rem 1rem;
+    z-index: 1030;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    color: var(--evonet-primary);
+}
+
+.nav-link {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: var(--evonet-primary);
+}
+
+.nav-link.active {
+    color: var(--evonet-secondary);
+}
+
+/* Feather icon sizes */
+.feather-small {
+    width: 18px;
+    height: 18px;
+}
+
+.feather-medium {
+    width: 24px;
+    height: 24px;
+}
+
+.feather-large {
+    width: 32px;
+    height: 32px;
+}
+
+/* Sidebar styles */
+#sidebar {
+    background-color: var(--sidebar-bg);
+    position: fixed;
+    width: var(--sidebar-width);
+    height: 100vh;
+    left: 0;
+    top: 0;
+    padding-top: calc(var(--navbar-height) + 1.5rem);
+    z-index: 1020;
+    transition: all 0.3s;
+    overflow-y: auto;
+}
+
+#sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    border-radius: 0.25rem;
+    margin: 0.125rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+#sidebar .nav-link svg {
+    margin-right: 0.75rem;
+    width: 18px;
+    height: 18px;
+}
+
+#sidebar .nav-link:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#sidebar .nav-link.active {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#sidebar .dropdown-menu {
+    background-color: #152d4e;
+    border: none;
+    padding: 0.5rem 0;
+    margin-left: 2.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+#sidebar .dropdown-menu .dropdown-item {
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.5rem 1rem;
+}
+
+#sidebar .dropdown-menu .dropdown-item:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main content styles */
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding-top: calc(var(--navbar-height) + 1.5rem);
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+/* Card custom styles */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 1rem 1.25rem;
+}
+
+.card-header h5, .card-header h6 {
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Stats cards */
+.stat-card {
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+    background-color: white;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card .icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--evonet-primary);
+}
+
+.stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    
+    #sidebar.show {
+        margin-left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .main-content.sidebar-active {
+        margin-left: 250px;
+    }
+}
+
+/* Login page styles */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, var(--evonet-primary) 0%, var(--evonet-secondary) 100%);
+}
+
+.login-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 2rem;
+}
+
+.login-logo h1 {
+    color: var(--evonet-primary);
+}
+
+/* Utility classes */
 .icon-bg {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Hover utilities */
 .hover-bg-light:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s;
+    background-color: var(--evonet-light);
 }
 
-/* Dashboard cards */
-.dashboard-stat-card {
-  text-align: center;
-  padding: 1.5rem;
+/* Progress bar */
+.progress {
+    height: 0.5rem;
+    border-radius: 1rem;
 }
 
-.dashboard-stat-card .stat-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: var(--bs-primary);
+.progress-sm {
+    height: 0.25rem;
 }
 
-.dashboard-stat-card .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--bs-secondary);
-  margin-bottom: 0.5rem;
+.progress-lg {
+    height: 1rem;
 }
 
-.dashboard-stat-card .stat-label {
-  font-size: 0.9rem;
-  color: #666;
+/* Status indicators */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
 }
 
-/* Wizard personalizzato */
-.wizard-nav {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  position: relative;
+.status-online {
+    background-color: var(--evonet-success);
 }
 
-.wizard-nav::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #e9ecef;
-  z-index: 0;
+.status-offline {
+    background-color: var(--evonet-danger);
 }
 
-.wizard-step-indicator {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background-color: white;
-  border: 2px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  position: relative;
-  z-index: 1;
+.status-warning {
+    background-color: var(--evonet-warning);
 }
 
-.wizard-step-indicator.active {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: white;
+/* Tooltip custom styling */
+.tooltip {
+    font-family: 'Montserrat', sans-serif;
 }
 
-.wizard-step-indicator.completed {
-  background-color: var(--bs-success);
-  border-color: var(--bs-success);
-  color: white;
+.tooltip-inner {
+    background-color: var(--evonet-primary);
 }
 
-/* Footer */
-.footer {
-  background-color: var(--bs-secondary);
-  color: white;
-  padding: 2rem 0;
-  margin-top: 3rem;
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--evonet-primary);
 }
 
-.footer a {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: var(--evonet-primary);
 }
 
-.footer a:hover {
-  color: white;
+.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: var(--evonet-primary);
+}
+
+.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: var(--evonet-primary);
+}
+
+/* Custom form styling */
+.form-control:focus {
+    border-color: var(--evonet-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(0, 156, 222, 0.25);
+}
+
+.input-group-text {
+    color: #6c757d;
+}
+
+/* Speed Test Page */
+.speed-test-container {
+    text-align: center;
+    padding: 2rem;
+}
+
+.speed-meter {
+    position: relative;
+    margin: 2rem auto;
+    width: 200px;
+    height: 200px;
+}
+
+.speed-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.speed-unit {
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.speedtest-result {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1rem 0;
+}
+
+.speedtest-details {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+
+.speedtest-detail {
+    text-align: center;
+}
+
+.speedtest-detail-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.speedtest-detail-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.speedtest-history-chart {
+    height: 300px;
+    margin-top: 2rem;
 }
