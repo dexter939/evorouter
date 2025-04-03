@@ -1,0 +1,308 @@
+{% extends "layout.html" %}
+
+{% block title %}Seleziona Test da Confrontare{% endblock %}
+
+{% block styles %}
+<style>
+    .test-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .test-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .test-card.selected {
+        border: 2px solid #28a745;
+        box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+    }
+    
+    .test-card .card-body {
+        position: relative;
+        padding-left: 40px;
+    }
+    
+    .test-check {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    
+    .compare-container {
+        position: sticky;
+        bottom: 20px;
+        z-index: 1000;
+        text-align: center;
+        padding: 15px;
+        background-color: rgba(248, 249, 250, 0.9);
+        border-radius: 10px;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        backdrop-filter: blur(5px);
+        display: none;
+    }
+    
+    .filter-container {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-exchange-alt me-2"></i> Seleziona Test da Confrontare
+        </h1>
+        <div>
+            <a href="{{ url_for('speed_test.history') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-history me-2"></i> Cronologia
+            </a>
+            <a href="{{ url_for('speed_test.index') }}" class="btn btn-outline-primary">
+                <i class="fas fa-tachometer-alt me-2"></i> Nuovo Test
+            </a>
+        </div>
+    </div>
+    
+    <div class="filter-container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchFilter" class="form-control" placeholder="Cerca...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select id="sortFilter" class="form-select">
+                    <option value="date-desc">Data (più recenti)</option>
+                    <option value="date-asc">Data (più vecchi)</option>
+                    <option value="download-desc">Download (più alto)</option>
+                    <option value="download-asc">Download (più basso)</option>
+                    <option value="upload-desc">Upload (più alto)</option>
+                    <option value="upload-asc">Upload (più basso)</option>
+                    <option value="ping-asc">Ping (più basso)</option>
+                    <option value="ping-desc">Ping (più alto)</option>
+                </select>
+            </div>
+            <div class="col-md-4 text-end">
+                <button id="clearSelectionBtn" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i> Cancella selezione
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    {% if tests %}
+        <form action="{{ url_for('speed_test.compare_tests') }}" method="post">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3" id="testsList">
+                {% for test in tests %}
+                    <div class="col mb-4 test-item" 
+                         data-timestamp="{{ test.timestamp }}"
+                         data-download="{{ test.speed_test.download if test.speed_test and test.speed_test.success else 0 }}"
+                         data-upload="{{ test.speed_test.upload if test.speed_test and test.speed_test.success else 0 }}"
+                         data-ping="{{ test.speed_test.ping if test.speed_test and test.speed_test.success else 0 }}">
+                        <div class="card test-card h-100">
+                            <div class="card-body">
+                                <input type="checkbox" name="test_ids" value="{{ test.id }}" class="form-check-input test-check" id="check-{{ test.id }}">
+                                
+                                <h5 class="card-title">
+                                    Test del {{ test.timestamp|replace('T', ' ')|replace('Z', '')|truncate(16, True, '') }}
+                                </h5>
+                                
+                                {% if test.speed_test and test.speed_test.success %}
+                                    <div class="mt-3">
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-download me-1"></i> {{ "%.1f"|format(test.speed_test.download) }} Mbps
+                                        </span>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-upload me-1"></i> {{ "%.1f"|format(test.speed_test.upload) }} Mbps
+                                        </span>
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-tachometer-alt me-1"></i> {{ "%.0f"|format(test.speed_test.ping) }} ms
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <p class="mb-0">
+                                            <strong>Server:</strong> {{ test.speed_test.server.name if test.speed_test.server and test.speed_test.server.name else "N/A" }}
+                                        </p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning" role="alert">
+                                        Test di velocità non completato o fallito.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div id="compareContainer" class="compare-container mt-4">
+                <span id="selectedCount" class="me-3">0 test selezionati</span>
+                <button type="submit" class="btn btn-primary" id="compareBtn" disabled>
+                    <i class="fas fa-chart-line me-1"></i> Confronta
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history fa-4x mb-3 text-muted"></i>
+            <h4>Nessun test disponibile</h4>
+            <p class="text-muted">Non è stato ancora eseguito alcun test di velocità.</p>
+            <a href="{{ url_for('speed_test.index') }}" class="btn btn-primary mt-3">
+                <i class="fas fa-tachometer-alt me-2"></i> Esegui Test
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const testCards = document.querySelectorAll('.test-card');
+    const compareBtn = document.getElementById('compareBtn');
+    const compareContainer = document.getElementById('compareContainer');
+    const selectedCount = document.getElementById('selectedCount');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    
+    // Filtro e ordinamento
+    const searchFilter = document.getElementById('searchFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const testsList = document.getElementById('testsList');
+    const testItems = Array.from(document.querySelectorAll('.test-item'));
+    
+    // Aggiorna il contatore e il bottone
+    function updateSelectedCount() {
+        const selected = document.querySelectorAll('.test-check:checked').length;
+        selectedCount.textContent = `${selected} test selezionati`;
+        
+        if (selected >= 2) {
+            compareBtn.disabled = false;
+            compareContainer.style.display = 'block';
+        } else {
+            compareBtn.disabled = true;
+            if (selected === 0) {
+                compareContainer.style.display = 'none';
+            } else {
+                compareContainer.style.display = 'block';
+            }
+        }
+    }
+    
+    // Aggiungi evento click alle card per selezionare il test
+    testCards.forEach(function(card) {
+        card.addEventListener('click', function(e) {
+            // Non triggera il click se si è cliccato direttamente sulla checkbox
+            if (e.target.type !== 'checkbox') {
+                const checkbox = this.querySelector('.test-check');
+                checkbox.checked = !checkbox.checked;
+                
+                if (checkbox.checked) {
+                    this.classList.add('selected');
+                } else {
+                    this.classList.remove('selected');
+                }
+                
+                updateSelectedCount();
+            }
+        });
+    });
+    
+    // Gestisci click sulla checkbox
+    document.querySelectorAll('.test-check').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.test-card');
+            
+            if (this.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            
+            updateSelectedCount();
+        });
+    });
+    
+    // Cancella selezione
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', function() {
+            document.querySelectorAll('.test-check').forEach(function(checkbox) {
+                checkbox.checked = false;
+                checkbox.closest('.test-card').classList.remove('selected');
+            });
+            
+            updateSelectedCount();
+        });
+    }
+    
+    // Implementazione filtro di ricerca
+    if (searchFilter) {
+        searchFilter.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
+            
+            testItems.forEach(function(item) {
+                const cardText = item.textContent.toLowerCase();
+                
+                if (cardText.includes(searchText)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Implementazione ordinamento
+    if (sortFilter && testsList) {
+        sortFilter.addEventListener('change', function() {
+            const sortValue = this.value;
+            const [sortKey, sortDir] = sortValue.split('-');
+            
+            const sortedItems = testItems.slice().sort(function(a, b) {
+                let aValue, bValue;
+                
+                if (sortKey === 'date') {
+                    aValue = new Date(a.getAttribute('data-timestamp'));
+                    bValue = new Date(b.getAttribute('data-timestamp'));
+                } else {
+                    aValue = parseFloat(a.getAttribute(`data-${sortKey}`));
+                    bValue = parseFloat(b.getAttribute(`data-${sortKey}`));
+                }
+                
+                if (sortDir === 'asc') {
+                    return aValue - bValue;
+                } else {
+                    return bValue - aValue;
+                }
+            });
+            
+            // Riordina elementi
+            sortedItems.forEach(function(item) {
+                testsList.appendChild(item);
+            });
+        });
+    }
+    
+    // Inizializza il contatore
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

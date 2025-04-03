@@ -395,6 +395,52 @@ class VpnClient(db.Model):
     def __repr__(self):
         return f'<VpnClient {self.name}>'
 
+
+class SpeedTest(db.Model):
+    """Speed Test Result"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    test_id = db.Column(db.String(64), nullable=False, unique=True)
+    
+    # Test metadata
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    source_ip = db.Column(db.String(45))  # IPv4 or IPv6
+    
+    # Test configuration
+    test_server = db.Column(db.String(255))
+    test_server_location = db.Column(db.String(255))
+    
+    # Test results
+    download_speed = db.Column(db.Float)  # Mbps
+    upload_speed = db.Column(db.Float)    # Mbps
+    ping = db.Column(db.Float)            # ms
+    jitter = db.Column(db.Float)          # ms
+    packet_loss = db.Column(db.Float)     # percentage (0-100)
+    
+    # Raw test data (stored as JSON)
+    result_data = db.Column(db.Text)  # JSON string
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('speed_tests', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<SpeedTest {self.test_id} {self.timestamp}>'
+    
+    def serialize(self):
+        """Return object data in serializable format"""
+        return {
+            'id': self.id,
+            'test_id': self.test_id,
+            'timestamp': self.timestamp.isoformat(),
+            'download_speed': self.download_speed,
+            'upload_speed': self.upload_speed,
+            'ping': self.ping,
+            'jitter': self.jitter,
+            'packet_loss': self.packet_loss,
+            'test_server': self.test_server,
+            'test_server_location': self.test_server_location
+        }
+
 # Modelli per il firewall
 class FirewallZone(db.Model):
     """Zona di firewall (ad es. WAN, LAN, DMZ)"""

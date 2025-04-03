@@ -1,0 +1,1048 @@
+{% extends "layout.html" %}
+
+{% block title %}Test di Velocità della Rete{% endblock %}
+
+{% block styles %}
+<style>
+    .speed-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .speed-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .progress-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+    
+    .progress-label {
+        position: absolute;
+        top: -25px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .progress-value {
+        position: absolute;
+        top: 6px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 12px;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    
+    .gauge-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+    
+    .gauge-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 250px;
+        margin-bottom: 20px;
+    }
+    
+    .test-result-container {
+        display: none;
+        margin-top: 30px;
+    }
+    
+    .quick-stats {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #666;
+    }
+    
+    #testBtn {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    #testBtn:hover {
+        transform: scale(1.05);
+    }
+    
+    #testBtn:active {
+        transform: scale(0.95);
+    }
+    
+    #testBtn .spinner-border {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -8px;
+        margin-left: -8px;
+    }
+    
+    #testBtn.loading {
+        color: transparent !important;
+    }
+    
+    #testBtn.loading .spinner-border {
+        display: inline-block;
+    }
+    
+    .result-tabs .nav-link {
+        border-radius: 10px 10px 0 0;
+        padding: 10px 20px;
+        font-weight: 500;
+    }
+    
+    .result-tabs .nav-link.active {
+        background-color: #f8f9fa;
+        border-bottom-color: transparent;
+    }
+    
+    .history-link {
+        font-size: 14px;
+        text-decoration: none;
+    }
+    
+    .download-btn {
+        padding: 6px 12px;
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i> Test di Velocità della Rete
+        </h1>
+        <a href="{{ url_for('speed_test.history') }}" class="history-link">
+            <i class="fas fa-history me-1"></i> Cronologia Test
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Avvia un nuovo test di velocità</h5>
+                    <p class="card-text text-muted">Il test misurerà la velocità di download e upload, la latenza e il jitter della tua connessione.</p>
+                    
+                    <div class="text-center mb-4">
+                        <button id="testBtn" class="btn btn-primary btn-lg px-5 py-3">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Avvia Test di Velocità
+                        </button>
+                    </div>
+                    
+                    <div id="testProgress" class="progress-container" style="display: none;">
+                        <div class="progress-label" id="progressLabel">Avvio del test...</div>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-value" id="progressValue">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Risultati del test -->
+            <div id="testResultContainer" class="test-result-container">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <ul class="nav nav-tabs card-header-tabs result-tabs" id="resultTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">Riepilogo</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="false">Dettagli</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="graph-tab" data-bs-toggle="tab" data-bs-target="#graph" type="button" role="tab" aria-controls="graph" aria-selected="false">Grafici</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="resultTabsContent">
+                            <!-- Riepilogo -->
+                            <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-6 border-end">
+                                                        <div class="quick-stats">
+                                                            <span class="stat-value" id="downloadSpeed">-</span>
+                                                            <span class="stat-label">Download (Mbps)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="quick-stats">
+                                                            <span class="stat-value" id="uploadSpeed">-</span>
+                                                            <span class="stat-label">Upload (Mbps)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-6 border-end">
+                                                        <div class="quick-stats">
+                                                            <span class="stat-value" id="pingValue">-</span>
+                                                            <span class="stat-label">Ping (ms)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="quick-stats">
+                                                            <span class="stat-value" id="jitterValue">-</span>
+                                                            <span class="stat-label">Jitter (ms)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="gauge-container">
+                                            <canvas id="downloadGauge"></canvas>
+                                            <div class="gauge-label">Download</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="gauge-container">
+                                            <canvas id="uploadGauge"></canvas>
+                                            <div class="gauge-label">Upload</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-4" id="testSummary">
+                                    <div class="d-flex align-items-center">
+                                        <div>
+                                            <h5 class="alert-heading">Riepilogo del test</h5>
+                                            <p class="mb-0" id="testSummaryText">Test completato con successo.</p>
+                                            <p class="mb-0 mt-2" id="testTimestamp">Data: -</p>
+                                        </div>
+                                        <div class="ms-auto">
+                                            <button class="btn btn-sm btn-outline-primary download-btn" id="downloadResultBtn">
+                                                <i class="fas fa-download"></i> Scarica
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Dettagli -->
+                            <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h5 class="card-title mb-0">Dettagli connessione</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row">IP Cliente</th>
+                                                            <td id="clientIp">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">ISP</th>
+                                                            <td id="clientIsp">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Server</th>
+                                                            <td id="serverName">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Posizione Server</th>
+                                                            <td id="serverLocation">-</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h5 class="card-title mb-0">Metriche avanzate</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row">Ping Minimo</th>
+                                                            <td id="pingMin">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Ping Massimo</th>
+                                                            <td id="pingMax">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Packet Loss</th>
+                                                            <td id="packetLoss">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Jitter</th>
+                                                            <td id="jitterDetail">-</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Informazioni sulle interfacce -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Interfacce di rete</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="networkInterfaces">
+                                            <p class="text-muted">Nessuna informazione disponibile sulle interfacce.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Grafici -->
+                            <div class="tab-pane fade" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                                <div class="chart-container">
+                                    <canvas id="speedChart"></canvas>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas id="latencyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test recenti -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Test Recenti</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_tests %}
+                        <div class="list-group">
+                            {% for test in recent_tests %}
+                                <a href="#" class="list-group-item list-group-item-action load-test" data-test-id="{{ test.id }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Test #{{ loop.index }}</h6>
+                                        <small>{{ test.timestamp|replace('T', ' ')|replace('Z', '')|truncate(16, True, '') }}</small>
+                                    </div>
+                                    {% if test.speed_test and test.speed_test.success %}
+                                        <p class="mb-1">
+                                            <span class="badge bg-primary">↓ {{ "%.1f"|format(test.speed_test.download) }} Mbps</span>
+                                            <span class="badge bg-success">↑ {{ "%.1f"|format(test.speed_test.upload) }} Mbps</span>
+                                            <span class="badge bg-secondary">{{ "%.0f"|format(test.speed_test.ping) }} ms</span>
+                                        </p>
+                                    {% else %}
+                                        <p class="mb-1 text-muted">Dati velocità non disponibili</p>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('speed_test.history') }}" class="btn btn-sm btn-outline-primary">
+                                Visualizza tutti i test
+                            </a>
+                            
+                            <a href="{{ url_for('speed_test.compare_tests') }}" class="btn btn-sm btn-outline-secondary ms-2">
+                                Confronta test
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">
+                            <i class="fas fa-history fa-3x mb-3"></i><br>
+                            Nessun test recente disponibile.<br>
+                            Esegui un nuovo test per visualizzarne i risultati.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Stato connessione -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Stato Connessione</h5>
+                </div>
+                <div class="card-body">
+                    <div id="quickTestLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                        <p class="text-muted mt-2">Verifica dello stato della connessione...</p>
+                    </div>
+                    
+                    <div id="quickTestResults" style="display: none;">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <span id="connectivityIcon" class="me-2">
+                                    <i class="fas fa-globe fa-2x"></i>
+                                </span>
+                                <div>
+                                    <h6 class="mb-0" id="connectivityStatus">Stato connessione</h6>
+                                    <p class="text-muted mb-0 small" id="connectivityDetails">Dettagli connessione</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <span id="pingIcon" class="me-2">
+                                    <i class="fas fa-tachometer-alt fa-2x"></i>
+                                </span>
+                                <div>
+                                    <h6 class="mb-0" id="pingStatus">Stato ping</h6>
+                                    <p class="text-muted mb-0 small" id="pingDetails">Dettagli ping</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button id="refreshQuickTest" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-sync-alt me-1"></i> Aggiorna
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentTestId = null;
+    let downloadGauge = null;
+    let uploadGauge = null;
+    let speedChart = null;
+    let latencyChart = null;
+    
+    // Inizializza controlli
+    const testBtn = document.getElementById('testBtn');
+    const progressContainer = document.getElementById('testProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressValue = document.getElementById('progressValue');
+    const testResultContainer = document.getElementById('testResultContainer');
+    const downloadResultBtn = document.getElementById('downloadResultBtn');
+    
+    // Esegui un quick test all'avvio
+    runQuickTest();
+    
+    // Inizializza grafici
+    function initGauges() {
+        // Download gauge
+        if (downloadGauge) downloadGauge.destroy();
+        downloadGauge = new Chart(document.getElementById('downloadGauge').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [0, 100],
+                    backgroundColor: ['#009cde', '#eaeaea'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '70%',
+                rotation: -90,
+                circumference: 180,
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: false
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: false
+                    },
+                    legend: {
+                        display: false
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            return null;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Upload gauge
+        if (uploadGauge) uploadGauge.destroy();
+        uploadGauge = new Chart(document.getElementById('uploadGauge').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [0, 100],
+                    backgroundColor: ['#1a365d', '#eaeaea'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '70%',
+                rotation: -90,
+                circumference: 180,
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: false
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: false
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    function initCharts() {
+        // Speed chart
+        if (speedChart) speedChart.destroy();
+        speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Download', 'Upload'],
+                datasets: [{
+                    label: 'Velocità (Mbps)',
+                    data: [0, 0],
+                    backgroundColor: ['#009cde', '#1a365d'],
+                    borderColor: ['rgba(0, 156, 222, 0.8)', 'rgba(26, 54, 93, 0.8)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Velocità di Connessione'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Mbps'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Latency chart
+        if (latencyChart) latencyChart.destroy();
+        latencyChart = new Chart(document.getElementById('latencyChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Ping', 'Jitter'],
+                datasets: [{
+                    label: 'Latenza (ms)',
+                    data: [0, 0],
+                    backgroundColor: ['rgba(255, 159, 64, 0.7)', 'rgba(153, 102, 255, 0.7)'],
+                    borderColor: ['rgb(255, 159, 64)', 'rgb(153, 102, 255)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Latenza e Jitter'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'ms'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Evento click sul pulsante di test
+    testBtn.addEventListener('click', function() {
+        // Resetta UI e avvia un nuovo test
+        resetUI();
+        startTest();
+    });
+    
+    // Evento click sul pulsante di download
+    downloadResultBtn.addEventListener('click', function() {
+        if (currentTestId) {
+            downloadTestResults(currentTestId);
+        }
+    });
+    
+    // Evento click su refresh quick test
+    document.getElementById('refreshQuickTest').addEventListener('click', function() {
+        document.getElementById('quickTestResults').style.display = 'none';
+        document.getElementById('quickTestLoading').style.display = 'block';
+        runQuickTest();
+    });
+    
+    // Evento click su test recenti
+    document.querySelectorAll('.load-test').forEach(function(element) {
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
+            const testId = this.getAttribute('data-test-id');
+            loadTestResults(testId);
+        });
+    });
+    
+    // Funzione per avviare un nuovo test
+    function startTest() {
+        testBtn.classList.add('loading');
+        progressContainer.style.display = 'block';
+        
+        // Reset progress
+        progressBar.style.width = '0%';
+        progressValue.textContent = '0%';
+        progressLabel.textContent = 'Inizializzazione test...';
+        
+        // Chiamata AJAX per avviare il test
+        fetch('{{ url_for("speed_test.run_test") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            currentTestId = data.test_id;
+            // Inizia a controllare lo stato
+            checkTestStatus();
+        })
+        .catch(error => {
+            console.error('Errore durante l\'avvio del test:', error);
+            testBtn.classList.remove('loading');
+            progressLabel.textContent = 'Errore durante l\'avvio del test';
+            progressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+            progressBar.classList.add('bg-danger');
+        });
+    }
+    
+    // Funzione per controllare lo stato del test
+    function checkTestStatus() {
+        if (!currentTestId) return;
+        
+        fetch(`{{ url_for("speed_test.test_status", test_id="") }}${currentTestId}`)
+        .then(response => response.json())
+        .then(data => {
+            updateProgressUI(data);
+            
+            // Controlla se il test è ancora in corso
+            if (data.status === 'running') {
+                // Continua a controllare lo stato dopo un breve intervallo
+                setTimeout(checkTestStatus, 1000);
+            } else if (data.status === 'completed') {
+                // Test completato con successo
+                testBtn.classList.remove('loading');
+                progressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                progressBar.classList.add('bg-success');
+                
+                // Mostra risultati
+                if (data.result) {
+                    displayTestResults(data.result);
+                }
+            } else if (data.status === 'error') {
+                // Test fallito
+                testBtn.classList.remove('loading');
+                progressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                progressBar.classList.add('bg-danger');
+                
+                // Mostra errore
+                progressLabel.textContent = `Errore: ${data.status_message || 'Si è verificato un errore durante il test'}`;
+            }
+        })
+        .catch(error => {
+            console.error('Errore durante il controllo dello stato:', error);
+            progressLabel.textContent = 'Errore di comunicazione';
+            testBtn.classList.remove('loading');
+            
+            // Riprova dopo un breve intervallo
+            setTimeout(checkTestStatus, 2000);
+        });
+    }
+    
+    // Aggiorna UI del progress
+    function updateProgressUI(data) {
+        progressBar.style.width = `${data.progress}%`;
+        progressValue.textContent = `${data.progress}%`;
+        progressLabel.textContent = data.status_message || 'Test in corso...';
+    }
+    
+    // Funzione per visualizzare i risultati del test
+    function displayTestResults(result) {
+        // Inizializza grafici se non esistono
+        if (!downloadGauge || !uploadGauge) initGauges();
+        if (!speedChart || !latencyChart) initCharts();
+        
+        // Mostra il container dei risultati
+        testResultContainer.style.display = 'block';
+        
+        // Popola i valori di base
+        let downloadSpeed = 0;
+        let uploadSpeed = 0;
+        let pingValue = 0;
+        let jitterValue = 0;
+        
+        // Estrai i dati dal risultato
+        if (result.speed_test && result.speed_test.success) {
+            downloadSpeed = parseFloat(result.speed_test.download).toFixed(1);
+            uploadSpeed = parseFloat(result.speed_test.upload).toFixed(1);
+            pingValue = Math.round(result.speed_test.ping);
+            
+            // Info client/server
+            document.getElementById('clientIp').textContent = result.speed_test.client.ip || '-';
+            document.getElementById('clientIsp').textContent = result.speed_test.client.isp || '-';
+            document.getElementById('serverName').textContent = result.speed_test.server.name || '-';
+            document.getElementById('serverLocation').textContent = result.speed_test.server.location || '-';
+        }
+        
+        if (result.jitter && result.jitter.success) {
+            jitterValue = parseFloat(result.jitter.jitter).toFixed(1);
+        }
+        
+        // Aggiorna i valori nei campi
+        document.getElementById('downloadSpeed').textContent = downloadSpeed;
+        document.getElementById('uploadSpeed').textContent = uploadSpeed;
+        document.getElementById('pingValue').textContent = pingValue;
+        document.getElementById('jitterValue').textContent = jitterValue;
+        
+        // Aggiorna i dettagli
+        if (result.ping_google && result.ping_google.success) {
+            document.getElementById('pingMin').textContent = `${result.ping_google.min.toFixed(1)} ms`;
+            document.getElementById('pingMax').textContent = `${result.ping_google.max.toFixed(1)} ms`;
+            document.getElementById('packetLoss').textContent = `${result.ping_google.packet_loss}%`;
+        }
+        
+        document.getElementById('jitterDetail').textContent = `${jitterValue} ms`;
+        
+        // Imposta timestamp
+        const timestamp = new Date(result.timestamp).toLocaleString();
+        document.getElementById('testTimestamp').textContent = `Data: ${timestamp}`;
+        
+        // Aggiorna grafici
+        updateGauges(downloadSpeed, uploadSpeed);
+        updateCharts(downloadSpeed, uploadSpeed, pingValue, jitterValue);
+        
+        // Aggiorna interfacce di rete
+        updateNetworkInterfaces(result.interfaces);
+        
+        // Aggiorna riepilogo
+        let summaryText = 'Test completato con successo.';
+        if (downloadSpeed > 0 && uploadSpeed > 0) {
+            // Valutazione qualità
+            let qualityDesc = '';
+            const avgSpeed = (parseFloat(downloadSpeed) + parseFloat(uploadSpeed)) / 2;
+            
+            if (avgSpeed >= 100) {
+                qualityDesc = 'eccellente';
+            } else if (avgSpeed >= 50) {
+                qualityDesc = 'ottima';
+            } else if (avgSpeed >= 25) {
+                qualityDesc = 'buona';
+            } else if (avgSpeed >= 10) {
+                qualityDesc = 'sufficiente';
+            } else {
+                qualityDesc = 'limitata';
+            }
+            
+            summaryText = `La tua connessione ha una velocità ${qualityDesc} con ${downloadSpeed} Mbps in download e ${uploadSpeed} Mbps in upload.`;
+        }
+        document.getElementById('testSummaryText').textContent = summaryText;
+    }
+    
+    // Aggiorna gauge charts
+    function updateGauges(downloadSpeed, uploadSpeed) {
+        // Limita i valori per la visualizzazione
+        const maxScale = 200;  // Massimo valore per la scala
+        
+        // Calcula la percentuale rispetto al massimo, ma non oltre il 100%
+        const downloadPercent = Math.min(100, (downloadSpeed / maxScale) * 100);
+        const uploadPercent = Math.min(100, (uploadSpeed / maxScale) * 100);
+        
+        // Aggiorna i gauge
+        downloadGauge.data.datasets[0].data = [downloadPercent, 100 - downloadPercent];
+        uploadGauge.data.datasets[0].data = [uploadPercent, 100 - uploadPercent];
+        
+        downloadGauge.update();
+        uploadGauge.update();
+    }
+    
+    // Aggiorna i grafici a barre
+    function updateCharts(downloadSpeed, uploadSpeed, pingValue, jitterValue) {
+        // Aggiorna grafico velocità
+        speedChart.data.datasets[0].data = [downloadSpeed, uploadSpeed];
+        speedChart.update();
+        
+        // Aggiorna grafico latenza
+        latencyChart.data.datasets[0].data = [pingValue, jitterValue];
+        latencyChart.update();
+    }
+    
+    // Aggiorna interfacce di rete
+    function updateNetworkInterfaces(interfaces) {
+        const container = document.getElementById('networkInterfaces');
+        
+        if (!interfaces || interfaces.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nessuna informazione disponibile sulle interfacce.</p>';
+            return;
+        }
+        
+        let html = '<div class="accordion" id="interfacesAccordion">';
+        
+        interfaces.forEach((iface, index) => {
+            const ifaceId = `interface-${index}`;
+            const headingId = `heading-${index}`;
+            const collapseId = `collapse-${index}`;
+            
+            html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="${headingId}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                        <strong>${iface.name}</strong>
+                        ${iface.addresses && iface.addresses.length > 0 ? 
+                            `<span class="ms-2 text-muted small">
+                                ${iface.addresses.filter(a => a.type === 'ipv4').map(a => a.address).join(', ')}
+                            </span>` : ''
+                        }
+                    </button>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${headingId}" data-bs-parent="#interfacesAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Indirizzi</h6>
+                                <ul class="list-unstyled">
+                                    ${iface.addresses && iface.addresses.map(addr => {
+                                        return `<li><strong>${addr.type.toUpperCase()}:</strong> ${addr.address}${addr.netmask ? ` (${addr.netmask})` : ''}</li>`;
+                                    }).join('') || '<li>Nessun indirizzo disponibile</li>'}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Statistiche</h6>
+                                <ul class="list-unstyled">
+                                    ${iface.stats ? `
+                                        <li><strong>Dati inviati:</strong> ${formatBytes(iface.stats.bytes_sent)}</li>
+                                        <li><strong>Dati ricevuti:</strong> ${formatBytes(iface.stats.bytes_recv)}</li>
+                                        <li><strong>Pacchetti inviati:</strong> ${iface.stats.packets_sent}</li>
+                                        <li><strong>Pacchetti ricevuti:</strong> ${iface.stats.packets_recv}</li>
+                                        <li><strong>Errori in ingresso:</strong> ${iface.stats.errin}</li>
+                                        <li><strong>Errori in uscita:</strong> ${iface.stats.errout}</li>
+                                    ` : '<li>Nessuna statistica disponibile</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    
+    // Formatta bytes in forma leggibile (KB, MB, GB)
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+    
+    // Funzione per caricare i risultati di un test passato
+    function loadTestResults(testId) {
+        fetch(`{{ url_for("speed_test.download_results", test_id="") }}${testId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Imposta test ID corrente
+            currentTestId = testId;
+            
+            // Visualizza i risultati
+            displayTestResults(data);
+            
+            // Scroll alla sezione risultati
+            testResultContainer.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Errore durante il caricamento dei risultati:', error);
+            alert('Errore durante il caricamento dei risultati del test.');
+        });
+    }
+    
+    // Funzione per download dei risultati di un test
+    function downloadTestResults(testId) {
+        fetch(`{{ url_for("speed_test.download_results", test_id="") }}${testId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Crea blob e link per il download
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `speed_test_${testId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Errore durante il download dei risultati:', error);
+            alert('Errore durante il download dei risultati del test.');
+        });
+    }
+    
+    // Funzione per eseguire un quick test
+    function runQuickTest() {
+        fetch('{{ url_for("speed_test.quick_test") }}')
+        .then(response => response.json())
+        .then(data => {
+            // Mostra risultati
+            document.getElementById('quickTestLoading').style.display = 'none';
+            document.getElementById('quickTestResults').style.display = 'block';
+            
+            // Connettività
+            const connectivityIcon = document.getElementById('connectivityIcon');
+            const connectivityStatus = document.getElementById('connectivityStatus');
+            const connectivityDetails = document.getElementById('connectivityDetails');
+            
+            if (data.connectivity.connectivity) {
+                connectivityIcon.innerHTML = '<i class="fas fa-globe fa-2x text-success"></i>';
+                connectivityStatus.textContent = 'Internet connesso';
+                connectivityDetails.textContent = 'La connessione a Internet è attiva';
+            } else {
+                connectivityIcon.innerHTML = '<i class="fas fa-globe fa-2x text-danger"></i>';
+                connectivityStatus.textContent = 'Internet non disponibile';
+                connectivityDetails.textContent = 'Nessuna connessione a Internet rilevata';
+            }
+            
+            // Ping
+            const pingIcon = document.getElementById('pingIcon');
+            const pingStatus = document.getElementById('pingStatus');
+            const pingDetails = document.getElementById('pingDetails');
+            
+            if (data.ping.success) {
+                const pingAvg = data.ping.avg;
+                let pingClass = 'text-success';
+                let pingText = 'Ottimo';
+                
+                if (pingAvg > 100) {
+                    pingClass = 'text-danger';
+                    pingText = 'Scarso';
+                } else if (pingAvg > 50) {
+                    pingClass = 'text-warning';
+                    pingText = 'Medio';
+                }
+                
+                pingIcon.innerHTML = `<i class="fas fa-tachometer-alt fa-2x ${pingClass}"></i>`;
+                pingStatus.textContent = `Ping ${pingText}`;
+                pingDetails.textContent = `${pingAvg.toFixed(1)} ms (packet loss: ${data.ping.packet_loss}%)`;
+            } else {
+                pingIcon.innerHTML = '<i class="fas fa-tachometer-alt fa-2x text-muted"></i>';
+                pingStatus.textContent = 'Ping non disponibile';
+                pingDetails.textContent = data.ping.error || 'Impossibile misurare la latenza';
+            }
+        })
+        .catch(error => {
+            console.error('Errore durante il quick test:', error);
+            document.getElementById('quickTestLoading').style.display = 'none';
+            document.getElementById('quickTestResults').style.display = 'block';
+            document.getElementById('connectivityIcon').innerHTML = '<i class="fas fa-exclamation-triangle fa-2x text-warning"></i>';
+            document.getElementById('connectivityStatus').textContent = 'Errore test';
+            document.getElementById('connectivityDetails').textContent = 'Impossibile eseguire il test rapido';
+        });
+    }
+    
+    // Funzione per reset UI
+    function resetUI() {
+        // Reset progress UI
+        progressBar.style.width = '0%';
+        progressBar.classList.remove('bg-danger', 'bg-success');
+        progressBar.classList.add('progress-bar-animated', 'progress-bar-striped');
+        progressValue.textContent = '0%';
+        progressLabel.textContent = 'Inizializzazione test...';
+        
+        // Inizializza grafici
+        initGauges();
+        initCharts();
+        
+        // Nascondi risultati precedenti
+        testResultContainer.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
