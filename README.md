@@ -11,15 +11,26 @@ Sistema operativo personalizzato per router EvoRouter R4, con interfaccia web av
 - 🔄 **Supporto VPN**: OpenVPN per connessioni sicure
 - 📊 **Monitoraggio Real-time**: Dashboard con statistiche e grafici
 - 💼 **Gestione Remota**: API per l'integrazione con sistemi di monitoraggio esterni
+- 🔍 **Test di Velocità**: Strumento integrato per misurare prestazioni di rete con grafici dettagliati
+- 🖥️ **Multi-piattaforma**: Supporto per EvoRouter R4 hardware e installazioni su Ubuntu/Debian
 
 ## Installazione
 
+### Per dispositivi EvoRouter R4
 Per installare EvoRouter R4 OS su un dispositivo EvoRouter R4, esegui:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh | sudo bash
 ```
 
+### Per sistemi Ubuntu/Debian
+Per installare su sistemi Ubuntu/Debian standard, usa lo script specifico:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_ubuntu.sh | sudo bash
+```
+
+### Installazione personalizzata
 Per un'installazione personalizzata, scarica lo script e modificalo secondo le tue esigenze:
 
 ```bash
@@ -27,6 +38,14 @@ wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evoroute
 chmod +x install_evorouter.sh
 # Personalizza il file secondo le tue esigenze
 sudo ./install_evorouter.sh
+```
+
+### Problemi comuni
+
+Se dopo l'installazione riscontri un errore 404 di Nginx, usa lo script di correzione:
+
+```bash
+sudo ./fix_nginx_configuration.sh
 ```
 
 ## Aggiornamento
