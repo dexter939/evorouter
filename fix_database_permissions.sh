@@ -1,8 +1,7 @@
 #!/bin/bash
 #
-# Script per risolvere problemi comuni di permessi del database SQLite
-# Questo script è utile quando appare l'errore "unable to open database file"
-# Versione: 1.0
+# Script per risolvere i problemi di permessi del database SQLite in EvoRouter R4 OS
+# Versione: 1.1
 # Data: 03/04/2025
 #
 
@@ -36,190 +35,179 @@ print_message() {
 # Verifica se lo script è eseguito come root
 if [ "$(id -u)" != "0" ]; then
    print_message "error" "Questo script deve essere eseguito come root (sudo)!"
+   print_message "info" "Esegui: sudo $0"
    exit 1
 fi
 
-# Definizione del percorso di installazione
-INSTALL_DIR="/opt/evorouter"
-
-# Verifica che EvoRouter sia già installato
-if [ ! -d "$INSTALL_DIR" ]; then
-    print_message "error" "EvoRouter R4 OS non sembra essere installato in $INSTALL_DIR."
-    print_message "info" "Esegui prima lo script di installazione install_evorouter.sh."
-    exit 1
-fi
-
 print_message "info" "#############################################"
 print_message "info" "##                                         ##"
-print_message "info" "##  RIPARAZIONE DATABASE                  ##"
-print_message "info" "##  EvoRouter R4 OS                       ##"
+print_message "info" "##  RIPARAZIONE DATABASE EVOROUTER R4 OS  ##"
 print_message "info" "##                                         ##"
 print_message "info" "#############################################"
 print_message "info" ""
-print_message "info" "Questo script risolverà i problemi comuni di permessi del database SQLite."
 
-# Arresta il servizio prima di intervenire
-print_message "info" "Arresto del servizio EvoRouter..."
-systemctl stop evorouter.service
+# Definizione delle variabili dei percorsi
+INSTALL_DIR="/opt/evorouter"
+DB_DIR="$INSTALL_DIR/instance"
+DB_FILE="$DB_DIR/evorouter.db"
+DB_ERROR_LOG="$INSTALL_DIR/db_error.log"
+BACKUP_DIR="$INSTALL_DIR/db_backups"
+WEB_USER="www-data"  # L'utente del web server (www-data per Nginx/Apache su Debian/Ubuntu)
+APP_USER=$(stat -c '%U' "$INSTALL_DIR" 2>/dev/null || echo "root")
 
-# Backup del database esistente (se presente)
-print_message "info" "Creazione del backup del database (se presente)..."
-mkdir -p $INSTALL_DIR/database_backup
-if [ -d "$INSTALL_DIR/instance" ]; then
-    cp -f $INSTALL_DIR/instance/*.db $INSTALL_DIR/database_backup/ 2>/dev/null
+# Verifica la distribuzione
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    print_message "info" "Sistema operativo rilevato: $NAME $VERSION_ID"
+    
+    # Rileva l'utente del web server
+    if [ "$ID" == "centos" ] || [ "$ID" == "fedora" ] || [ "$ID" == "rhel" ]; then
+        WEB_USER="apache"
+    fi
+fi
+
+print_message "info" "Verifica dei permessi e dell'installazione del database..."
+
+# Verifica se il database esiste
+if [ ! -f "$DB_FILE" ]; then
+    print_message "warning" "Il file del database non esiste: $DB_FILE"
+    
+    # Verifica se la directory instance esiste
+    if [ ! -d "$DB_DIR" ]; then
+        print_message "info" "Creazione della directory instance..."
+        mkdir -p "$DB_DIR"
+        if [ $? -ne 0 ]; then
+            print_message "error" "Impossibile creare la directory del database: $DB_DIR"
+            exit 1
+        fi
+    fi
+    
+    # Crea un file vuoto per il database
+    print_message "info" "Creazione del file di database vuoto..."
+    touch "$DB_FILE"
+    if [ $? -ne 0 ]; then
+        print_message "error" "Impossibile creare il file di database: $DB_FILE"
+        exit 1
+    fi
+else
+    print_message "success" "File del database trovato: $DB_FILE"
+    
+    # Crea una directory di backup se non esiste
+    if [ ! -d "$BACKUP_DIR" ]; then
+        mkdir -p "$BACKUP_DIR"
+    fi
+    
+    # Crea un backup del database esistente
+    BACKUP_FILE="$BACKUP_DIR/evorouter_$(date +%Y%m%d_%H%M%S).db"
+    print_message "info" "Creazione di un backup del database in $BACKUP_FILE..."
+    cp "$DB_FILE" "$BACKUP_FILE"
     if [ $? -eq 0 ]; then
         print_message "success" "Backup del database creato con successo."
     else
-        print_message "warning" "Nessun file di database trovato per il backup."
+        print_message "warning" "Impossibile creare un backup del database."
     fi
 fi
 
-# Estrai il percorso del database dalla configurazione
-print_message "info" "Individuazione del percorso del database..."
-if [ -f "$INSTALL_DIR/.env" ]; then
-    source $INSTALL_DIR/.env
-    if [[ "$DATABASE_URL" == sqlite* ]]; then
-        # Estrai il percorso del file database dall'URL
-        DB_FILE_PATH=${DATABASE_URL#sqlite:///}
-        
-        # Se è un percorso relativo, lo rendiamo assoluto
-        if [[ "$DB_FILE_PATH" != /* ]]; then
-            DB_FILE_PATH="$INSTALL_DIR/$DB_FILE_PATH"
-        fi
-        
-        print_message "info" "Percorso del database SQLite: $DB_FILE_PATH"
-        
-        # Crea la directory se non esiste
-        DB_DIR=$(dirname "$DB_FILE_PATH")
-        print_message "info" "Creazione della directory $DB_DIR (se non esiste)..."
-        mkdir -p "$DB_DIR"
-        chmod -R 777 "$DB_DIR"
-        
-        # Se il database esiste, correggi i permessi
-        if [ -f "$DB_FILE_PATH" ]; then
-            print_message "info" "Correzione dei permessi del file database..."
-            chmod 666 "$DB_FILE_PATH"
-            print_message "success" "Permessi corretti sul file $DB_FILE_PATH"
-        else
-            print_message "warning" "Il file database non esiste. Sarà creato al riavvio dell'applicazione."
-        fi
+# Verifica chi è il proprietario del file di database
+CURRENT_OWNER=$(stat -c '%U:%G' "$DB_FILE" 2>/dev/null)
+print_message "info" "Proprietario attuale del database: $CURRENT_OWNER"
+
+# Verifica i permessi attuali
+CURRENT_PERMS=$(stat -c '%a' "$DB_FILE" 2>/dev/null)
+print_message "info" "Permessi attuali del database: $CURRENT_PERMS"
+
+# Cambia il proprietario del file di database
+print_message "info" "Impostazione del proprietario del database a $WEB_USER..."
+chown $WEB_USER:$WEB_USER "$DB_FILE"
+if [ $? -eq 0 ]; then
+    print_message "success" "Proprietario del database modificato con successo."
+else
+    print_message "error" "Impossibile modificare il proprietario del database."
+fi
+
+# Cambia i permessi del file di database
+print_message "info" "Impostazione dei permessi di lettura/scrittura per il database..."
+chmod 664 "$DB_FILE"
+if [ $? -eq 0 ]; then
+    print_message "success" "Permessi del database modificati con successo."
+else
+    print_message "error" "Impossibile modificare i permessi del database."
+fi
+
+# Cambia il proprietario dell'intera directory instance
+print_message "info" "Impostazione del proprietario della directory del database a $WEB_USER..."
+chown -R $WEB_USER:$WEB_USER "$DB_DIR"
+if [ $? -eq 0 ]; then
+    print_message "success" "Proprietario della directory del database modificato con successo."
+else
+    print_message "error" "Impossibile modificare il proprietario della directory del database."
+fi
+
+# Impostazione dei permessi sulla directory
+print_message "info" "Impostazione dei permessi sulla directory del database..."
+chmod 775 "$DB_DIR"
+if [ $? -eq 0 ]; then
+    print_message "success" "Permessi della directory del database modificati con successo."
+else
+    print_message "error" "Impossibile modificare i permessi della directory del database."
+fi
+
+# Verifica i nuovi permessi
+NEW_OWNER=$(stat -c '%U:%G' "$DB_FILE" 2>/dev/null)
+print_message "info" "Nuovo proprietario del database: $NEW_OWNER"
+
+NEW_PERMS=$(stat -c '%a' "$DB_FILE" 2>/dev/null)
+print_message "info" "Nuovi permessi del database: $NEW_PERMS"
+
+# Verifica se esiste il file di log degli errori del database
+if [ -f "$DB_ERROR_LOG" ]; then
+    print_message "info" "Rimozione del file di log degli errori del database..."
+    rm "$DB_ERROR_LOG"
+fi
+
+# Aggiunge l'utente dell'applicazione al gruppo del web server per consentire l'accesso ai file
+if [ "$APP_USER" != "$WEB_USER" ] && [ "$APP_USER" != "root" ]; then
+    print_message "info" "Aggiunta dell'utente dell'applicazione ($APP_USER) al gruppo del web server ($WEB_USER)..."
+    usermod -a -G $WEB_USER $APP_USER 2>/dev/null
+    if [ $? -eq 0 ]; then
+        print_message "success" "Utente aggiunto al gruppo del web server con successo."
     else
-        print_message "info" "Non stai utilizzando SQLite, ma un altro tipo di database: $DATABASE_URL"
-        print_message "info" "Questo script è principalmente per la risoluzione di problemi con SQLite."
+        print_message "warning" "Impossibile aggiungere l'utente al gruppo del web server. Potrebbe essere necessario farlo manualmente."
     fi
-else
-    print_message "warning" "File di configurazione .env non trovato. Utilizzo il percorso predefinito."
-    # Crea la directory instance se non esiste
-    mkdir -p $INSTALL_DIR/instance
-    chmod -R 777 $INSTALL_DIR/instance
-    print_message "success" "Permessi corretti sulla directory instance."
 fi
 
-# Correggi i permessi della directory instance comunque
-print_message "info" "Correzione dei permessi della directory instance..."
-mkdir -p $INSTALL_DIR/instance
-chmod -R 777 $INSTALL_DIR/instance
-print_message "success" "Permessi corretti sulla directory instance."
-
-# Correggi l'ownership dei file
-print_message "info" "Impostazione dell'ownership corretta..."
-NGINX_USER=$(grep -E "^user" /etc/nginx/nginx.conf | awk '{print $2}' | sed 's/;$//')
-if [ -z "$NGINX_USER" ]; then
-    NGINX_USER="www-data"  # Valore predefinito
-fi
-
-chown -R $NGINX_USER:$NGINX_USER $INSTALL_DIR/instance
-print_message "success" "Ownership impostata a $NGINX_USER per la directory instance."
-
-# Modifica il file di servizio systemd per creare la directory instance all'avvio
-print_message "info" "Aggiornamento del file di servizio systemd..."
-cat > /etc/systemd/system/evorouter.service << EOF
-[Unit]
-Description=EvoRouter R4 OS
-After=network.target
-Wants=nginx.service
-
-[Service]
-User=root
-WorkingDirectory=$INSTALL_DIR
-# Carica le variabili d'ambiente dal file .env
-EnvironmentFile=-$INSTALL_DIR/.env
-ExecStartPre=/bin/bash -c "mkdir -p $INSTALL_DIR/instance && chmod 777 $INSTALL_DIR/instance"
-ExecStart=$INSTALL_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 3 --timeout 120 main:app
-Restart=always
-RestartSec=5
-# Aggiungi un tempo di avvio più lungo per garantire che l'app abbia tempo di inizializzare
-TimeoutStartSec=90
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Ricarica la configurazione di systemd
-print_message "info" "Ricaricamento della configurazione di systemd..."
-systemctl daemon-reload
-
-# Tenta di inizializzare il database tramite Python
-print_message "info" "Tentativo di inizializzazione del database..."
-cd $INSTALL_DIR
-source venv/bin/activate
-
-python -c "from app import app, db; app.app_context().push(); db.create_all()"
-if [ $? -ne 0 ]; then
-    print_message "warning" "Errore durante l'inizializzazione del database. Per ulteriori dettagli, esegui il comando manualmente."
-    print_message "info" "Puoi tentare manualmente con: cd $INSTALL_DIR && source venv/bin/activate && python -c 'from app import app, db; app.app_context().push(); db.create_all()'"
-else
-    print_message "success" "Database inizializzato con successo!"
-fi
-
-# Tenta di creare l'admin se necessario
-if [ ! -f "$INSTALL_DIR/instance/evorouter.db" ] || [ ! -s "$INSTALL_DIR/instance/evorouter.db" ]; then
-    print_message "info" "Tentativo di creazione dell'utente admin..."
-    python create_admin.py
-    if [ $? -ne 0 ]; then
-        print_message "warning" "Errore durante la creazione dell'utente admin. Per ulteriori dettagli, esegui il comando manualmente."
-        print_message "info" "Puoi tentare manualmente con: cd $INSTALL_DIR && source venv/bin/activate && python create_admin.py"
+# Verifica la presenza e l'accessibilità dell'ambiente virtuale Python
+if [ -d "$INSTALL_DIR/venv" ]; then
+    print_message "info" "Ambiente virtuale Python trovato: $INSTALL_DIR/venv"
+    
+    # Verifica i permessi dell'ambiente virtuale
+    VENV_OWNER=$(stat -c '%U:%G' "$INSTALL_DIR/venv" 2>/dev/null)
+    print_message "info" "Proprietario dell'ambiente virtuale: $VENV_OWNER"
+    
+    # Aggiungi permessi di esecuzione ai file dell'ambiente virtuale
+    print_message "info" "Aggiunta dei permessi di esecuzione ai file dell'ambiente virtuale..."
+    chmod -R +x "$INSTALL_DIR/venv/bin"
+    if [ $? -eq 0 ]; then
+        print_message "success" "Permessi di esecuzione aggiunti con successo."
     else
-        print_message "success" "Utente admin creato con successo!"
+        print_message "warning" "Impossibile aggiungere permessi di esecuzione."
     fi
-fi
-
-# Riavvio del servizio
-print_message "info" "Riavvio del servizio EvoRouter..."
-systemctl restart evorouter.service
-
-# Verifica lo stato in modo più dettagliato
-sleep 5
-if ! systemctl is-active --quiet evorouter.service; then
-    print_message "warning" "Il servizio EvoRouter non è stato avviato correttamente."
-    print_message "info" "Consulta i log per maggiori dettagli: journalctl -u evorouter.service -n 50"
 else
-    print_message "success" "Il servizio EvoRouter è stato riavviato con successo!"
+    print_message "warning" "Ambiente virtuale Python non trovato: $INSTALL_DIR/venv"
+    print_message "info" "Potrebbe essere necessario reinstallare l'applicazione o ricreare l'ambiente virtuale."
 fi
 
-# Verifica finale dell'applicazione web
-print_message "info" "Verifica dell'applicazione web..."
-sleep 5
-if curl -s --max-time 10 http://127.0.0.1/ | grep -q "EvoRouter"; then
-    print_message "success" "L'applicazione web è attiva e raggiungibile!"
-else
-    print_message "warning" "L'applicazione web non risponde correttamente. Verificare i log:"
-    print_message "info" "journalctl -u evorouter.service -n 50"
-    print_message "info" "journalctl -u nginx.service -n 20"
-fi
+# Istruzioni per testare il database
+print_message "info" ""
+print_message "info" "Database riparato. Per verificare la riparazione, esegui:"
+print_message "info" "cd $INSTALL_DIR && source venv/bin/activate && python create_admin.py"
+print_message "info" ""
 
-# Informazioni finali
-print_message "success" "##############################################"
-print_message "success" "Riparazione del database completata!"
-print_message "success" "##############################################"
+# Istruzioni per riavviare il servizio
+print_message "info" "Dopo la verifica, riavvia il servizio EvoRouter con:"
+print_message "info" "sudo systemctl restart evorouter.service"
 print_message "info" ""
-print_message "info" "Se continui a riscontrare problemi con il database, prova a:"
-print_message "info" "1. Verificare che il file .env contenga il percorso corretto del database"
-print_message "info" "2. Assicurarsi che l'utente che esegue l'applicazione abbia accesso alla directory"
-print_message "info" "3. Verificare la presenza di errori nei log di sistema"
-print_message "info" ""
-print_message "info" "Per visualizzare i log del sistema:"
-print_message "info" "- Logs di EvoRouter: journalctl -u evorouter.service -f"
-print_message "info" "- Logs di Nginx: journalctl -u nginx.service -f"
+
+print_message "success" "Riparazione del database completata."
 
 exit 0
