@@ -1,111 +1,77 @@
-# EvoRouter R4 OS v1.4.0 - Repository GitHub
+# EvoRouter R4 OS
 
-Benvenuto nel repository GitHub ufficiale di EvoRouter R4 OS! Questo repository contiene il codice sorgente completo del sistema operativo personalizzato per router EvoRouter R4 con interfaccia web avanzata, centralino telefonico integrato e funzionalità complete di rete.
+Sistema operativo personalizzato per router EvoRouter R4, con interfaccia web avanzata, supporto per firewall, VPN, QoS e centralino telefonico integrato.
 
-## Novità della versione 1.4.0
+## Caratteristiche
 
-- **Script di Installazione Semplificati**: Nuovi script `install_evorouter.sh` e `install_evorouter_complete.sh` per installazione automatizzata
-- **Installazione All-in-One**: Opzione per installare sistema e centralino in un unico passaggio
-- **Rilevamento Automatico del Sistema**: Configurazione ottimizzata per diverse distribuzioni Debian
-- **Aggiornamento Documentazione**: Aggiornamento delle guide di installazione con i nuovi metodi semplificati
-- **Compatibilità Migliorata**: Verifica e correzione delle dipendenze durante l'installazione
+- 🚀 **Interfaccia Web Responsive**: Gestisci facilmente il tuo router da qualsiasi dispositivo
+- 🔒 **Sicurezza Avanzata**: Firewall configurabile, VPN, e protezione da attacchi comuni
+- 📞 **Centralino Telefonico Integrato**: Configurazione e gestione di telefonia VoIP
+- 🌐 **Gestione di Rete Completa**: DHCP, DNS, QoS, UPnP e molto altro
+- 🔄 **Supporto VPN**: OpenVPN per connessioni sicure
+- 📊 **Monitoraggio Real-time**: Dashboard con statistiche e grafici
+- 💼 **Gestione Remota**: API per l'integrazione con sistemi di monitoraggio esterni
 
-## Come utilizzare questo repository
+## Installazione
 
-### Installazione di EvoRouter R4 OS
-
-Per installare il sistema su un dispositivo EvoRouter R4, puoi utilizzare uno dei nostri script di installazione semplificati:
+Per installare EvoRouter R4 OS su un dispositivo EvoRouter R4, esegui:
 
 ```bash
-# Installazione solo sistema
 curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh | sudo bash
-
-# Installazione completa (sistema + centralino)
-curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter_complete.sh | sudo bash
 ```
 
-Per istruzioni dettagliate, consulta il file [INSTALL.md](INSTALL.md).
+Per un'installazione personalizzata, scarica lo script e modificalo secondo le tue esigenze:
 
-### Per sviluppatori
+```bash
+wget https://raw.githubusercontent.com/dexter939/evorouter/main/install_evorouter.sh
+chmod +x install_evorouter.sh
+# Personalizza il file secondo le tue esigenze
+sudo ./install_evorouter.sh
+```
 
-Se desideri contribuire allo sviluppo o fare modifiche al sistema:
+## Aggiornamento
 
-1. **Clona il repository**:
-   ```bash
-   git clone https://github.com/dexter939/evorouter.git
-   cd evorouter
-   ```
+Per aggiornare l'installazione esistente di EvoRouter R4 OS, utilizza:
 
-2. **Imposta l'ambiente di sviluppo**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+```bash
+sudo /opt/evorouter/update_evorouter.sh
+```
 
-3. **Avvia il server di sviluppo**:
-   ```bash
-   python main.py
-   ```
+Oppure scarica l'ultimo script di aggiornamento:
 
-4. **Accedi all'interfaccia web** tramite http://localhost:5000 con credenziali predefinite:
-   - Username: admin
-   - Password: admin123
+```bash
+curl -sSL https://raw.githubusercontent.com/dexter939/evorouter/main/update_evorouter.sh | sudo bash
+```
+
+## Requisiti hardware
+
+EvoRouter R4 OS è progettato specificamente per l'hardware EvoRouter R4 con le seguenti specifiche:
+
+- CPU: Quad-core Arm Cortex-A53 (1.5 GHz)
+- RAM: 2GB DDR4
+- Storage: eMMC 8GB (minimo)
+- Porte: 5x Gigabit Ethernet
+- Wi-Fi: 802.11ac
+
+Per maggiori dettagli sull'hardware supportato, consulta [HARDWARE.md](HARDWARE.md).
 
 ## Documentazione
 
-- [README.md](README.md) - Panoramica generale del progetto
-- [INSTALL.md](INSTALL.md) - Guida dettagliata all'installazione
-- [API_INTEGRATION.md](API_INTEGRATION.md) - Documentazione API
-- [HARDWARE.md](HARDWARE.md) - Specifiche hardware e funzionalità
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Linee guida per i contributi
+Documentazione completa disponibile nei seguenti file:
 
-## Struttura del progetto
-
-```
-evorouter/
-├── app.py              # Configurazione app Flask
-├── main.py             # Entry point
-├── models.py           # Modelli database
-├── config.py           # Configurazioni
-├── routes/             # Route e controller
-├── forms/              # Definizioni form
-├── templates/          # Template UI
-├── static/             # Asset statici
-├── utils/              # Funzioni di utilità
-└── tests/              # Test unitari
-```
-
-## Flusso di lavoro per lo sviluppo
-
-Per contribuire al progetto, segui queste linee guida:
-
-1. **Crea un fork** di questo repository
-2. **Crea un branch** per la tua funzionalità (`git checkout -b feature/amazing-feature`)
-3. **Commit** delle tue modifiche (`git commit -m 'Aggiunta nuova funzionalità'`)
-4. **Push** al branch (`git push origin feature/amazing-feature`)
-5. **Crea una Pull Request** verso questo repository
-
-## Politica di rilascio
-
-Utilizziamo il versionamento semantico (SemVer) per tutte le release:
-- **Versioni major (X.0.0)** contengono cambiamenti incompatibili con versioni precedenti
-- **Versioni minor (0.X.0)** contengono nuove funzionalità retrocompatibili
-- **Versioni patch (0.0.X)** contengono correzioni di bug retrocompatibili
+- [INSTALL.md](INSTALL.md): Istruzioni dettagliate per l'installazione
+- [API_INTEGRATION.md](API_INTEGRATION.md): Documentazione API per l'integrazione con sistemi esterni
+- [HARDWARE.md](HARDWARE.md): Specifiche hardware supportate
+- [CONTRIBUTING.md](CONTRIBUTING.md): Linee guida per contribuire al progetto
 
 ## Licenza
 
-Questo progetto è rilasciato sotto licenza [MIT](LICENSE).
+Questo progetto è rilasciato sotto licenza MIT. Vedi il file [LICENSE](LICENSE) per i dettagli.
 
-## Riconoscimenti
+## Supporto
 
-Un ringraziamento speciale a tutti i contributori che hanno reso possibile questo progetto!
+Per problemi, domande o suggerimenti, apri una issue su GitHub o contatta il team di supporto.
 
 ---
 
-### Note per chi utilizza GitHub per la prima volta
-
-Se sei nuovo con GitHub e Git, ecco alcune risorse utili:
-- [GitHub Guides](https://guides.github.com/) 
-- [Git Documentation](https://git-scm.com/doc)
-- [Pro Git Book](https://git-scm.com/book/en/v2) (disponibile anche in italiano)
+&copy; 2025 EvoRouter. Tutti i diritti riservati.
